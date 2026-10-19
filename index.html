@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Enfantillage — Toys, Baby & Outdoor Fun in Lebanon</title>
+  <meta name="description" content="Enfantillage is Lebanon's family toy store: LEGO, Barbie, Step2, Little Tikes, Nintendo, baby essentials, pools, bikes and more. Shop by age, brand or character.">
+  <meta name="theme-color" content="#25318c">
+  <link rel="icon" href="assets/img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-current="home">
+  <div id="site-header"></div>
+
+  <main>
+    <!-- HERO: carousel + side promos -->
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero__grid">
+          <div class="slider" id="slider" aria-roledescription="carousel"></div>
+          <div class="hero__side" id="heroSide"></div>
+        </div>
+        <div class="perks" id="perks"></div>
+      </div>
+    </section>
+
+    <!-- SHOP BY CATEGORY -->
+    <section class="section" id="categories">
+      <div class="wrap">
+        <div class="section__head">
+          <div class="reveal" data-from="left">
+            <h2 class="section__title" style="--c:var(--red)"><svg class="squiggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M3 14c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/></svg>Shop by Category</h2>
+            <p class="section__sub">Pick a world and dive in!</p>
+          </div>
+          <a class="see-all reveal" data-from="right" href="shop.html">All toys <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+        <div class="rail-wrap">
+          <div class="rail" id="catRail"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SHOP BY AGE -->
+    <section class="section section--tint" id="ages">
+      <svg class="para" data-speed="-.12" style="left:3%;top:40px;width:60px" viewBox="0 0 24 24"><path d="m12 2 2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.2 5.8 20.9l1.6-7L2 9.2l7.1-.6z" fill="#ffc83d"/></svg>
+      <svg class="para" data-speed=".1" data-rot=".05" style="right:4%;bottom:30px;width:44px" viewBox="0 0 24 24"><path d="m12 2 2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.2 5.8 20.9l1.6-7L2 9.2l7.1-.6z" fill="#ec1c8c"/></svg>
+      <div class="wrap" style="position:relative;z-index:1">
+        <div class="section__head">
+          <div class="reveal" data-from="left">
+            <h2 class="section__title" style="--c:var(--blue)"><svg class="squiggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M3 14c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/></svg>Shop by Age</h2>
+            <p class="section__sub">The right toy for every stage of growing up</p>
+          </div>
+        </div>
+        <div class="ages" id="ageGrid"></div>
+      </div>
+    </section>
+
+    <!-- PRODUCTS: tabbed rail -->
+    <section class="section" id="picks">
+      <div class="wrap">
+        <div class="section__head">
+          <div class="reveal" data-from="left">
+            <h2 class="section__title" style="--c:var(--pink)"><svg class="squiggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M3 14c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/></svg>Toy Box Picks</h2>
+            <p class="section__sub">Fresh arrivals, family favourites and the best deals</p>
+          </div>
+          <div class="tabs reveal" data-from="right" id="pickTabs" role="tablist">
+            <span class="tabs__pill"></span>
+            <button class="tab is-active" data-tab="new" role="tab">New Arrivals</button>
+            <button class="tab" data-tab="best" role="tab">Best Sellers</button>
+            <button class="tab" data-tab="sale" role="tab">On Sale</button>
+            <button class="tab" data-tab="under25" role="tab">Under 25 $</button>
+          </div>
+        </div>
+        <div class="rail-wrap">
+          <button class="arrow-btn arrow-btn--prev" aria-label="Previous"></button>
+          <div class="rail p-rail" id="pickRail"></div>
+          <button class="arrow-btn arrow-btn--next" aria-label="Next"></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- BRANDS marquee: rows glide left and right -->
+    <section class="brands" id="brands">
+      <div class="wrap section__head">
+        <div class="reveal" data-from="left">
+          <h2 class="section__title" style="--c:var(--green)"><svg class="squiggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M3 14c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/></svg>Brands We Love</h2>
+          <p class="section__sub" id="brandSub">The names kids ask for, all under one roof</p>
+        </div>
+        <a class="see-all reveal" data-from="right" href="shop.html">Browse all <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="brands__mask">
+        <div class="brands__row" id="brandRow1" style="--speed:55s"></div>
+        <div class="brands__row brands__row--rev" id="brandRow2" style="--speed:60s"></div>
+      </div>
+    </section>
+
+    <!-- CHARACTERS -->
+    <section class="section section--sky" id="characters">
+      <svg class="wave wave--top" viewBox="0 0 1440 48" preserveAspectRatio="none" style="position:absolute;top:-47px;left:0;color:var(--blue-soft)"><path d="M0 48V24C120 0 240 0 360 16s240 32 360 16S960 0 1080 8s240 32 360 24v16z" fill="currentColor"/></svg>
+      <div class="wrap">
+        <div class="section__head">
+          <div class="reveal" data-from="left">
+            <h2 class="section__title" style="--c:var(--pink)"><svg class="squiggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M3 14c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/></svg>Shop by Character</h2>
+            <p class="section__sub">Meet their favourite heroes, friends and icons</p>
+          </div>
+        </div>
+        <div class="chars" id="charGrid"></div>
+      </div>
+    </section>
+
+    <!-- GIFT FINDER -->
+    <section class="section" id="gift-finder">
+      <div class="wrap">
+        <div class="finder reveal" data-from="up" id="finder"></div>
+      </div>
+    </section>
+
+    <!-- SPLIT BANNERS -->
+    <section class="section" style="padding-top:0">
+      <div class="wrap splits" id="splits"></div>
+    </section>
+
+    <!-- SECOND RAIL -->
+    <section class="section section--tint">
+      <div class="wrap">
+        <div class="section__head">
+          <div class="reveal" data-from="left">
+            <h2 class="section__title" style="--c:var(--teal)"><svg class="squiggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M3 14c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/></svg>Baby & Toddler Favourites</h2>
+            <p class="section__sub">Soft, safe and made for tiny hands</p>
+          </div>
+          <a class="see-all reveal" data-from="right" href="shop.html?cat=baby">All baby <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+        <div class="rail-wrap">
+          <button class="arrow-btn arrow-btn--prev" aria-label="Previous"></button>
+          <div class="rail p-rail" id="babyRail"></div>
+          <button class="arrow-btn arrow-btn--next" aria-label="Next"></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SHOP BY BUDGET -->
+    <section class="section">
+      <div class="wrap">
+        <div class="section__head">
+          <div class="reveal" data-from="left">
+            <h2 class="section__title" style="--c:var(--green)"><svg class="squiggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M3 14c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/></svg>Shop by Budget</h2>
+            <p class="section__sub">Great gifts at every price</p>
+          </div>
+        </div>
+        <div class="budgets" id="budgets"></div>
+      </div>
+    </section>
+
+    <!-- CLUB / NEWSLETTER -->
+    <section class="section" style="padding-top:0">
+      <div class="wrap">
+        <div class="club reveal" data-from="up" id="club"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/home.js"></script>
+</body>
+</html>

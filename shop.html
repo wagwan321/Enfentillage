@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop Toys — Enfantillage Lebanon</title>
+  <meta name="description" content="Browse Enfantillage toys by category, age, brand, character and price.">
+  <meta name="theme-color" content="#25318c">
+  <link rel="icon" href="assets/img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-current="shop">
+  <div id="site-header"></div>
+
+  <main>
+    <section class="shop-hero" id="shopHero"></section>
+    <div class="wrap shop-layout">
+      <aside class="filters" id="filters" aria-label="Filters"></aside>
+      <div>
+        <div class="toolbar">
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="btn btn--navy btn--sm filter-btn" id="openFilters" type="button">Filters</button>
+            <span class="toolbar__count" id="count"></span>
+          </div>
+          <label><span class="sr-only">Sort by</span>
+            <select class="select" id="sort">
+              <option value="popular">Most popular</option>
+              <option value="new">Newest first</option>
+              <option value="low">Price: low to high</option>
+              <option value="high">Price: high to low</option>
+              <option value="deal">Biggest savings</option>
+            </select>
+          </label>
+        </div>
+        <div class="active-filters" id="active"></div>
+        <div class="p-grid" id="grid"></div>
+        <div class="load-more" id="more"></div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/shop.js"></script>
+</body>
+</html>
