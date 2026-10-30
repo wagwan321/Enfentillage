@@ -7,6 +7,9 @@
   'use strict';
 
   const P = window.PRODUCTS || [];
+  /* pictures are stored with the site: sm = card thumbnail, lg = quick-view gallery */
+  P.forEach(p => { p.i = `assets/img/products/sm/${p.id}.webp`; });
+  const imgLg = (p, k = 0) => `assets/img/products/lg/${p.id}-${k}.webp`;
   const byId = new Map(P.map(p => [p.id, p]));
 
   /* ---------- palette ---------- */
@@ -47,38 +50,108 @@
     { key: '17+',   num: '17+',   unit: 'years', label: 'Grown-up Fun',      color: 'navy' },
   ];
 
-  const BRANDS = [
-    { key: 'LEGO', name: 'LEGO', color: 'red', logo: 'lego.svg' },
-    { key: 'STEP2', name: 'Step2', color: 'blue', logo: 'step2.svg' },
-    { key: 'LITTLE TIKES', name: 'Little Tikes', color: 'red', logo: 'littletikes.svg' },
-    { key: 'BARBIE', name: 'Barbie', color: 'pink', logo: 'barbie.svg' },
-    { key: 'NINTENDO', name: 'Nintendo', color: 'red', logo: 'nintendo.svg' },
-    { key: 'INTEX', name: 'Intex', color: 'blue', logo: 'intex.png' },
-    { key: 'BESTWAY', name: 'Bestway', color: 'teal', logo: 'bestway.png' },
-    { key: 'PLAY-DOH', name: 'Play-Doh', color: 'blue', logo: 'playdoh.png' },
-    { key: 'HUFFY', name: 'Huffy', color: 'navy', logo: 'huffy.png' },
-    { key: 'TINY LOVE', name: 'Tiny Love', color: 'green', logo: 'tinylove.png' },
-    { key: 'TOMMEE TIPPEE', name: 'Tommee Tippee', color: 'teal', logo: 'tommeetippee.svg' },
-    { key: 'SILVERLIT', name: 'Silverlit', color: 'red', logo: 'silverlit.png' },
-    { key: 'RAINBOW HIGH', name: 'Rainbow High', color: 'pink' },
-    { key: 'LISCIANI GIOCHI', name: 'Lisciani', color: 'green' },
-    { key: 'GALT', name: 'Galt', color: 'red' },
-    { key: 'KIDYWOLF', name: 'Kidywolf', color: 'navy', logo: 'kidywolf.png' },
-    { key: 'BEBECONFORT', name: 'Bébéconfort', color: 'teal' },
-    { key: 'WOWWEE', name: 'WowWee', color: 'blue' },
-    { key: 'DOOMOO', name: 'Doomoo', color: 'green', logo: 'doomoo.png' },
-    { key: 'TOBAR', name: 'Tobar', color: 'pink', logo: 'tobar.png' },
-    { key: 'ODYSSEY TOYS', name: 'Odyssey Toys', color: 'navy', logo: 'odyssey.png' },
-    { key: 'EDU FUN', name: 'Edu Fun', color: 'green' },
-    { key: 'INFINI FUN', name: 'Infini Fun', color: 'blue' },
-    { key: 'B TOYS', name: 'B. Toys', color: 'teal' },
-    { key: 'INFANTINO', name: 'Infantino', color: 'pink', logo: 'infantino.png' },
-    { key: 'FEBER', name: 'Feber', color: 'red', logo: 'feber.svg' },
-    { key: 'TOWNLEY', name: 'Townley Girl', color: 'pink', logo: 'townley.png' },
-    { key: 'WOW GENERATION', name: 'Wow Generation', color: 'teal' },
-    { key: 'CANAL TOYS', name: 'Canal Toys', color: 'blue' },
-    { key: 'NEEDOH', name: 'NeeDoh', color: 'green' },
-  ];
+  /* Brand display names, colors and official logos (files in assets/img/brands).
+     Every brand in the catalog is listed automatically; entries here only refine how it looks. */
+  const BRAND_INFO = {
+    'LEGO': { name: 'LEGO', color: 'red', logo: 'lego.svg' },
+    'STEP2': { name: 'Step2', color: 'blue', logo: 'step2.svg' },
+    'LITTLE TIKES': { name: 'Little Tikes', color: 'red', logo: 'littletikes.svg' },
+    'BARBIE': { name: 'Barbie', color: 'pink', logo: 'barbie.svg' },
+    'NINTENDO': { name: 'Nintendo', color: 'red', logo: 'nintendo.svg' },
+    'INTEX': { name: 'Intex', color: 'blue', logo: 'intex.png' },
+    'BESTWAY': { name: 'Bestway', color: 'teal', logo: 'bestway.png' },
+    'PLAY-DOH': { name: 'Play-Doh', color: 'blue', logo: 'playdoh.png' },
+    'HUFFY': { name: 'Huffy', color: 'navy', logo: 'huffy.png' },
+    'TINY LOVE': { name: 'Tiny Love', color: 'green', logo: 'tinylove.png' },
+    'TOMMEE TIPPEE': { name: 'Tommee Tippee', color: 'teal', logo: 'tommeetippee.svg' },
+    'SILVERLIT': { name: 'Silverlit', color: 'red', logo: 'silverlit.png' },
+    'KIDYWOLF': { name: 'Kidywolf', color: 'navy', logo: 'kidywolf.png' },
+    'DOOMOO': { name: 'Doomoo', color: 'green', logo: 'doomoo.png' },
+    'TOBAR': { name: 'Tobar', color: 'pink', logo: 'tobar.png' },
+    'ODYSSEY TOYS': { name: 'Odyssey Toys', color: 'navy', logo: 'odyssey.png' },
+    'INFANTINO': { name: 'Infantino', color: 'pink', logo: 'infantino.png' },
+    'FEBER': { name: 'Feber', color: 'red', logo: 'feber.svg' },
+    'TOWNLEY': { name: 'Townley Girl', color: 'pink', logo: 'townley.png' },
+    'RAINBOW HIGH': { name: 'Rainbow High', color: 'pink', logo: 'rainbowhigh.png' },
+    'LISCIANI GIOCHI': { name: 'Lisciani', color: 'green', logo: 'lisciani.png' },
+    'BEBECONFORT': { name: 'Bébéconfort', color: 'teal' },
+    'WOWWEE': { name: 'WowWee', color: 'blue', logo: 'wowwee.svg' },
+    'B TOYS': { name: 'B. Toys', color: 'teal', logo: 'btoys.svg' },
+    'NEEDOH': { name: 'NeeDoh', color: 'green', logo: 'needoh.svg' },
+    'POKEMON': { name: 'Pokémon', logo: 'pokemon.png' },
+    'SENTOSPHÈRE': { name: 'Sentosphère', logo: 'sentosphere.png' },
+    'SCIENCE4YOU': { name: 'Science4you', logo: 'science4you.png' },
+    'MGA': { name: 'MGA', logo: 'mga.svg' }, "MGA'S MINIVERSE": { name: "MGA's Miniverse", logo: 'miniverse.png' },
+    'SBV': { name: 'SBV' }, 'HGL': { name: 'HGL' }, 'IMC TOYS': { name: 'IMC Toys' },
+    'LEAPFROG': { name: 'LeapFrog', logo: 'leapfrog.svg' }, 'FISHER PRICE': { name: 'Fisher-Price' },
+    'PAW PATROL': { name: 'PAW Patrol', logo: 'pawpatrol.png' }, 'POP MART': { name: 'POP MART' }, 'MRBEAST': { name: 'MrBeast' },
+    'L.O.L SURPRISE': { name: 'L.O.L. Surprise!' }, 'NETFLIX K-POP': { name: 'K-Pop Demon Hunters' },
+    "GABBY'S DOLLHOUSE": { name: "Gabby's Dollhouse", logo: 'gabbysdollhouse.png' }, 'JAKKS': { name: 'JAKKS Pacific' },
+    'XOX KWEENIE': { name: 'XOX Kweenie' }, 'SKY CASTLE': { name: 'Sky Castle' },
+    'BLOKEES': { logo: 'blokees.svg' },
+    'PLAYMOBIL': { logo: 'playmobil.svg' },
+    'BABYJEM': { logo: 'babyjem.png' },
+    'VITAL BABY': { logo: 'vitalbaby.png' },
+    'WOW GENERATION': { logo: 'wowgeneration.png' },
+    'GALT': { logo: 'galt.png' },
+    'GOLIATH': { logo: 'goliath.svg' },
+    'ZURU': { logo: 'zuru.svg' },
+    'SKILLMATICS': { logo: 'skillmatics.png' },
+    'JOIE': { logo: 'joie.png' },
+    'CUDDLE BARN': { logo: 'cuddlebarn.png' },
+    'MADMIA': { logo: 'madmia.png' },
+    'BUKI': { logo: 'buki.png' },
+    'CANAL TOYS': { logo: 'canaltoys.png' },
+    'MAISTO': { logo: 'maisto.png' },
+    'STICKI ROLLS': { logo: 'stickirolls.png' },
+    'PHATMOJO': { logo: 'phatmojo.svg' },
+    'ALPHANOVA': { logo: 'alphanova.svg' },
+    'OUR GENERATION': { logo: 'ourgeneration.svg' },
+    'NICE': { logo: 'nice.png' },
+    'SQUISHMALLOWS': { logo: 'squishmallows.png' },
+    'NATHAN': { logo: 'nathan.png' },
+    'TOSSIT': { logo: 'tossit.png' },
+    'MAGBLOX': { logo: 'magblox.png' },
+    'STARLUX': { logo: 'starlux.png' },
+    'DORA': { logo: 'dora.svg' },
+    'HELLO KITTY': { logo: 'hellokitty.png' },
+    'CLEMENTONI': { logo: 'clementoni.png' },
+    'DISNEY STITCH': { logo: 'stitch.svg' },
+    'SMOBY': { logo: 'smoby.svg' },
+    'BBURAGO': { name: 'Bburago', logo: 'bburago.png' },
+    'GEOMAG': { logo: 'geomag.png' },
+    'BEYBLADE X': { name: 'Beyblade X', logo: 'beybladex.svg' },
+    'BEAVER': { logo: 'beaver.png' },
+    'FISHER PRICE': { logo: 'fisherprice.svg' },
+    'HOT WHEELS': { logo: 'hotwheels.svg' },
+    'SPIN MASTER': { name: 'Spin Master', logo: 'spinmaster.png' },
+    'ECOIFFIER': { logo: 'ecoiffier.svg' },
+    'BABY EINSTEIN': { logo: 'babyeinstein.png' },
+    'GRACO': { logo: 'graco.png' },
+    'RAZOR': { logo: 'razor.svg' },
+    'FUNKO FIGURE': { name: 'Funko', logo: 'funko.svg' },
+    "RUBIK'S": { name: "Rubik's", logo: 'rubiks.svg' },
+    'BRIGHT STARTS': { logo: 'brightstarts.png' },
+    'BABYMOOV': { name: 'Babymoov', logo: 'babymoov.png' },
+    'SCHMIDT': { logo: 'schmidt.png' },
+    'MATCHBOX': { logo: 'matchbox.png' },
+    'BRATZ': { logo: 'bratz.png' },
+    'POP MART': { logo: 'popmart.svg' },
+    'INGENUITY': { logo: 'ingenuity.png' },
+    'EVENFLO': { logo: 'evenflo.png' },
+    'JAKKS': { logo: 'jakks.png' },
+    'NENUCO': { logo: 'nenuco.png' },
+    'RAINBOW LOOM': { logo: 'rainbowloom.png' },
+    'PILSAN': { logo: 'pilsan.svg' },
+  };
+  const titleCase = k => k.toLowerCase().replace(/(^|[\s\-/&(])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+  const brandCounts = {};
+  P.forEach(p => { if (p.b) brandCounts[p.b] = (brandCounts[p.b] || 0) + 1; });
+  /* all catalog brands, biggest first */
+  const BRANDS = Object.keys(brandCounts).map(key => {
+    const info = BRAND_INFO[key] || {};
+    return { key, name: info.name || titleCase(key), color: info.color || hashColor(key), logo: info.logo, n: brandCounts[key] };
+  }).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
 
   const CHARACTERS = [
     { key: 'mario',       name: 'Super Mario',       color: 'red',   img: 30977 },
@@ -99,7 +172,7 @@
 
   /* brand logo <img> (official logos live in assets/img/brands) */
   const brandLogo = (b, cls = '') => b.logo ? `<img class="${cls}" src="assets/img/brands/${b.logo}" alt="${b.name}">` : '';
-  const brandMatch = (p, key) => p.b === key || p.b.startsWith(key + ' ');
+  const brandMatch = (p, key) => p.b === key;
   const imgOf = (id, fallbackFilter) => (byId.get(id) || (fallbackFilter && P.find(fallbackFilter)) || P[0] || {}).i;
 
   /* ---------- icons ---------- */
@@ -147,7 +220,7 @@
 
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const money = n => (Math.round(n * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' $';
-  const brandName = key => (BRANDS.find(b => key === b.key || key.startsWith(b.key + ' ')) || {}).name || key.replace(/\w\S*/g, w => w[0] + w.slice(1).toLowerCase());
+  const brandName = key => (BRAND_INFO[key] || {}).name || titleCase(key);
 
   /* "new" = most recently added products (highest ids) */
   const NEW_IDS = new Set([...P].sort((a, b) => b.id - a.id).slice(0, 60).map(p => p.id));
@@ -163,6 +236,12 @@
   /* ==========================================================================
      Product card
      ========================================================================== */
+  /* price block: sale price, "from" for products with options, or ask-in-store when the old site had no price */
+  function priceHTML(p, cls = 'price') {
+    if (!p.p) return `<div class="${cls} price--ask">Ask in store</div>`;
+    return `<div class="${cls}${p.o ? ' price--sale' : ''}">${p.o ? `<s>${money(p.o)}</s>` : ''}${p.v ? '<small>from</small> ' : ''}${money(p.p)}</div>`;
+  }
+
   function card(p, opts = {}) {
     const pct = p.o ? Math.round((1 - p.p / p.o) * 100) : 0;
     const badges = [];
@@ -182,10 +261,10 @@
         ${p.b ? `<div class="card__brand" style="--c:${brandColor}">${esc(brandName(p.b))}</div>` : ''}
         <h3 class="card__name" data-quick="${p.id}">${esc(p.n)}</h3>
         <div class="card__foot">
-          <div class="price${p.o ? ' price--sale' : ''}">${p.o ? `<s>${money(p.o)}</s>` : ''}${money(p.p)}</div>
-          <button class="add-btn${added}" data-add="${p.id}" type="button" aria-label="Add ${esc(p.n)} to cart">
+          ${priceHTML(p)}
+          ${p.p ? `<button class="add-btn${added}" data-add="${p.id}" type="button" aria-label="Add ${esc(p.n)} to cart">
             ${icon('cart', 'icon i-cart', 2.4)}${icon('check', 'icon i-check', 3)}
-          </button>
+          </button>` : `<a class="ask-btn" href="tel:+9613720233" aria-label="Call the store about ${esc(p.n)}">${icon('phone', 'icon', 2.4)}</a>`}
         </div>
       </div>
     </article>`;
@@ -216,7 +295,7 @@
     return `<div class="mega"><div class="wrap mega__tiles">${AGES.map(a => `<a class="mega__tile" style="${colorVars(a.color)}" href="${shopUrl({ age: a.key })}"><big>${a.num}</big>${a.unit}<small>${a.label}</small></a>`).join('')}</div></div>`;
   }
   function megaBrands() {
-    return `<div class="mega"><div class="wrap mega__brands">${[...BRANDS].sort((a, b) => !!b.logo - !!a.logo).slice(0, 23).map(b => `<a href="${shopUrl({ brand: b.key })}" style="${colorVars(b.color)}"${b.logo ? ' class="has-logo"' : ''}>${b.logo ? brandLogo(b) : esc(b.name)}</a>`).join('')}<a href="${shopUrl()}" style="${colorVars('navy')}">All brands →</a></div></div>`;
+    return `<div class="mega"><div class="wrap mega__brands">${[...BRANDS].sort((a, b) => !!b.logo - !!a.logo).slice(0, 23).map(b => `<a href="${shopUrl({ brand: b.key })}" style="${colorVars(b.color)}"${b.logo ? ' class="has-logo"' : ''}>${b.logo ? brandLogo(b) : esc(b.name)}</a>`).join('')}<a href="brands.html" style="${colorVars('navy')}">All ${BRANDS.length} brands →</a></div></div>`;
   }
   function megaChars() {
     return `<div class="mega"><div class="wrap mega__tiles mega__tiles--chars">${CHARACTERS.map(c => `<a class="mega__tile" style="${colorVars(c.color)}" href="${shopUrl({ char: c.key })}"><img src="${esc(imgOf(c.img, p => p.h.includes(c.key)))}" alt="" loading="lazy">${esc(c.name)}</a>`).join('')}</div></div>`;
@@ -271,7 +350,7 @@
       <div class="drawer__body">
         ${macc('Categories', 'red', CATEGORIES.map(c => [c.name, shopUrl({ cat: c.key })]))}
         ${macc('Shop by Age', 'blue', AGES.map(a => [`${a.num} years · ${a.label}`, shopUrl({ age: a.key })]))}
-        ${macc('Brands', 'green', BRANDS.map(b => [b.name, shopUrl({ brand: b.key })]))}
+        ${macc('Brands', 'green', [...BRANDS.filter(b => b.n >= 5).map(b => [b.name, shopUrl({ brand: b.key })]), [`All ${BRANDS.length} brands →`, 'brands.html']])}
         ${macc('Characters', 'pink', CHARACTERS.map(c => [c.name, shopUrl({ char: c.key })]))}
         <a class="macc__btn" href="index.html#gift-finder"><span><span class="dot" style="--c:var(--teal)"></span>Gift Finder</span></a>
         <a class="macc__btn" href="${shopUrl({ sale: 1 })}" style="color:var(--red)"><span><span class="dot"></span>Offer Zone</span><span class="nav__pill">-${maxOff}%</span></a>
@@ -388,6 +467,7 @@
   }
 
   function addToCart(id, fromEl) {
+    if (!byId.get(id)?.p) return;
     cart[id] = (cart[id] || 0) + 1;
     store.set('enf_cart', cart);
     renderCart();
@@ -422,7 +502,7 @@
   function flyToCart(id, fromEl) {
     const target = visibleCartTarget();
     const finish = () => { syncCounts(); if (target) { target.classList.remove('bump'); void target.offsetWidth; target.classList.add('bump'); } };
-    const src = fromEl && (fromEl.closest('.card')?.querySelector('.card__media img') || fromEl.closest('.modal__card')?.querySelector('.modal__media img'));
+    const src = fromEl && (fromEl.closest('.card')?.querySelector('.card__media img') || fromEl.closest('.modal__card')?.querySelector('#qvMain'));
     if (!src || !target || matchMedia('(prefers-reduced-motion: reduce)').matches) return finish();
     const a = src.getBoundingClientRect(), b = target.getBoundingClientRect();
     const fly = document.createElement('div');
@@ -476,6 +556,10 @@
      Quick view
      ========================================================================== */
   let lastFocus;
+  /* descriptions + gallery live in details.json, fetched the first time someone opens a quick view */
+  let detailsP;
+  const loadDetails = () => detailsP || (detailsP = fetch('assets/data/details.json').then(r => r.json()).catch(() => ({})));
+
   function openQuick(id) {
     const p = byId.get(id);
     if (!p) return;
@@ -484,26 +568,40 @@
     const cats = CATEGORIES.filter(c => p.c.includes(c.key));
     const ages = AGES.filter(a => p.a.includes(a.key));
     const chars = CHARACTERS.filter(c => p.h.includes(c.key));
+    const shots = Array.from({ length: p.g || 1 }, (_, k) => imgLg(p, k));
     m.querySelector('.modal__card').innerHTML = `
       <button class="drawer__close modal__close" data-close-modal aria-label="Close">${icon('x')}</button>
-      <div class="modal__media"><img src="${esc(p.i.replace(/-\d+x\d+(?=\.\w+$)/, ''))}" alt="${esc(p.n)}"></div>
+      <div class="modal__media">
+        <div class="gallery__main"><img src="${esc(shots[0])}" alt="${esc(p.n)}" id="qvMain"></div>
+        ${shots.length > 1 ? `<div class="gallery__thumbs">${shots.map((src, k) => `<button type="button" class="gallery__thumb${k ? '' : ' is-on'}" data-shot="${esc(src)}" aria-label="Picture ${k + 1} of ${shots.length}"><img src="${esc(src)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
+      </div>
       <div class="modal__info">
-        ${p.b ? `<a class="card__brand" style="--c:${COLORS[hashColor(p.b)].c}" href="${shopUrl({ brand: (BRANDS.find(b => brandMatch(p, b.key)) || { key: p.b }).key })}">${esc(brandName(p.b))}</a>` : ''}
+        ${p.b ? `<a class="card__brand" style="--c:${COLORS[hashColor(p.b)].c}" href="${shopUrl({ brand: p.b })}">${esc(brandName(p.b))}</a>` : ''}
         <h3>${esc(p.n)}</h3>
         <div class="modal__meta">
           ${ages.map(a => `<span style="${colorVars(a.color)}">Ages ${a.num}</span>`).join('')}
           ${cats.map(c => `<span style="${colorVars(c.color)}">${c.name}</span>`).join('')}
           ${chars.map(c => `<span style="${colorVars(c.color)}">${c.name}</span>`).join('')}
         </div>
-        <div class="modal__price">${money(p.p)}${p.o ? `<s>${money(p.o)}</s> <span class="badge badge--sale" style="vertical-align:middle">-${pct}%</span>` : ''}</div>
+        ${p.p ? `<div class="modal__price">${p.v ? '<small>from</small> ' : ''}${money(p.p)}${p.o ? `<s>${money(p.o)}</s> <span class="badge badge--sale" style="vertical-align:middle">-${pct}%</span>` : ''}</div>`
+              : '<div class="modal__price price--ask">Ask in store for the price</div>'}
         <span class="stock${p.s ? '' : ' is-out'}">${p.s ? 'In stock — ready to play' : 'Out of stock'}</span>
-        <p style="color:var(--ink-soft);font-size:15px">Free delivery on orders above 50 $. Save 12% with code <b style="color:var(--red)">TILLO12</b>.</p>
+        <div class="modal__desc" id="qvDesc"><span class="modal__loading">Loading details…</span></div>
         <div class="modal__actions">
-          <button class="btn btn--red" type="button" data-add="${p.id}">${icon('cart', 'icon', 2.4)} Add to cart</button>
+          ${p.p ? `<button class="btn btn--red" type="button" data-add="${p.id}">${icon('cart', 'icon', 2.4)} Add to cart</button>`
+                : `<a class="btn btn--red" href="tel:+9613720233">${icon('phone', 'icon', 2.4)} Call the store</a>`}
           <button class="btn btn--white" type="button" data-fav-btn="${p.id}">${icon('heart', 'icon', 2.4)} ${favs.has(p.id) ? 'Saved' : 'Wishlist'}</button>
         </div>
-        <a href="${esc(p.u)}" style="font-weight:800;color:var(--blue);font-size:14px">See full product details ${icon('arrow', 'icon', 2.6).replace('class="icon"', 'class="icon" style="width:14px;height:14px;display:inline;vertical-align:-2px"')}</a>
+        <p class="modal__note">Free delivery on orders above 50 $. Save 12% with code <b>TILLO12</b>.${p.v ? ' This toy comes in several options; choose yours at checkout.' : ''}</p>
       </div>`;
+    loadDetails().then(all => {
+      const d = all[p.id];
+      const box = m.querySelector('#qvDesc');
+      if (!box || m.querySelector('#qvMain')?.alt !== p.n) return;   // another product was opened meanwhile
+      box.innerHTML = d && d.d
+        ? `<p>${esc(d.d).replace(/\n/g, '<br>')}</p>${d.sku ? `<small>Ref. ${esc(d.sku)}</small>` : ''}`
+        : (d && d.sku ? `<small>Ref. ${esc(d.sku)}</small>` : '');
+    });
     lastFocus = document.activeElement;
     m.classList.add('is-open');
     m.setAttribute('aria-hidden', 'false');
@@ -578,7 +676,7 @@
         (prods.length ? `<div class="suggest__label">Toys</div>${prods.map(itemHTML).join('')}<a class="suggest__chip" style="display:block;text-align:center;margin:8px" href="${shopUrl({ q: input.value.trim() })}">See all results for “${esc(input.value.trim())}”</a>`
           : `<div class="suggest__empty">${balloon('#ec1c8c', 36)}<br>No toys found for “${esc(input.value)}” — try another word!</div>`);
     }
-    const itemHTML = p => `<a class="suggest__item" href="#" data-quick="${p.id}"><img src="${esc(p.i)}" alt=""><span><small>${esc(brandName(p.b))}</small>${esc(p.n)}</span><b>${money(p.p)}</b></a>`;
+    const itemHTML = p => `<a class="suggest__item" href="#" data-quick="${p.id}"><img src="${esc(p.i)}" alt=""><span><small>${esc(brandName(p.b))}</small>${esc(p.n)}</span><b>${p.p ? money(p.p) : 'Ask'}</b></a>`;
     input.addEventListener('focus', () => { render(); wrap.classList.add('is-open'); });
     input.addEventListener('input', render);
     input.addEventListener('keydown', e => {
@@ -673,6 +771,14 @@
       if (fav) { e.preventDefault(); toggleFav(+fav.dataset.fav, fav); return; }
       const favBtn = t.closest('[data-fav-btn]');
       if (favBtn) { const id = +favBtn.dataset.favBtn; toggleFav(id, favBtn); favBtn.lastChild.textContent = favs.has(id) ? ' Saved' : ' Wishlist'; return; }
+      const shot = t.closest('[data-shot]');
+      if (shot) {
+        const main = document.getElementById('qvMain');
+        main.src = shot.dataset.shot;
+        main.animate([{ opacity: .3, transform: 'scale(.96)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'ease-out' });
+        shot.parentElement.querySelectorAll('.gallery__thumb').forEach(b => b.classList.toggle('is-on', b === shot));
+        return;
+      }
       const quick = t.closest('[data-quick]');
       if (quick) { e.preventDefault(); document.getElementById('search').classList.remove('is-open'); openQuick(+quick.dataset.quick); return; }
       const qty = t.closest('[data-qty]');
@@ -708,7 +814,7 @@
 
   window.ENF = {
     P, byId, COLORS, colorVars, hashColor, CATEGORIES, AGES, BRANDS, CHARACTERS,
-    brandMatch, brandLogo, imgOf, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
+    brandMatch, brandLogo, imgOf, imgLg, priceHTML, titleCase, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
     observeReveals, initRail, burst, toast, NEW_IDS, getFavs: () => favs,
   };
 

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>All Brands — Enfantillage Lebanon</title>
+  <meta name="description" content="Every toy and baby brand sold at Enfantillage, from LEGO and Playmobil to Step2, Little Tikes and Tommee Tippee.">
+  <meta name="theme-color" content="#25318c">
+  <link rel="icon" href="assets/img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-current="brands">
+  <div id="site-header"></div>
+
+  <main>
+    <section class="shop-hero" style="--c:#25318c;--c-soft:#e6e8f7">
+      <div class="wrap" style="position:relative;z-index:1">
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a><span>›</span><span>All brands</span></nav>
+        <h1 class="reveal" data-from="left">All Brands</h1>
+        <p class="reveal" data-from="left" style="--d:.1s" id="brandsSub">Every brand we carry, from A to Z</p>
+      </div>
+    </section>
+
+    <div class="wrap brands-page">
+      <div class="brands-tools">
+        <label class="brands-search">
+          <span class="sr-only">Find a brand</span>
+          <input type="search" id="brandSearch" placeholder="Find a brand…" autocomplete="off">
+        </label>
+        <nav class="az" id="az" aria-label="Jump to letter"></nav>
+      </div>
+      <div id="brandGroups"></div>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/brands.js"></script>
+</body>
+</html>

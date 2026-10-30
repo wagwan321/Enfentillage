@@ -19,6 +19,7 @@ document.addEventListener('site:ready', () => {
     sort: url.get('sort') || 'popular',
   };
   let shown = PAGE;
+  let brandQuery = '';
 
   function writeUrl() {
     const u = new URLSearchParams();
@@ -114,7 +115,7 @@ document.addEventListener('site:ready', () => {
         <div class="chips" style="margin-top:10px">${[[0, 10], [0, 25], [25, 50], [50, 100], [100, '']].map(([a, b]) => `<button type="button" class="suggest__chip" data-price="${a},${b}">${b === '' ? a + ' $+' : a ? a + '–' + b + ' $' : 'Under ' + b + ' $'}</button>`).join('')}</div>
         <label class="toggle" style="margin-top:10px">On sale only <input type="checkbox" id="saleT"${st.sale ? ' checked' : ''}></label>`, isClosed('price', false))}
       ${group('char', 'Character', CHARACTERS.map(c => check('char', c.key, c.name, facetCount('char', p => p.h.includes(c.key)), c.color)).join(''), isClosed('char', true))}
-      ${group('brand', 'Brand', `<div class="fgroup__inner fgroup__inner--scroll" style="padding:0">${brands.map(b => check('brand', b.key, b.name, b.n, b.color)).join('')}</div>`, isClosed('brand', true))}
+      ${group('brand', `Brand <em style="font-style:normal;font-size:13px;color:var(--ink-soft)">${BRANDS.length}</em>`, `<input class="fbrand-search" id="fbrandSearch" type="search" placeholder="Find a brand…" value="${esc(brandQuery)}" aria-label="Find a brand"><div class="fgroup__inner fgroup__inner--scroll" id="fbrandList" style="padding:0">${brands.map(b => check('brand', b.key, b.name, b.n, b.color)).join('')}</div>`, isClosed('brand', st.brand.length === 0))}
       <div class="filter-btn" style="display:none;padding-top:16px"><button class="btn btn--red" style="width:100%" type="button" data-close>Show ${results().length} toys</button></div>`;
     if (matchMedia('(max-width: 1024px)').matches) f.querySelectorAll('.filter-btn').forEach(el => el.style.display = 'flex');
   }
@@ -158,6 +159,7 @@ document.addEventListener('site:ready', () => {
     writeUrl();
     renderHero();
     renderFilters();
+    applyBrandQuery();
     renderActive();
     renderGrid(false);
     window.ENF.observeReveals();
@@ -172,7 +174,16 @@ document.addEventListener('site:ready', () => {
       st[t.dataset.f] = t.checked ? [...arr, t.value] : arr.filter(x => x !== t.value);
       refresh();
     } else if (t.id === 'saleT') { st.sale = t.checked; refresh(); }
+    else if (t.id === 'fbrandSearch') return;
     else if (t.id === 'pmin' || t.id === 'pmax') { st.min = $('#pmin').value; st.max = $('#pmax').value; refresh(); }
+  });
+  const applyBrandQuery = () => {
+    const list = document.getElementById('fbrandList');
+    if (!list) return;
+    list.querySelectorAll('.check').forEach(l => { l.hidden = brandQuery && !l.textContent.toLowerCase().includes(brandQuery); });
+  };
+  filters.addEventListener('input', e => {
+    if (e.target.id === 'fbrandSearch') { brandQuery = e.target.value.trim().toLowerCase(); applyBrandQuery(); }
   });
   filters.addEventListener('click', e => {
     const ttl = e.target.closest('.fgroup__title');

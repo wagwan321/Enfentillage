@@ -12,35 +12,35 @@ document.addEventListener('site:ready', () => {
   const topDeals = P.filter(p => p.o).sort((a, b) => (1 - b.p / b.o) - (1 - a.p / a.o)).slice(0, 3);
   const SLIDES = [
     {
-      bg: 'linear-gradient(135deg,#25318c 0%,#1d5fc4 55%,#00a6e4 100%)',
+      bg: 'linear-gradient(135deg,#eef1fc 0%,#dce3fa 100%)', accent: '#1d6fd1',
       kicker: `${icon('gift', 'icon', 2.4)} Gift season is coming`,
       title: 'Wishlists <em>start</em> here!',
       desc: 'Super Mario, LEGO, Barbie and hundreds more — wrap up the toys they’ve been dreaming about.',
-      cta: ['Find the perfect gift', 'index.html#gift-finder', 'btn--white'],
+      cta: ['Find the perfect gift', 'index.html#gift-finder', 'btn--navy'],
       imgs: [30954, 31379, 54021],
     },
     {
-      bg: 'linear-gradient(135deg,#ec1c8c 0%,#f2456b 60%,#e8222b 100%)',
+      bg: 'linear-gradient(135deg,#fff9e6 0%,#ffecb8 100%)', accent: '#d4157c',
       kicker: `${icon('sparkle', 'icon', 2.4)} Just landed`,
       title: 'Little hands, <em>big</em> imaginations',
       desc: 'New wooden dollhouses, play kitchens and Galt first-learning sets — made for make-believe.',
-      cta: ['Shop new arrivals', shopUrl({ sort: 'new' }), 'btn--white'],
+      cta: ['Shop new arrivals', shopUrl({ sort: 'new' }), 'btn--pink'],
       imgs: [55166, 55164, 55205],
     },
     {
-      bg: 'linear-gradient(135deg,#3db54a 0%,#20b38a 55%,#12b5c1 100%)',
+      bg: 'linear-gradient(135deg,#ecf9ee 0%,#cdeed4 100%)', accent: '#23893a',
       kicker: `${icon('bike', 'icon', 2.4)} Ride-ons & bikes`,
       title: 'Ready, set, <em>ride!</em>',
       desc: 'Cozy Coupes for little drivers and Huffy bikes for big adventures.',
-      cta: ['Shop ride-ons', shopUrl({ cat: 'rideon' }), 'btn--white'],
+      cta: ['Shop ride-ons', shopUrl({ cat: 'rideon' }), 'btn--green'],
       imgs: [52531, 52203, 52554],
     },
     {
-      bg: 'linear-gradient(135deg,#e8222b 0%,#f0503a 50%,#ec1c8c 100%)',
+      bg: 'linear-gradient(135deg,#fff1f1 0%,#ffd9dc 100%)', accent: '#d81e27',
       kicker: `${icon('tag', 'icon', 2.4)} Offer Zone`,
       title: 'Save <em>12%</em> today',
       desc: 'Use code TILLO12 at checkout — plus real markdowns on top toys right now.',
-      cta: ['Shop the offers', shopUrl({ sale: 1 }), 'btn--white'],
+      cta: ['Shop the offers', shopUrl({ sale: 1 }), 'btn--red'],
       imgs: topDeals.map(p => p.id),
       burst: true,
     },
@@ -49,12 +49,12 @@ document.addEventListener('site:ready', () => {
   const slider = $('#slider');
   slider.style.setProperty('--dur', DUR + 'ms');
   slider.innerHTML = SLIDES.map((s, i) => `
-    <div class="slide${i === 0 ? ' is-active' : ''}" style="--bg:${s.bg}" role="group" aria-roledescription="slide" aria-label="${i + 1} of ${SLIDES.length}">
+    <div class="slide${i === 0 ? ' is-active' : ''}" style="--bg:${s.bg};--accent:${s.accent}" role="group" aria-roledescription="slide" aria-label="${i + 1} of ${SLIDES.length}">
       <div class="slide__deco">
         <i style="width:220px;height:220px;left:-60px;bottom:-80px"></i>
         <i style="width:90px;height:90px;left:42%;top:-30px"></i>
         <span style="position:absolute;left:46%;bottom:18%;opacity:.9" class="floaty-a">${starSvg('#ffc83d', 26)}</span>
-        <span style="position:absolute;left:8%;top:14%;opacity:.8">${starSvg('#fff', 16)}</span>
+        <span style="position:absolute;left:8%;top:14%;opacity:.8">${starSvg(s.accent, 16)}</span>
       </div>
       <div class="slide__text">
         <span class="slide__kicker">${s.kicker.replace('class="icon"', 'class="icon" style="width:18px;height:18px"')}</span>
@@ -98,12 +98,12 @@ document.addEventListener('site:ready', () => {
   schedule();
 
   $('#heroSide').innerHTML = `
-    <a class="promo-tile reveal" data-from="right" style="--bg:linear-gradient(135deg,#ec1c8c,#f45fa9)" href="${shopUrl({ cat: 'baby' })}">
+    <a class="promo-tile reveal" data-from="right" style="--bg:linear-gradient(135deg,#e7f9fb,#c6eef3);--accent:#0b8a93" href="${shopUrl({ cat: 'baby' })}">
       <h3>Baby World</h3><p>Rockers, jumpers, pillows & first toys</p>
       <span class="link-arrow">Explore ${icon('arrow', 'icon', 2.6).replace('class="icon"', 'class="icon" style="width:16px;height:16px"')}</span>
       <div class="promo-tile__img"><img src="${img(20700)}" alt=""></div>
     </a>
-    <a class="promo-tile reveal" data-from="right" style="--d:.12s;--bg:linear-gradient(135deg,#e8222b,#ff6a3d)" href="${shopUrl({ brand: 'NINTENDO' })}">
+    <a class="promo-tile reveal" data-from="right" style="--d:.12s;--bg:linear-gradient(135deg,#fff4e8,#ffdcc4);--accent:#d81e27" href="${shopUrl({ brand: 'NINTENDO' })}">
       <h3>Game On!</h3><p>Super Mario & Sonic plush, figures & playsets</p>
       <span class="link-arrow">Let’s-a go ${icon('arrow', 'icon', 2.6).replace('class="icon"', 'class="icon" style="width:16px;height:16px"')}</span>
       <div class="promo-tile__img"><img src="${img(30977)}" alt=""></div>
@@ -178,8 +178,8 @@ document.addEventListener('site:ready', () => {
   $('#babyRail').innerHTML = babyPicks.map((p, i) => card(p, { reveal: 'left', delay: Math.min(i, 6) * 0.08 })).join('');
 
   /* ---------------- BRANDS MARQUEE ---------------- */
-  const withCounts = BRANDS.map(b => ({ ...b, n: P.filter(p => brandMatch(p, b.key)).length })).filter(b => b.n >= 3);
-  $('#brandSub').textContent = `${withCounts.length}+ brands kids ask for — all under one roof`;
+  const withCounts = BRANDS.filter(b => b.n >= 3);
+  $('#brandSub').textContent = `${BRANDS.length} brands kids ask for — all under one roof`;
   const chip = b => `<a class="brand-chip${b.logo ? ' has-logo' : ''}" style="${colorVars(b.color)}" href="${shopUrl({ brand: b.key })}" aria-label="${esc(b.name)} — ${b.n} toys">
       ${b.logo ? brandLogo(b, 'brand-chip__logo') : `<span class="brand-chip__name">${esc(b.name)}</span>`}<small>${b.n} ${b.n === 1 ? 'toy' : 'toys'}</small></a>`;
   // logos first, then dealt alternately into the two rows so each belt gets a good mix
@@ -188,6 +188,9 @@ document.addEventListener('site:ready', () => {
   // duplicate content so the loop is seamless (animation moves -50%)
   $('#brandRow1').innerHTML = [...row1, ...row1].map(chip).join('');
   $('#brandRow2').innerHTML = [...row2, ...row2].map(chip).join('');
+  // keep the glide speed steady (about 3.2s per tile) however many brands there are
+  $('#brandRow1').style.setProperty('--speed', row1.length * 3.2 + 's');
+  $('#brandRow2').style.setProperty('--speed', row2.length * 3.4 + 's');
 
   /* ---------------- CHARACTERS ---------------- */
   $('#charGrid').innerHTML = CHARACTERS.map((c, i) => {
