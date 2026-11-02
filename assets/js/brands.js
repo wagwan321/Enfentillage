@@ -17,9 +17,9 @@ document.addEventListener('site:ready', () => {
   $('#az').innerHTML = letters.map(l => `<a href="#letter-${l === '#' ? 'num' : l}">${l}</a>`).join('');
 
   const tile = b => `
-    <a class="brand-tile${b.logo ? ' has-logo' : ''}" style="${colorVars(b.color)}" href="${shopUrl({ brand: b.key })}" data-name="${esc(b.name.toLowerCase())}">
+    <a class="brand-tile${b.logo ? ' has-logo' : ''}${b.n ? '' : ' is-out'}" style="${colorVars(b.color)}" href="${shopUrl(b.n ? { brand: b.key } : { brand: b.key, out: 1 })}" data-name="${esc(b.name.toLowerCase())}">
       <span class="brand-tile__mark">${b.logo ? brandLogo(b, 'brand-tile__logo') : `<span class="brand-tile__name">${esc(b.name)}</span>`}</span>
-      <small>${b.logo ? esc(b.name) + ' · ' : ''}${b.n} ${b.n === 1 ? 'toy' : 'toys'}</small>
+      <small>${b.logo ? esc(b.name) + ' · ' : ''}${b.n ? `${b.n} ${b.n === 1 ? 'toy' : 'toys'}` : 'Sold out for now'}</small>
     </a>`;
 
   $('#brandGroups').innerHTML = letters.map(l => `

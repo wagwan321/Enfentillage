@@ -109,11 +109,12 @@ document.addEventListener('site:ready', () => {
       <div class="promo-tile__img"><img src="${img(30977)}" alt=""></div>
     </a>`;
 
-  const brandCount = new Set(P.map(p => p.b).filter(Boolean)).size;
+  const onSale = P.filter(p => p.s);
+  const brandCount = new Set(onSale.map(p => p.b).filter(Boolean)).size;
   const PERKS = [
     ['truck', 'green', 'Free delivery', 'On orders above 50 $'],
     ['tag', 'red', '12% off today', 'Code TILLO12 at checkout'],
-    ['blocks', 'blue', `${Math.floor(P.length / 100) * 100}+ toys`, `From ${Math.floor(brandCount / 10) * 10}+ brands`],
+    ['blocks', 'blue', `${Math.floor(onSale.length / 100) * 100}+ toys`, `From ${Math.floor(brandCount / 10) * 10}+ brands`],
     ['pin', 'pink', 'Visit our store', 'Mazraat Yachouh, Chattat Center'],
   ];
   $('#perks').innerHTML = PERKS.map(([ic, c, t, s], i) => `
@@ -194,7 +195,7 @@ document.addEventListener('site:ready', () => {
 
   /* ---------------- CHARACTERS ---------------- */
   $('#charGrid').innerHTML = CHARACTERS.map((c, i) => {
-    const n = P.filter(p => p.h.includes(c.key)).length;
+    const n = P.filter(p => p.s && p.h.includes(c.key)).length;
     return `<a class="char reveal" data-from="${i % 2 ? 'right' : 'left'}" style="${colorVars(c.color)};--d:${(i % 7) * 0.06}s" href="${shopUrl({ char: c.key })}">
       <span class="char__ring"><span class="char__img"><img src="${esc(imgOf(c.img, p => p.h.includes(c.key)))}" alt="" loading="lazy"></span></span>
       <span class="char__name">${esc(c.name)}</span>

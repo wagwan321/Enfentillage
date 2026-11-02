@@ -8,8 +8,19 @@
 
   const P = window.PRODUCTS || [];
   /* pictures are stored with the site: sm = card thumbnail, lg = quick-view gallery */
-  P.forEach(p => { p.i = `assets/img/products/sm/${p.id}.webp`; });
+  /* pictures: on-sale items are stored with the site (sm = card, lg = gallery);
+     sold-out items (p.r) still load theirs from the current store */
+  const UPLOADS = 'https://enfantillagestore.com/wp-content/uploads/';
+  P.forEach(p => { p.i = p.r ? UPLOADS + p.r : `assets/img/products/sm/${p.id}.webp`; });
   const imgLg = (p, k = 0) => `assets/img/products/lg/${p.id}-${k}.webp`;
+  /* every picture of a product; sold-out items need their details loaded first */
+  const gallery = (p, d) => d && d.img ? d.img.map(u => /^https?:/.test(u) ? u : UPLOADS + u)
+    : p.r ? [p.i] : Array.from({ length: p.g || 1 }, (_, k) => imgLg(p, k));
+  /* descriptions, refs and sold-out galleries live in 20 small files (id % 20), loaded on demand */
+  const detailChunks = {};
+  const loadDetail = id => (detailChunks[id % 20] || (detailChunks[id % 20] =
+    fetch(`assets/data/details/${id % 20}.json`).then(r => r.json()).catch(() => ({})))).then(all => all[id]);
+  const productUrl = p => `product.html?id=${p.id}`;
   const byId = new Map(P.map(p => [p.id, p]));
 
   /* ---------- palette ---------- */
@@ -145,12 +156,12 @@
     'PILSAN': { logo: 'pilsan.svg' },
   };
   const titleCase = k => k.toLowerCase().replace(/(^|[\s\-/&(])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
-  const brandCounts = {};
-  P.forEach(p => { if (p.b) brandCounts[p.b] = (brandCounts[p.b] || 0) + 1; });
+  const brandCounts = {}, brandTotals = {};
+  P.forEach(p => { if (p.b) { brandTotals[p.b] = (brandTotals[p.b] || 0) + 1; if (p.s) brandCounts[p.b] = (brandCounts[p.b] || 0) + 1; } });
   /* all catalog brands, biggest first */
-  const BRANDS = Object.keys(brandCounts).map(key => {
+  const BRANDS = Object.keys(brandTotals).map(key => {
     const info = BRAND_INFO[key] || {};
-    return { key, name: info.name || titleCase(key), color: info.color || hashColor(key), logo: info.logo, n: brandCounts[key] };
+    return { key, name: info.name || titleCase(key), color: info.color || hashColor(key), logo: info.logo, n: brandCounts[key] || 0, t: brandTotals[key] };
   }).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
 
   const CHARACTERS = [
@@ -223,7 +234,7 @@
   const brandName = key => (BRAND_INFO[key] || {}).name || titleCase(key);
 
   /* "new" = most recently added products (highest ids) */
-  const NEW_IDS = new Set([...P].sort((a, b) => b.id - a.id).slice(0, 60).map(p => p.id));
+  const NEW_IDS = new Set(P.filter(p => p.s).sort((a, b) => b.id - a.id).slice(0, 60).map(p => p.id));
 
   /* ---------- storage (per-viewer conveniences only) ---------- */
   const store = {
@@ -245,26 +256,27 @@
   function card(p, opts = {}) {
     const pct = p.o ? Math.round((1 - p.p / p.o) * 100) : 0;
     const badges = [];
-    if (pct >= 5) badges.push(`<span class="badge badge--sale">-${pct}%</span>`);
+    if (!p.s) badges.push('<span class="badge badge--out">Sold out</span>');
+    else if (pct >= 5) badges.push(`<span class="badge badge--sale">-${pct}%</span>`);
     if (NEW_IDS.has(p.id)) badges.push('<span class="badge badge--new">NEW</span>');
     else if (opts.hot) badges.push('<span class="badge badge--hot">HOT</span>');
     const brandColor = COLORS[hashColor(p.b)].c;
     const added = cart[p.id] ? ' is-added' : '';
-    return `<article class="card${opts.reveal ? ' reveal' : ''}" ${opts.reveal ? `data-from="${opts.reveal}"` : ''} style="--d:${opts.delay || 0}s" data-id="${p.id}">
-      <div class="card__media" data-quick="${p.id}">
+    return `<article class="card${opts.reveal ? ' reveal' : ''}${p.s ? '' : ' is-out'}" ${opts.reveal ? `data-from="${opts.reveal}"` : ''} style="--d:${opts.delay || 0}s" data-id="${p.id}">
+      <div class="card__media">
         <div class="card__badges">${badges.join('')}</div>
-        <img src="${esc(p.i)}" alt="${esc(p.n)}" loading="lazy" width="300" height="300">
+        <a href="${productUrl(p)}" class="card__link" aria-label="${esc(p.n)}"><img src="${esc(p.i)}" alt="${esc(p.n)}" loading="lazy" width="300" height="300"></a>
         <button class="card__quick" data-quick="${p.id}" type="button">${icon('eye', 'icon', 2.4).replace('class="icon"', 'class="icon" style="width:16px;height:16px"')} Quick look</button>
       </div>
       <button class="card__fav${favs.has(p.id) ? ' is-on' : ''}" data-fav="${p.id}" type="button" aria-label="Add to wishlist">${icon('heart', 'icon', 2.2).replace('class="icon"', 'class="icon" style="width:20px;height:20px"')}</button>
       <div class="card__body">
         ${p.b ? `<div class="card__brand" style="--c:${brandColor}">${esc(brandName(p.b))}</div>` : ''}
-        <h3 class="card__name" data-quick="${p.id}">${esc(p.n)}</h3>
+        <h3 class="card__name"><a href="${productUrl(p)}">${esc(p.n)}</a></h3>
         <div class="card__foot">
           ${priceHTML(p)}
-          ${p.p ? `<button class="add-btn${added}" data-add="${p.id}" type="button" aria-label="Add ${esc(p.n)} to cart">
+          ${p.p && p.s ? `<button class="add-btn${added}" data-add="${p.id}" type="button" aria-label="Add ${esc(p.n)} to cart">
             ${icon('cart', 'icon i-cart', 2.4)}${icon('check', 'icon i-check', 3)}
-          </button>` : `<a class="ask-btn" href="tel:+9613720233" aria-label="Call the store about ${esc(p.n)}">${icon('phone', 'icon', 2.4)}</a>`}
+          </button>` : `<a class="ask-btn" href="tel:+9613720233" aria-label="${p.s ? 'Call the store about' : 'Sold out. Call the store about'} ${esc(p.n)}">${icon('phone', 'icon', 2.4)}</a>`}
         </div>
       </div>
     </article>`;
@@ -412,7 +424,7 @@
       </div>
       <div class="wrap footer__bottom">
         <span>© ${new Date().getFullYear()} Enfantillage sarl. All rights reserved.</span>
-        <span class="pay"><span>VISA</span><span>Mastercard</span><span>Cash on delivery</span></span>
+        <span class="pay"><span>Cash on delivery</span><span class="pay__whish"><img class="pay-logo" src="assets/img/pay/whish-money.svg" alt="Whish Money" width="80" height="18"></span></span>
       </div>
     </footer>
     <button class="to-top" id="toTop" aria-label="Back to top">${balloon('#e8222b', 56)}</button>
@@ -463,18 +475,20 @@
         </div>`; }).join('')}`;
     foot.innerHTML = `<div class="cart-total"><span>Subtotal</span><span>${money(total)}</span></div>
       <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Use code <b style="color:var(--red)">TILLO12</b> at checkout to save 12%.</p>
-      <button class="btn btn--green" style="width:100%" type="button" data-checkout>Checkout ${icon('arrow', 'icon', 2.6)}</button>`;
+      <a class="btn btn--green" style="width:100%" href="checkout.html">Checkout ${icon('arrow', 'icon', 2.6)}</a>
+      <p class="cart-pay">Pay by <b>cash on delivery</b> or <img src="assets/img/pay/whish-money.svg" alt="Whish Money" width="62" height="14"></p>`;
   }
 
-  function addToCart(id, fromEl) {
-    if (!byId.get(id)?.p) return;
-    cart[id] = (cart[id] || 0) + 1;
+  function addToCart(id, fromEl, qty = 1) {
+    const prod = byId.get(id);
+    if (!prod || !prod.p || !prod.s) return;
+    cart[id] = (cart[id] || 0) + qty;
     store.set('enf_cart', cart);
     renderCart();
     flyToCart(id, fromEl);
     document.querySelectorAll(`[data-add="${id}"]`).forEach(b => b.classList.add('is-added'));
     const p = byId.get(id);
-    toast(`<b>${esc(p.n.length > 38 ? p.n.slice(0, 36) + '…' : p.n)}</b> added to your toy box`);
+    toast(`${qty > 1 ? qty + ' × ' : ''}<b>${esc(p.n.length > 38 ? p.n.slice(0, 36) + '…' : p.n)}</b> added to your toy box`);
   }
   function setQty(id, d) {
     cart[id] = (cart[id] || 0) + d;
@@ -502,7 +516,7 @@
   function flyToCart(id, fromEl) {
     const target = visibleCartTarget();
     const finish = () => { syncCounts(); if (target) { target.classList.remove('bump'); void target.offsetWidth; target.classList.add('bump'); } };
-    const src = fromEl && (fromEl.closest('.card')?.querySelector('.card__media img') || fromEl.closest('.modal__card')?.querySelector('#qvMain'));
+    const src = fromEl && (fromEl.closest('.card')?.querySelector('.card__media img') || fromEl.closest('.modal__card')?.querySelector('#qvMain') || (fromEl.closest('.pdp') && document.getElementById('pdpMain')));
     if (!src || !target || matchMedia('(prefers-reduced-motion: reduce)').matches) return finish();
     const a = src.getBoundingClientRect(), b = target.getBoundingClientRect();
     const fly = document.createElement('div');
@@ -556,9 +570,15 @@
      Quick view
      ========================================================================== */
   let lastFocus;
-  /* descriptions + gallery live in details.json, fetched the first time someone opens a quick view */
-  let detailsP;
-  const loadDetails = () => detailsP || (detailsP = fetch('assets/data/details.json').then(r => r.json()).catch(() => ({})));
+  /* main picture + thumbnails; shared by the quick view and the product page */
+  function galleryHTML(shots, alt, mainId) {
+    return `<div class="gallery__main"><img src="${esc(shots[0])}" alt="${esc(alt)}" id="${mainId}"></div>
+      ${shots.length > 1 ? `<div class="gallery__thumbs">${shots.map((src, k) => `<button type="button" class="gallery__thumb${k ? '' : ' is-on'}" data-shot="${esc(src)}" data-main="${mainId}" aria-label="Picture ${k + 1} of ${shots.length}"><img src="${esc(src)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}`;
+  }
+  /* description block from the old store (plain text, keeps line breaks) */
+  const descHTML = d => d && d.d
+    ? `<p>${esc(d.d).replace(/\n/g, '<br>')}</p>${d.sku ? `<small>Ref. ${esc(d.sku)}</small>` : ''}`
+    : (d && d.sku ? `<small>Ref. ${esc(d.sku)}</small>` : '');
 
   function openQuick(id) {
     const p = byId.get(id);
@@ -568,13 +588,9 @@
     const cats = CATEGORIES.filter(c => p.c.includes(c.key));
     const ages = AGES.filter(a => p.a.includes(a.key));
     const chars = CHARACTERS.filter(c => p.h.includes(c.key));
-    const shots = Array.from({ length: p.g || 1 }, (_, k) => imgLg(p, k));
     m.querySelector('.modal__card').innerHTML = `
       <button class="drawer__close modal__close" data-close-modal aria-label="Close">${icon('x')}</button>
-      <div class="modal__media">
-        <div class="gallery__main"><img src="${esc(shots[0])}" alt="${esc(p.n)}" id="qvMain"></div>
-        ${shots.length > 1 ? `<div class="gallery__thumbs">${shots.map((src, k) => `<button type="button" class="gallery__thumb${k ? '' : ' is-on'}" data-shot="${esc(src)}" aria-label="Picture ${k + 1} of ${shots.length}"><img src="${esc(src)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
-      </div>
+      <div class="modal__media" id="qvMedia">${galleryHTML(gallery(p), p.n, 'qvMain')}</div>
       <div class="modal__info">
         ${p.b ? `<a class="card__brand" style="--c:${COLORS[hashColor(p.b)].c}" href="${shopUrl({ brand: p.b })}">${esc(brandName(p.b))}</a>` : ''}
         <h3>${esc(p.n)}</h3>
@@ -585,22 +601,20 @@
         </div>
         ${p.p ? `<div class="modal__price">${p.v ? '<small>from</small> ' : ''}${money(p.p)}${p.o ? `<s>${money(p.o)}</s> <span class="badge badge--sale" style="vertical-align:middle">-${pct}%</span>` : ''}</div>`
               : '<div class="modal__price price--ask">Ask in store for the price</div>'}
-        <span class="stock${p.s ? '' : ' is-out'}">${p.s ? 'In stock — ready to play' : 'Out of stock'}</span>
+        <span class="stock${p.s ? '' : ' is-out'}">${p.s ? 'In stock — ready to play' : 'Sold out for now'}</span>
         <div class="modal__desc" id="qvDesc"><span class="modal__loading">Loading details…</span></div>
         <div class="modal__actions">
-          ${p.p ? `<button class="btn btn--red" type="button" data-add="${p.id}">${icon('cart', 'icon', 2.4)} Add to cart</button>`
+          ${p.p && p.s ? `<button class="btn btn--red" type="button" data-add="${p.id}">${icon('cart', 'icon', 2.4)} Add to cart</button>`
                 : `<a class="btn btn--red" href="tel:+9613720233">${icon('phone', 'icon', 2.4)} Call the store</a>`}
           <button class="btn btn--white" type="button" data-fav-btn="${p.id}">${icon('heart', 'icon', 2.4)} ${favs.has(p.id) ? 'Saved' : 'Wishlist'}</button>
         </div>
-        <p class="modal__note">Free delivery on orders above 50 $. Save 12% with code <b>TILLO12</b>.${p.v ? ' This toy comes in several options; choose yours at checkout.' : ''}</p>
+        <a class="modal__more" href="${productUrl(p)}">See the full product page ${icon('arrow', 'icon', 2.6)}</a>
       </div>`;
-    loadDetails().then(all => {
-      const d = all[p.id];
+    loadDetail(p.id).then(d => {
       const box = m.querySelector('#qvDesc');
       if (!box || m.querySelector('#qvMain')?.alt !== p.n) return;   // another product was opened meanwhile
-      box.innerHTML = d && d.d
-        ? `<p>${esc(d.d).replace(/\n/g, '<br>')}</p>${d.sku ? `<small>Ref. ${esc(d.sku)}</small>` : ''}`
-        : (d && d.sku ? `<small>Ref. ${esc(d.sku)}</small>` : '');
+      box.innerHTML = descHTML(d);
+      if (p.r && d && d.img && d.img.length > 1) m.querySelector('#qvMedia').innerHTML = galleryHTML(gallery(p, d), p.n, 'qvMain');
     });
     lastFocus = document.activeElement;
     m.classList.add('is-open');
@@ -662,12 +676,12 @@
       active = -1;
       if (!q) {
         box.innerHTML = `<div class="suggest__label">Popular right now</div><div class="suggest__chips">${popular.map(([t, p]) => `<a class="suggest__chip" href="${shopUrl(p)}">${t}</a>`).join('')}</div>
-          <div class="suggest__label">Trending toys</div>${P.slice(0, 4).map(itemHTML).join('')}`;
+          <div class="suggest__label">Trending toys</div>${P.filter(p => p.s).slice(0, 4).map(itemHTML).join('')}`;
         return;
       }
       const terms = q.split(/\s+/);
       const hit = p => { const s = (p.n + ' ' + p.b).toLowerCase(); return terms.every(t => s.includes(t)); };
-      const prods = P.filter(hit).slice(0, 6);
+      const prods = P.filter(hit).sort((a, b) => b.s - a.s).slice(0, 6);
       const brands = BRANDS.filter(b => b.name.toLowerCase().includes(q)).slice(0, 4).map(b => [b.name, { brand: b.key }]);
       const chars = CHARACTERS.filter(c => c.name.toLowerCase().includes(q)).slice(0, 3).map(c => [c.name, { char: c.key }]);
       const cats = CATEGORIES.filter(c => c.name.toLowerCase().includes(q)).slice(0, 3).map(c => [c.name, { cat: c.key }]);
@@ -676,7 +690,7 @@
         (prods.length ? `<div class="suggest__label">Toys</div>${prods.map(itemHTML).join('')}<a class="suggest__chip" style="display:block;text-align:center;margin:8px" href="${shopUrl({ q: input.value.trim() })}">See all results for “${esc(input.value.trim())}”</a>`
           : `<div class="suggest__empty">${balloon('#ec1c8c', 36)}<br>No toys found for “${esc(input.value)}” — try another word!</div>`);
     }
-    const itemHTML = p => `<a class="suggest__item" href="#" data-quick="${p.id}"><img src="${esc(p.i)}" alt=""><span><small>${esc(brandName(p.b))}</small>${esc(p.n)}</span><b>${p.p ? money(p.p) : 'Ask'}</b></a>`;
+    const itemHTML = p => `<a class="suggest__item" href="${productUrl(p)}"><img src="${esc(p.i)}" alt=""><span><small>${esc(brandName(p.b))}</small>${esc(p.n)}</span><b>${!p.s ? 'Sold out' : p.p ? money(p.p) : 'Ask'}</b></a>`;
     input.addEventListener('focus', () => { render(); wrap.classList.add('is-open'); });
     input.addEventListener('input', render);
     input.addEventListener('keydown', e => {
@@ -686,7 +700,7 @@
         active = (active + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
         items.forEach((it, i) => it.classList.toggle('is-active', i === active));
       } else if (e.key === 'Enter' && active >= 0 && items[active]) {
-        e.preventDefault(); openQuick(+items[active].dataset.quick); wrap.classList.remove('is-open');
+        e.preventDefault(); location.href = items[active].href;
       } else if (e.key === 'Escape') { wrap.classList.remove('is-open'); input.blur(); }
     });
     document.addEventListener('click', e => { if (!wrap.contains(e.target)) wrap.classList.remove('is-open'); });
@@ -773,7 +787,7 @@
       if (favBtn) { const id = +favBtn.dataset.favBtn; toggleFav(id, favBtn); favBtn.lastChild.textContent = favs.has(id) ? ' Saved' : ' Wishlist'; return; }
       const shot = t.closest('[data-shot]');
       if (shot) {
-        const main = document.getElementById('qvMain');
+        const main = document.getElementById(shot.dataset.main || 'qvMain');
         main.src = shot.dataset.shot;
         main.animate([{ opacity: .3, transform: 'scale(.96)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'ease-out' });
         shot.parentElement.querySelectorAll('.gallery__thumb').forEach(b => b.classList.toggle('is-on', b === shot));
@@ -787,7 +801,6 @@
       if (open) { openDrawer(open.dataset.open); return; }
       if (t.closest('[data-close]')) { closeDrawers(); return; }
       if (t.closest('[data-close-modal]')) { closeQuick(); return; }
-      if (t.closest('[data-checkout]')) { burst(t.closest('[data-checkout]')); toast('Checkout will connect to the live WooCommerce store'); return; }
       const acc = t.closest('.macc__btn');
       if (acc && acc.tagName === 'BUTTON') { acc.parentElement.classList.toggle('is-open'); return; }
       if (t.closest('.mbar a[href*="#"], .drawer a[href*="#"]')) closeDrawers();
@@ -814,7 +827,7 @@
 
   window.ENF = {
     P, byId, COLORS, colorVars, hashColor, CATEGORIES, AGES, BRANDS, CHARACTERS,
-    brandMatch, brandLogo, imgOf, imgLg, priceHTML, titleCase, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
+    brandMatch, brandLogo, imgOf, imgLg, gallery, galleryHTML, descHTML, loadDetail, productUrl, priceHTML, titleCase, addToCart, getCart: () => cart, setCart: c => { cart = c; store.set('enf_cart', cart); renderCart(); syncCounts(); }, FREE_SHIP, cartTotal, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
     observeReveals, initRail, burst, toast, NEW_IDS, getFavs: () => favs,
   };
 

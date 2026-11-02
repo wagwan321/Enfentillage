@@ -14,7 +14,7 @@ document.addEventListener('site:ready', () => {
   const list = k => (url.get(k) || '').split(',').filter(Boolean);
   const st = {
     cat: list('cat'), age: list('age'), brand: list('brand'), char: list('char'),
-    q: url.get('q') || '', sale: url.get('sale') === '1', fav: url.get('fav') === '1',
+    q: url.get('q') || '', sale: url.get('sale') === '1', fav: url.get('fav') === '1', out: url.get('out') === '1',
     min: url.get('min') || '', max: url.get('max') || '',
     sort: url.get('sort') || 'popular',
   };
@@ -27,6 +27,7 @@ document.addEventListener('site:ready', () => {
     if (st.q) u.set('q', st.q);
     if (st.sale) u.set('sale', '1');
     if (st.fav) u.set('fav', '1');
+    if (st.out) u.set('out', '1');
     if (st.min) u.set('min', st.min);
     if (st.max) u.set('max', st.max);
     if (st.sort !== 'popular') u.set('sort', st.sort);
@@ -43,6 +44,7 @@ document.addEventListener('site:ready', () => {
   function passes(p, skip) {
     for (const k of ['cat', 'age', 'brand', 'char']) if (k !== skip && st[k].length && !TESTS[k](p)) return false;
     if (st.q) { const s = (p.n + ' ' + p.b).toLowerCase(); if (!st.q.toLowerCase().split(/\s+/).every(t => s.includes(t))) return false; }
+    if (!p.s && !st.out && !st.fav) return false;   // sold-out toys only when asked for (or saved)
     if (st.sale && !p.o) return false;
     if (st.fav && !getFavs().has(p.id)) return false;
     if (st.min !== '' && p.p < +st.min) return false;
@@ -113,7 +115,8 @@ document.addEventListener('site:ready', () => {
       ${group('price', 'Price', `
         <div class="range"><input type="number" min="0" placeholder="Min $" id="pmin" value="${esc(st.min)}" aria-label="Minimum price"><span>–</span><input type="number" min="0" placeholder="Max $" id="pmax" value="${esc(st.max)}" aria-label="Maximum price"></div>
         <div class="chips" style="margin-top:10px">${[[0, 10], [0, 25], [25, 50], [50, 100], [100, '']].map(([a, b]) => `<button type="button" class="suggest__chip" data-price="${a},${b}">${b === '' ? a + ' $+' : a ? a + '–' + b + ' $' : 'Under ' + b + ' $'}</button>`).join('')}</div>
-        <label class="toggle" style="margin-top:10px">On sale only <input type="checkbox" id="saleT"${st.sale ? ' checked' : ''}></label>`, isClosed('price', false))}
+        <label class="toggle" style="margin-top:10px">On sale only <input type="checkbox" id="saleT"${st.sale ? ' checked' : ''}></label>
+        <label class="toggle">Show sold-out toys <input type="checkbox" id="outT"${st.out ? ' checked' : ''}></label>`, isClosed('price', false))}
       ${group('char', 'Character', CHARACTERS.map(c => check('char', c.key, c.name, facetCount('char', p => p.h.includes(c.key)), c.color)).join(''), isClosed('char', true))}
       ${group('brand', `Brand <em style="font-style:normal;font-size:13px;color:var(--ink-soft)">${BRANDS.length}</em>`, `<input class="fbrand-search" id="fbrandSearch" type="search" placeholder="Find a brand…" value="${esc(brandQuery)}" aria-label="Find a brand"><div class="fgroup__inner fgroup__inner--scroll" id="fbrandList" style="padding:0">${brands.map(b => check('brand', b.key, b.name, b.n, b.color)).join('')}</div>`, isClosed('brand', st.brand.length === 0))}
       <div class="filter-btn" style="display:none;padding-top:16px"><button class="btn btn--red" style="width:100%" type="button" data-close>Show ${results().length} toys</button></div>`;
@@ -131,6 +134,7 @@ document.addEventListener('site:ready', () => {
     if (st.q) add(`“${st.q}”`, 'navy', () => { st.q = ''; const i = document.querySelector('.search__input'); if (i) i.value = ''; });
     if (st.sale) add('On sale', 'red', () => st.sale = false);
     if (st.fav) add('Wishlist', 'pink', () => st.fav = false);
+    if (st.out) add('Including sold out', 'navy', () => st.out = false);
     if (st.min || st.max) add(`${st.min || 0} – ${st.max || '∞'} $`, 'green', () => { st.min = ''; st.max = ''; });
     $('#active').innerHTML = chips.map((c, i) => `<span class="afilter" style="${colorVars(c.color)}">${esc(c.label)}<button type="button" data-rm="${i}" aria-label="Remove ${esc(c.label)}">×</button></span>`).join('') +
       (chips.length > 1 ? '<button class="clear-all" type="button" data-clear>Clear all</button>' : '');
@@ -140,7 +144,9 @@ document.addEventListener('site:ready', () => {
   /* ---------- grid ---------- */
   function renderGrid(keep) {
     const r = results();
-    $('#count').innerHTML = `<b>${r.length}</b> ${r.length === 1 ? 'toy' : 'toys'} found`;
+    const hiddenOut = st.out || st.fav ? 0 : P.filter(p => !p.s && passes({ ...p, s: true })).length;
+    $('#count').innerHTML = `<b>${r.length}</b> ${r.length === 1 ? 'toy' : 'toys'} found` +
+      (hiddenOut ? ` <button type="button" class="count-out" id="showOut">+ ${hiddenOut} sold out</button>` : '');
     const grid = $('#grid');
     if (!r.length) {
       grid.innerHTML = `<div class="empty-state">${balloon('#ec1c8c', 70)}<h3>${st.fav ? 'No hearts yet!' : 'No toys match… yet!'}</h3><p style="color:var(--ink-soft)">${st.fav ? 'Tap the heart on any toy to save it here.' : 'Try removing a filter or searching for something else.'}</p><br><a class="btn btn--navy" href="shop.html">See all toys</a></div>`;
@@ -174,6 +180,7 @@ document.addEventListener('site:ready', () => {
       st[t.dataset.f] = t.checked ? [...arr, t.value] : arr.filter(x => x !== t.value);
       refresh();
     } else if (t.id === 'saleT') { st.sale = t.checked; refresh(); }
+    else if (t.id === 'outT') { st.out = t.checked; refresh(); }
     else if (t.id === 'fbrandSearch') return;
     else if (t.id === 'pmin' || t.id === 'pmax') { st.min = $('#pmin').value; st.max = $('#pmax').value; refresh(); }
   });
@@ -196,8 +203,9 @@ document.addEventListener('site:ready', () => {
   $('#active').addEventListener('click', e => {
     const rm = e.target.closest('[data-rm]');
     if (rm) { $('#active')._chips[+rm.dataset.rm].fn(); refresh(); return; }
-    if (e.target.closest('[data-clear]')) { Object.assign(st, { cat: [], age: [], brand: [], char: [], q: '', sale: false, fav: false, min: '', max: '' }); refresh(); }
+    if (e.target.closest('[data-clear]')) { Object.assign(st, { cat: [], age: [], brand: [], char: [], q: '', sale: false, fav: false, out: false, min: '', max: '' }); refresh(); }
   });
+  $('#count').addEventListener('click', e => { if (e.target.closest('#showOut')) { st.out = true; refresh(); } });
   $('#sort').value = st.sort;
   $('#sort').addEventListener('change', e => { st.sort = e.target.value; refresh(); });
   $('#more').addEventListener('click', e => { if (e.target.closest('#moreBtn')) { shown += PAGE; renderGrid(true); } });
