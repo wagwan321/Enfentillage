@@ -81,8 +81,7 @@ document.addEventListener('site:ready', () => {
     const hero = $('#shopHero');
     hero.style.cssText = colorVars(color);
     hero.innerHTML = `
-      <span class="para" style="right:8%;top:10px;animation:floaty 6s ease-in-out infinite">${balloon('#ffffff', 46)}</span>
-      <span class="para" style="right:14%;top:40px;opacity:.7;animation:floaty 7s ease-in-out -3s infinite">${balloon(getComputedStyle(hero).getPropertyValue('--c'), 34)}</span>
+      <div class="hero-tillo">${window.ENF.tillo('tillo--hero', 130)}<span class="hero-tillo__say">${st.fav ? 'Your favourites!' : st.sale ? 'Bargains!' : 'Ooh, look at all these toys!'}</span></div>
       <div class="wrap" style="position:relative;z-index:1">
         <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a><span>›</span><a href="shop.html">Shop</a>${title !== 'All Toys' ? `<span>›</span><span>${esc(title)}</span>` : ''}</nav>
         <h1 class="reveal" data-from="left">${esc(title)}</h1>

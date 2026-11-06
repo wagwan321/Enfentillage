@@ -337,8 +337,10 @@
   const balloon = (color, w = 50, cls = '') =>
     `<svg class="${cls}" viewBox="0 0 50 84" width="${w}" aria-hidden="true"><path d="M25 2C12 2 4 12 4 24c0 14 12 26 21 28 9-2 21-14 21-28C46 12 38 2 25 2z" fill="${color}"/><path d="M21 52l4 6 4-6z" fill="${color}"/><ellipse cx="16" cy="18" rx="4" ry="7" fill="#fff" opacity=".5" transform="rotate(-20 16 18)"/><path d="M25 58c-3 6 3 10 0 16s2 6 0 8" stroke="${color}" stroke-width="1.6" fill="none" opacity=".8"/></svg>`;
   /* Tillo, the Enfantillage mascot */
+  /* Tillo as a figure: the image plus a Santa hat that only shows in the Christmas theme.
+     Tap any Tillo and he jumps (see mascot.js). */
   const tillo = (cls = '', w = 120, alt = 'Tillo, the Enfantillage mascot') =>
-    `<img class="tillo ${cls}" src="assets/img/mascot/tillo-sm.webp" alt="${alt}" width="${w}" height="${Math.round(w * 1.51)}" loading="lazy">`;
+    `<span class="tillo ${cls}" style="width:${w}px" data-tillo><img src="assets/img/mascot/${w > 180 ? 'tillo' : 'tillo-sm'}.webp" alt="${alt}" width="${w}" height="${Math.round(w * 1.51)}" loading="lazy"><i class="tillo__hat" aria-hidden="true"></i></span>`;
   const starSvg = (color, w = 18) =>
     `<svg viewBox="0 0 24 24" width="${w}" aria-hidden="true"><path d="m12 2 2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.2 5.8 20.9l1.6-7L2 9.2l7.1-.6z" fill="${color}"/></svg>`;
 
@@ -496,7 +498,7 @@
     </aside>
 
     <aside class="drawer drawer--right" id="cartDrawer" aria-label="Shopping cart">
-      <div class="drawer__head"><h3>Your Toy Box</h3><button class="drawer__close" data-close aria-label="Close cart">${icon('x')}</button></div>
+      <div class="drawer__head"><h3 class="drawer__title-tillo">${tillo('tillo--head', 54)} Your Toy Box</h3><button class="drawer__close" data-close aria-label="Close cart">${icon('x')}</button></div>
       <div class="drawer__body" id="cartBody"></div>
       <div class="drawer__foot" id="cartFoot"></div>
     </aside>
