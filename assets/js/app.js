@@ -336,6 +336,9 @@
   /* balloon from the logo — used as decoration everywhere */
   const balloon = (color, w = 50, cls = '') =>
     `<svg class="${cls}" viewBox="0 0 50 84" width="${w}" aria-hidden="true"><path d="M25 2C12 2 4 12 4 24c0 14 12 26 21 28 9-2 21-14 21-28C46 12 38 2 25 2z" fill="${color}"/><path d="M21 52l4 6 4-6z" fill="${color}"/><ellipse cx="16" cy="18" rx="4" ry="7" fill="#fff" opacity=".5" transform="rotate(-20 16 18)"/><path d="M25 58c-3 6 3 10 0 16s2 6 0 8" stroke="${color}" stroke-width="1.6" fill="none" opacity=".8"/></svg>`;
+  /* Tillo, the Enfantillage mascot */
+  const tillo = (cls = '', w = 120, alt = 'Tillo, the Enfantillage mascot') =>
+    `<img class="tillo ${cls}" src="assets/img/mascot/tillo-sm.webp" alt="${alt}" width="${w}" height="${Math.round(w * 1.51)}" loading="lazy">`;
   const starSvg = (color, w = 18) =>
     `<svg viewBox="0 0 24 24" width="${w}" aria-hidden="true"><path d="m12 2 2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.2 5.8 20.9l1.6-7L2 9.2l7.1-.6z" fill="${color}"/></svg>`;
 
@@ -438,7 +441,16 @@
     <header class="header" id="header">
       <div class="wrap header__row">
         <button class="burger" data-open="menu" aria-label="Open menu">${icon('menu')}</button>
-        <a class="logo" href="index.html" aria-label="Enfantillage home"><img src="assets/img/logo.png" alt="Enfantillage" width="700" height="400"></a>
+        <a class="logo" href="index.html" aria-label="Enfantillage home">
+          <span class="logo__stack">
+            <img class="logo__word" src="assets/img/logo-word.png" alt="Enfantillage" width="700" height="400">
+            <span class="logo__sway">
+              <img class="logo__balloons" src="assets/img/logo-balloons.png" alt="" width="700" height="400">
+              <svg class="logo__hat" viewBox="0 0 64 56" aria-hidden="true"><path d="M8 44 C14 22 30 6 52 8 C46 16 44 26 46 40 Z" fill="#e8222b"/><path d="M52 8 C56 10 58 14 57 18" stroke="#c5141c" stroke-width="3" fill="none"/><circle cx="57" cy="20" r="6" fill="#fff"/><rect x="2" y="40" width="50" height="12" rx="6" fill="#fff"/></svg>
+            </span>
+            <i class="logo__spark logo__spark--1"></i><i class="logo__spark logo__spark--2"></i><i class="logo__spark logo__spark--3"></i>
+          </span>
+        </a>
         <div class="search" id="search">
           <form class="search__box" action="shop.html" role="search">
             <input class="search__input" name="q" type="search" autocomplete="off" placeholder="Search toys, brands, characters…" aria-label="Search">
@@ -493,7 +505,7 @@
       <div class="modal__backdrop" data-close-modal></div>
       <div class="modal__card" role="dialog" aria-modal="true" aria-label="Product quick view"></div>
     </div>
-    <div class="toast" id="toast" role="status" aria-live="polite"><i>${icon('check', 'icon', 3).replace('class="icon"', 'class="icon" style="width:16px;height:16px"')}</i><span></span></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"><span class="toast__tillo" aria-hidden="true"><img src="assets/img/mascot/tillo-sm.webp" alt=""></span><span class="toast__msg"></span></div>
     `;
   }
   function macc(title, color, links) {
@@ -567,7 +579,7 @@
     const lines = Object.entries(cart).filter(([id]) => byId.has(+id));
     const total = cartTotal();
     if (!lines.length) {
-      body.innerHTML = `<div class="cart-empty">${balloon('#00a6e4', 90)}<h3 style="color:var(--navy);font-size:24px;margin:10px 0 4px">Your toy box is empty!</h3><p>Let’s fill it with something fun.</p><br><a class="btn btn--red" href="shop.html">Start shopping</a></div>`;
+      body.innerHTML = `<div class="cart-empty">${tillo('tillo--wave', 110)}<h3 style="color:var(--navy);font-size:24px;margin:10px 0 4px">Your toy box is empty!</h3><p>Let’s fill it with something fun.</p><br><a class="btn btn--red" href="shop.html">Start shopping</a></div>`;
       foot.innerHTML = '';
       return;
     }
@@ -670,7 +682,8 @@
   function toast(html) {
     const t = document.getElementById('toast');
     if (!t) return;
-    t.querySelector('span').innerHTML = html;
+    t.querySelector('.toast__msg').innerHTML = html;
+    const face = t.querySelector('.toast__tillo'); face.style.animation = 'none'; void face.offsetWidth; face.style.animation = '';
     t.classList.add('is-shown');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('is-shown'), 2600);
@@ -798,7 +811,7 @@
       const chips = [...cats, ...chars, ...brands];
       box.innerHTML = (chips.length ? `<div class="suggest__label">Jump to</div><div class="suggest__chips">${chips.map(([t, p]) => `<a class="suggest__chip" href="${shopUrl(p)}">${esc(t)}</a>`).join('')}</div>` : '') +
         (prods.length ? `<div class="suggest__label">Toys</div>${prods.map(itemHTML).join('')}<a class="suggest__chip" style="display:block;text-align:center;margin:8px" href="${shopUrl({ q: input.value.trim() })}">See all results for “${esc(input.value.trim())}”</a>`
-          : `<div class="suggest__empty">${balloon('#ec1c8c', 36)}<br>No toys found for “${esc(input.value)}” — try another word!</div>`);
+          : `<div class="suggest__empty">${tillo('tillo--tiny', 44)}<br>No toys found for “${esc(input.value)}” — try another word!</div>`);
     }
     const itemHTML = p => `<a class="suggest__item" href="${productUrl(p)}"><img src="${esc(p.i)}" alt=""><span><small>${esc(brandName(p.b))}</small>${esc(p.n)}</span><b>${!p.s ? 'Sold out' : p.p ? money(p.p) : 'Ask'}</b></a>`;
     input.addEventListener('focus', () => { render(); wrap.classList.add('is-open'); });
@@ -937,7 +950,7 @@
 
   window.ENF = {
     P, byId, COLORS, colorVars, hashColor, CATEGORIES, AGES, BRANDS, CHARACTERS,
-    brandMatch, brandLogo, imgOf, imgLg, gallery, galleryHTML, descHTML, loadDetail, productUrl, priceHTML, titleCase, addToCart, getCart: () => cart, setCart: c => { cart = c; store.set('enf_cart', cart); renderCart(); syncCounts(); }, FREE_SHIP, cartTotal, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
+    tillo, brandMatch, brandLogo, imgOf, imgLg, gallery, galleryHTML, descHTML, loadDetail, productUrl, priceHTML, titleCase, addToCart, getCart: () => cart, setCart: c => { cart = c; store.set('enf_cart', cart); renderCart(); syncCounts(); }, FREE_SHIP, cartTotal, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
     observeReveals, initRail, burst, toast, NEW_IDS, getFavs: () => favs,
   };
 

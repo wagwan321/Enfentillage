@@ -45,11 +45,36 @@ document.addEventListener('site:ready', () => {
       burst: true,
     },
   ];
+  /* Christmas version of the carousel (theme.js sets window.ENF_THEME) */
+  const XMAS = window.ENF_THEME === 'christmas';
+  if (XMAS) {
+    SLIDES.splice(0, SLIDES.length,
+      { bg: 'linear-gradient(135deg,#fff4f2 0%,#ffdcd7 100%)', accent: '#c8102e', xmas: 'red',
+        kicker: `${icon('gift', 'icon', 2.4)} The Christmas gift shop is open`,
+        title: 'Make this <em>Christmas</em> magical',
+        desc: 'LEGO, Barbie, Super Mario and hundreds more toys, ready to go under the tree.',
+        cta: ['Find the perfect gift', 'index.html#gift-finder', 'btn--red'], imgs: [30954, 31379, 54021] },
+      { bg: 'linear-gradient(135deg,#eef8f0 0%,#cfead6 100%)', accent: '#1f7a3a', xmas: 'green',
+        kicker: `${icon('star', 'icon', 2.4)} Stocking fillers`,
+        title: 'Little gifts, <em>big</em> smiles',
+        desc: 'Fun surprises under 25 $ for every stocking.',
+        cta: ['Shop under 25 $', shopUrl({ max: 25 }), 'btn--green'], imgs: [54925, 54119, 54924] },
+      { bg: 'linear-gradient(135deg,#eef3ff 0%,#d6e2fb 100%)', accent: '#1d4fb8', xmas: 'snow',
+        kicker: `${icon('sparkle', 'icon', 2.4)} For the little ones`,
+        title: 'Their very <em>first</em> Christmas',
+        desc: 'Soft toys, first-learning sets and baby favourites to make it special.',
+        cta: ['Shop baby gifts', shopUrl({ cat: 'baby' }), 'btn--navy'], imgs: [55205, 20700, 55164] },
+      { bg: 'linear-gradient(135deg,#fff6e3 0%,#ffe4a8 100%)', accent: '#c8102e', xmas: 'gold',
+        kicker: `${icon('tag', 'icon', 2.4)} Christmas offers`,
+        title: 'Save <em>12%</em> with Tillo',
+        desc: 'Use code TILLO12 at checkout, plus real markdowns on top toys.',
+        cta: ['Shop the offers', shopUrl({ sale: 1 }), 'btn--red'], imgs: topDeals.map(p => p.id), burst: true });
+  }
   const DUR = 6500;
   const slider = $('#slider');
   slider.style.setProperty('--dur', DUR + 'ms');
   slider.innerHTML = SLIDES.map((s, i) => `
-    <div class="slide${i === 0 ? ' is-active' : ''}" style="--bg:${s.bg};--accent:${s.accent}" role="group" aria-roledescription="slide" aria-label="${i + 1} of ${SLIDES.length}">
+    <div class="slide${i === 0 ? ' is-active' : ''}${s.xmas ? ' slide--xmas' : ''}" style="--bg:${s.bg};--accent:${s.accent}" role="group" aria-roledescription="slide" aria-label="${i + 1} of ${SLIDES.length}">
       <div class="slide__deco">
         <i style="width:220px;height:220px;left:-60px;bottom:-80px"></i>
         <i style="width:90px;height:90px;left:42%;top:-30px"></i>
@@ -99,12 +124,12 @@ document.addEventListener('site:ready', () => {
 
   $('#heroSide').innerHTML = `
     <a class="promo-tile reveal" data-from="right" style="--bg:linear-gradient(135deg,#e7f9fb,#c6eef3);--accent:#0b8a93" href="${shopUrl({ cat: 'baby' })}">
-      <h3>Baby World</h3><p>Rockers, jumpers, pillows & first toys</p>
+      <h3>${XMAS ? 'Baby’s First Christmas' : 'Baby World'}</h3><p>${XMAS ? 'Cosy gifts for the littlest ones' : 'Rockers, jumpers, pillows & first toys'}</p>
       <span class="link-arrow">Explore ${icon('arrow', 'icon', 2.6).replace('class="icon"', 'class="icon" style="width:16px;height:16px"')}</span>
       <div class="promo-tile__img"><img src="${img(20700)}" alt=""></div>
     </a>
     <a class="promo-tile reveal" data-from="right" style="--d:.12s;--bg:linear-gradient(135deg,#fff4e8,#ffdcc4);--accent:#d81e27" href="${shopUrl({ brand: 'NINTENDO' })}">
-      <h3>Game On!</h3><p>Super Mario & Sonic plush, figures & playsets</p>
+      <h3>${XMAS ? 'Santa’s Picks' : 'Game On!'}</h3><p>${XMAS ? 'Super Mario & Sonic gifts they’ll love' : 'Super Mario & Sonic plush, figures & playsets'}</p>
       <span class="link-arrow">Let’s-a go ${icon('arrow', 'icon', 2.6).replace('class="icon"', 'class="icon" style="width:16px;height:16px"')}</span>
       <div class="promo-tile__img"><img src="${img(30977)}" alt=""></div>
     </a>`;
@@ -243,7 +268,7 @@ document.addEventListener('site:ready', () => {
     if (b) { params.min = b.min; if (b.max < 1e9) params.max = b.max; }
     if (sel.interest) params.cat = sel.interest;
     if (!all.length) {
-      out.innerHTML = `<div class="finder__empty">${balloon('#ffc83d', 60)}<h3 style="font-size:24px;margin:10px 0 4px">Hmm, no exact match!</h3><p>Try a different budget or interest — there’s plenty more to discover.</p></div>`;
+      out.innerHTML = `<div class="finder__empty">${window.ENF.tillo('tillo--wave', 90)}<h3 style="font-size:24px;margin:10px 0 4px">Hmm, no exact match!</h3><p>Try a different budget or interest — there’s plenty more to discover.</p></div>`;
       return;
     }
     // shuffle a little so "surprise me" feels alive, but keep it stable per selection

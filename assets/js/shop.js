@@ -149,7 +149,7 @@ document.addEventListener('site:ready', () => {
       (hiddenOut ? ` <button type="button" class="count-out" id="showOut">+ ${hiddenOut} sold out</button>` : '');
     const grid = $('#grid');
     if (!r.length) {
-      grid.innerHTML = `<div class="empty-state">${balloon('#ec1c8c', 70)}<h3>${st.fav ? 'No hearts yet!' : 'No toys match… yet!'}</h3><p style="color:var(--ink-soft)">${st.fav ? 'Tap the heart on any toy to save it here.' : 'Try removing a filter or searching for something else.'}</p><br><a class="btn btn--navy" href="shop.html">See all toys</a></div>`;
+      grid.innerHTML = `<div class="empty-state">${window.ENF.tillo('tillo--wave', 110)}<h3>${st.fav ? 'No hearts yet!' : 'No toys match… yet!'}</h3><p style="color:var(--ink-soft)">${st.fav ? 'Tap the heart on any toy to save it here.' : 'Try removing a filter or searching for something else.'}</p><br><a class="btn btn--navy" href="shop.html">See all toys</a></div>`;
       $('#more').innerHTML = '';
       return;
     }

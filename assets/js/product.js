@@ -12,7 +12,7 @@ document.addEventListener('site:ready', () => {
 
   if (!p) {
     document.title = 'Toy not found — Enfantillage Lebanon';
-    main.innerHTML = `<div class="wrap empty-state" style="padding:80px 20px">${balloon('#ec1c8c', 80)}
+    main.innerHTML = `<div class="wrap empty-state" style="padding:80px 20px">${window.ENF.tillo('tillo--wave', 120)}
       <h3>We couldn’t find that toy</h3><p style="color:var(--ink-soft)">It may have moved. Try searching for it, or browse everything we have.</p><br>
       <a class="btn btn--navy" href="shop.html">Browse all toys</a></div>`;
     return;

@@ -34,7 +34,7 @@ document.addEventListener('site:ready', () => {
 
   function render() {
     if (!lines().length) {
-      main.innerHTML = `${notice}<div class="empty-state" style="padding:60px 20px">${balloon('#00a6e4', 80)}
+      main.innerHTML = `${notice}<div class="empty-state" style="padding:60px 20px">${window.ENF.tillo('tillo--wave', 120)}
         <h3>Your toy box is empty</h3><p style="color:var(--ink-soft)">Add a few toys first, then come back to check out.</p><br>
         <a class="btn btn--red" href="shop.html">Start shopping</a></div>`;
       return;
@@ -190,7 +190,7 @@ document.addEventListener('site:ready', () => {
     main.innerHTML = `
       ${notice}
       <div class="co-done">
-        ${balloon('#3db54a', 70)}
+        ${window.ENF.tillo('tillo--jump', 130, 'Tillo cheering')}
         <h1>Thank you, ${esc(f.name.split(' ')[0])}!</h1>
         <p class="co-done__no">Order <b>${order.no}</b> · ${money(t.total)}</p>
         <div class="co-done__next">
