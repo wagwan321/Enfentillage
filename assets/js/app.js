@@ -339,8 +339,11 @@
   /* Tillo, the Enfantillage mascot */
   /* Tillo as a figure: the image plus a Santa hat that only shows in the Christmas theme.
      Tap any Tillo and he jumps (see mascot.js). */
+  /* at Christmas Tillo wears his own festive outfit (hat, scarf and snowflake shirt) */
+  const TILLO_SET = window.ENF_THEME === 'christmas' ? '-xmas' : '';
+  const tilloSrc = big => `assets/img/mascot/tillo${TILLO_SET}${big ? '' : '-sm'}.webp`;
   const tillo = (cls = '', w = 120, alt = 'Tillo, the Enfantillage mascot') =>
-    `<span class="tillo ${cls}" style="width:${w}px" data-tillo><img src="assets/img/mascot/${w > 180 ? 'tillo' : 'tillo-sm'}.webp" alt="${alt}" width="${w}" height="${Math.round(w * 1.51)}" loading="lazy"><i class="tillo__hat" aria-hidden="true"></i></span>`;
+    `<span class="tillo ${cls}" style="width:${w}px" data-tillo><img src="${tilloSrc(w > 180)}" alt="${alt}" width="${w}" height="${Math.round(w * 1.5)}" loading="lazy"></span>`;
   const starSvg = (color, w = 18) =>
     `<svg viewBox="0 0 24 24" width="${w}" aria-hidden="true"><path d="m12 2 2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.2 5.8 20.9l1.6-7L2 9.2l7.1-.6z" fill="${color}"/></svg>`;
 
@@ -507,7 +510,7 @@
       <div class="modal__backdrop" data-close-modal></div>
       <div class="modal__card" role="dialog" aria-modal="true" aria-label="Product quick view"></div>
     </div>
-    <div class="toast" id="toast" role="status" aria-live="polite"><span class="toast__tillo" aria-hidden="true"><img src="assets/img/mascot/tillo-sm.webp" alt=""></span><span class="toast__msg"></span></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"><span class="toast__tillo" aria-hidden="true"><img src="${tilloSrc(false)}" alt=""></span><span class="toast__msg"></span></div>
     `;
   }
   function macc(title, color, links) {

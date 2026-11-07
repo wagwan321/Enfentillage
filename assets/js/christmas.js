@@ -32,7 +32,7 @@ document.addEventListener('site:ready', () => {
       <circle cx="47" cy="110" r="5.5" fill="#c8102e"/><circle cx="45" cy="108" r="1.6" fill="#fff" opacity=".7"/>
       <circle cx="78" cy="70" r="4.6" fill="#f2b705"/><circle cx="76" cy="68" r="1.3" fill="#fff" opacity=".7"/>
       <circle cx="85" cy="117" r="5" fill="#4aa8ff"/><circle cx="83" cy="115" r="1.4" fill="#fff" opacity=".7"/>
-      <g class="xtree__star"><path d="M60 1 L65 13 L78 13 L67.5 21 L71.5 34 L60 26 L48.5 34 L52.5 21 L42 13 L55 13 Z" fill="#ffd54a" stroke="#f2a900" stroke-width="1.5" stroke-linejoin="round"/></g>
+      <circle cx="60" cy="19" r="15" fill="#ffe57a" opacity=".28"/><g class="xtree__star"><path d="M60 1 L65 13 L78 13 L67.5 21 L71.5 34 L60 26 L48.5 34 L52.5 21 L42 13 L55 13 Z" fill="#ffd54a" stroke="#f2a900" stroke-width="1.5" stroke-linejoin="round"/></g>
     </svg>`;
 
   const DEER = (x, rudolph) => `
@@ -47,7 +47,7 @@ document.addEventListener('site:ready', () => {
       <ellipse cx="50" cy="10" rx="8.5" ry="5.8" fill="#9a6337"/>
       <path d="M44 8 L39 5" stroke="#9a6337" stroke-width="3" stroke-linecap="round"/>
       <circle cx="51" cy="8" r="1.3" fill="#1b1b1b"/>
-      <circle class="${rudolph ? 'xs-nose' : ''}" cx="58.5" cy="10.5" r="${rudolph ? 3.8 : 2.4}" fill="${rudolph ? '#ff2b3a' : '#3b2416'}"/>
+      ${rudolph ? '<circle cx="58.5" cy="10.5" r="8" fill="#ff2b3a" opacity=".25"/>' : ''}<circle class="${rudolph ? 'xs-nose' : ''}" cx="58.5" cy="10.5" r="${rudolph ? 3.8 : 2.4}" fill="${rudolph ? '#ff2b3a' : '#3b2416'}"/>
       <path d="M33 27 Q38 31 41 25" stroke="#c8102e" stroke-width="2.4" fill="none"/>
       <circle cx="37" cy="29.5" r="2" fill="#f2b705"/>
     </g>`;
@@ -144,7 +144,7 @@ document.addEventListener('site:ready', () => {
         const x = (1 - t) * (1 - t) * x0 + 2 * (1 - t) * t * cx + t * t * x1;
         const y = (1 - t) * (1 - t) * 2 + 2 * (1 - t) * t * (dip * 2) + t * t * 2;
         const c = BULBS[k % 5];
-        bulbs += `<g class="xd-bulb" style="--c:${c};--d:${((k * 0.37) % 2).toFixed(2)}s" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><rect x="-2.4" y="-1" width="4.8" height="4" rx="1" fill="#3e4f45"/><ellipse cx="0" cy="8" rx="4.4" ry="6.4" fill="${c}"/><ellipse cx="-1.3" cy="6" rx="1.2" ry="2" fill="#fff" opacity=".6"/></g>`;
+        bulbs += `<g class="xd-bulb" style="--c:${c};--d:${((k * 0.37) % 2).toFixed(2)}s" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="0" cy="8" rx="9" ry="11" fill="${c}" opacity=".22"/><rect x="-2.4" y="-1" width="4.8" height="4" rx="1" fill="#3e4f45"/><ellipse cx="0" cy="8" rx="4.4" ry="6.4" fill="${c}"/><ellipse cx="-1.3" cy="6" rx="1.2" ry="2" fill="#fff" opacity=".6"/></g>`;
         k++;
       }
     }
@@ -216,74 +216,70 @@ document.addEventListener('site:ready', () => {
     window.ENF.observeReveals();
   }, 30);
 
-  /* ======================= Santa flies across the page now and then ======================= */
-  if (!reduce) {
-    const fly = document.createElement('div');
-    fly.className = 'xflyby';
-    fly.setAttribute('aria-hidden', 'true');
-    fly.innerHTML = SLEIGH() + '<span class="xflyby__trail"></span>';
-    document.body.appendChild(fly);
-    const launch = () => {
-      if (document.hidden) return;
-      fly.style.setProperty('--y', (90 + Math.random() * Math.max(80, innerHeight * 0.35)).toFixed(0) + 'px');
-      fly.classList.remove('is-flying'); void fly.offsetWidth; fly.classList.add('is-flying');
-    };
-    setTimeout(launch, 4000);
-    setInterval(launch, 30000);
-  }
+  /* ======================= pause decorations that are off screen ======================= */
+  // CSS animations keep running (and repainting) even when scrolled away; pausing them keeps scrolling smooth
+  setTimeout(() => {
+    const io = new IntersectionObserver(entries => entries.forEach(e => e.target.classList.toggle('xpaused', !e.isIntersecting)), { rootMargin: '100px' });
+    document.querySelectorAll('.xscene, .xfooter, .finder, .tillo-hello, #ages, #brands, #characters, .footer').forEach(el => io.observe(el));
+  }, 100);
 
-  /* ======================= snowfall ======================= */
+  /* ======================= snowfall (pre-rendered flakes, no per-frame blur) ======================= */
   const canvas = document.createElement('canvas');
   canvas.className = 'xmas-snow';
   canvas.setAttribute('aria-hidden', 'true');
   document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d');
   let flakes = [], W = 0, H = 0, raf = 0, last = 0, wind = 0, windT = 0;
-  const DPR = Math.min(devicePixelRatio || 1, 2);
 
-  function resize() {
-    W = innerWidth; H = innerHeight;
-    canvas.width = W * DPR; canvas.height = H * DPR;
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    const count = Math.round(Math.min(260, W / 5.2));
-    flakes = Array.from({ length: count }, () => flake(true));
-  }
-  function flake(anywhere) {
-    const star = Math.random() < 0.18;
-    const r = star ? 4 + Math.random() * 4 : 1 + Math.random() * 3.2;
-    return { x: Math.random() * W, y: anywhere ? Math.random() * H : -12, r, star,
-             vy: 0.45 + (star ? 0.6 : r * 0.38), sway: Math.random() * 6.28, swaySpeed: 0.006 + Math.random() * 0.014,
-             rot: Math.random() * 6.28, spin: (Math.random() - 0.5) * 0.03, a: 0.6 + Math.random() * 0.4 };
-  }
-  function drawStar(f) {
-    ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.rot);
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+  // draw each flake look once into a small image, then just stamp it every frame
+  const sprite = (size, draw) => { const c = document.createElement('canvas'); c.width = c.height = size; draw(c.getContext('2d'), size); return c; };
+  const DOTS = [2, 3, 4, 5.5].map(r => sprite(Math.ceil(r * 2 + 6), (g, n) => {
+    const m = n / 2, grd = g.createRadialGradient(m, m, 0, m, m, m);
+    grd.addColorStop(0, '#fff'); grd.addColorStop(r / m * 0.75, '#fff'); grd.addColorStop(r / m, 'rgba(220,235,250,.9)'); grd.addColorStop(1, 'rgba(90,130,170,0)');
+    g.fillStyle = grd; g.fillRect(0, 0, n, n);
+  }));
+  const STARS = [10, 15].map(n => sprite(n + 4, (g, size) => {
+    const m = size / 2, r = n / 2;
+    g.translate(m, m); g.strokeStyle = '#fff'; g.lineWidth = 1.4; g.lineCap = 'round';
+    g.shadowColor = 'rgba(60,100,140,.5)'; g.shadowBlur = 2;
     for (let i = 0; i < 6; i++) {
-      ctx.rotate(Math.PI / 3);
-      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -f.r);
-      ctx.moveTo(0, -f.r * 0.55); ctx.lineTo(f.r * 0.28, -f.r * 0.8);
-      ctx.moveTo(0, -f.r * 0.55); ctx.lineTo(-f.r * 0.28, -f.r * 0.8);
-      ctx.stroke();
+      g.rotate(Math.PI / 3);
+      g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -r);
+      g.moveTo(0, -r * 0.55); g.lineTo(r * 0.3, -r * 0.82); g.moveTo(0, -r * 0.55); g.lineTo(-r * 0.3, -r * 0.82);
+      g.stroke();
     }
-    ctx.restore();
+  }));
+
+  function sizeCanvas() { W = innerWidth; H = innerHeight; canvas.width = W; canvas.height = H; }
+  function seed() { flakes = Array.from({ length: Math.round(Math.min(150, W / 9)) }, () => flake(true)); }
+  function flake(anywhere) {
+    const star = Math.random() < 0.12;
+    const img = star ? STARS[Math.random() < 0.5 ? 0 : 1] : DOTS[Math.floor(Math.random() * DOTS.length)];
+    const k = img.width / 10;
+    return { x: Math.random() * W, y: anywhere ? Math.random() * H : -20, img, star, half: img.width / 2,
+             vy: 0.5 + k * 0.42, sway: Math.random() * 6.28, swaySpeed: 0.006 + Math.random() * 0.014,
+             rot: Math.random() * 6.28, spin: (Math.random() - 0.5) * 0.03, a: 0.65 + Math.random() * 0.35, k };
   }
   function draw(t) {
     const dt = Math.min(48, t - (last || t)) / 16.7; last = t;
     windT += 0.004 * dt;
     wind = Math.sin(windT) * 0.6 + Math.sin(windT * 2.7) * 0.25;   // gentle gusts
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    ctx.shadowColor = 'rgba(60, 100, 140, .45)';
-    ctx.shadowBlur = 3;
-    ctx.fillStyle = '#fff';
     for (const f of flakes) {
-      f.sway += f.swaySpeed * dt; f.rot += f.spin * dt;
+      f.sway += f.swaySpeed * dt;
       f.y += f.vy * dt;
-      f.x += (Math.sin(f.sway) * 0.5 + wind * (0.6 + f.r * 0.12)) * dt;
-      if (f.y > H + 12) Object.assign(f, flake(false));
-      if (f.x > W + 12) f.x = -10; else if (f.x < -12) f.x = W + 10;
+      f.x += (Math.sin(f.sway) * 0.5 + wind * (0.6 + f.k * 0.25)) * dt;
+      if (f.y > H + 20) Object.assign(f, flake(false));
+      if (f.x > W + 20) f.x = -16; else if (f.x < -20) f.x = W + 16;
       ctx.globalAlpha = f.a;
-      if (f.star) drawStar(f);
-      else { ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 6.283); ctx.fill(); }
+      if (f.star) {
+        f.rot += f.spin * dt;
+        const c = Math.cos(f.rot), sn = Math.sin(f.rot);
+        ctx.setTransform(c, sn, -sn, c, f.x, f.y);
+        ctx.drawImage(f.img, -f.half, -f.half);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+      } else ctx.drawImage(f.img, f.x - f.half, f.y - f.half);
     }
     raf = requestAnimationFrame(draw);
   }
@@ -291,8 +287,9 @@ document.addEventListener('site:ready', () => {
   function stop() { cancelAnimationFrame(raf); raf = 0; ctx.clearRect(0, 0, W, H); }
 
   let snowOn = store.get('enf_snow') !== 'off' && !reduce;
-  resize();
-  addEventListener('resize', resize);
+  sizeCanvas(); seed();
+  // phones fire "resize" when the address bar hides; only re-seed when the width really changes
+  addEventListener('resize', () => { const w = W; sizeCanvas(); if (Math.abs(innerWidth - w) > 40) seed(); });
   document.addEventListener('visibilitychange', () => (document.hidden ? stop() : snowOn && start()));
   if (snowOn) start();
 

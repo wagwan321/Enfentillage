@@ -1359,14 +1359,14 @@ html.theme-xmas {
 .theme-xmas .btn--red { --c: var(--red); --c-dark: #8e0b21; }
 .theme-xmas .add-btn { background: var(--red); box-shadow: 0 4px 0 #8e0b21; }
 .theme-xmas .add-btn.is-added { background: var(--green); box-shadow: 0 4px 0 #156a2e; }
-.theme-xmas .logo__hat, .theme-xmas .tillo__hat { display: block; }
+.theme-xmas .logo__hat { display: block; }
 .theme-xmas .header { padding-bottom: 8px; }
 .theme-xmas .tillo-hello { background: radial-gradient(circle at 12% 70%, #fff 0 30%, transparent 31%), linear-gradient(120deg, #fde6e8, #e1f3e5); }
 
 /* draped string lights */
 .xmas-drape { position: absolute; left: 0; top: 100%; margin-top: -6px; pointer-events: none; z-index: 3; overflow: visible; }
-.xd-bulb ellipse:first-of-type { filter: drop-shadow(0 0 5px var(--c)); animation: bulbGlow 1.8s ease-in-out infinite; animation-delay: var(--d); }
-@keyframes bulbGlow { 0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px var(--c)) brightness(1.15); } 50% { opacity: .45; filter: drop-shadow(0 0 1px var(--c)) brightness(.7); } }
+.xd-bulb { animation: bulbBlink 1.8s ease-in-out infinite; animation-delay: var(--d); }
+@keyframes bulbBlink { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
 /* hanging baubles */
 .xmas-baubles { position: absolute; left: 0; right: 0; top: 100%; height: 0; pointer-events: none; z-index: 3; }
@@ -1378,10 +1378,10 @@ html.theme-xmas {
 .header-tree .xtree { width: 100%; display: block; }
 
 /* trees, star and lights */
-.xb { animation: treeBulb 1.6s ease-in-out infinite; animation-delay: var(--d); filter: drop-shadow(0 0 3px var(--c)); }
+.xb { animation: treeBulb 1.6s ease-in-out infinite; animation-delay: var(--d); }
 @keyframes treeBulb { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
-.xtree__star { transform-box: fill-box; transform-origin: 50% 55%; animation: starPulse 2.4s ease-in-out infinite; filter: drop-shadow(0 0 6px #ffd54a); }
-@keyframes starPulse { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.18) rotate(8deg); filter: drop-shadow(0 0 12px #ffe57a); } }
+.xtree__star { transform-box: fill-box; transform-origin: 50% 55%; animation: starPulse 2.4s ease-in-out infinite; }
+@keyframes starPulse { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.18) rotate(8deg); } }
 .xmini-tree { width: 40px; height: 40px; }
 
 /* sleigh + reindeer */
@@ -1393,8 +1393,8 @@ html.theme-xmas {
 @keyframes gallopB { from { transform: rotate(22deg); } to { transform: rotate(-24deg); } }
 .xs-deer:nth-of-type(2) .xs-legs { animation-delay: -.14s; }
 .xs-deer:nth-of-type(3) .xs-legs { animation-delay: -.28s; }
-.xs-nose { animation: rudolph 1.2s ease-in-out infinite; filter: drop-shadow(0 0 5px #ff2b3a); }
-@keyframes rudolph { 0%, 100% { filter: drop-shadow(0 0 6px #ff2b3a); opacity: 1; } 50% { filter: drop-shadow(0 0 1px #ff2b3a); opacity: .75; } }
+.xs-nose { animation: rudolph 1.2s ease-in-out infinite; }
+@keyframes rudolph { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
 .xs-arm { transform-box: fill-box; transform-origin: 0% 100%; animation: santaWave .7s ease-in-out infinite alternate; }
 @keyframes santaWave { from { transform: rotate(-18deg); } to { transform: rotate(16deg); } }
 .xsm-arm { transform-box: fill-box; }
@@ -1403,16 +1403,10 @@ html.theme-xmas {
 @keyframes snowArmL { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(14deg); } }
 @keyframes snowArmR { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-22deg); } }
 
-/* Santa flies across the whole page */
-.xflyby { position: fixed; left: 0; top: var(--y, 120px); width: 300px; z-index: 51; pointer-events: none; transform: translateX(-340px); opacity: 0; }
-.xflyby.is-flying { animation: flyAcross 13s linear forwards; }
-.xflyby .xsleigh { animation: sleighBob 1.6s ease-in-out infinite; }
-.xflyby__trail { position: absolute; right: 100%; top: 58%; width: 260px; height: 3px; background: linear-gradient(90deg, transparent, #ffe57a); border-radius: 3px; filter: drop-shadow(0 0 6px #ffd54a); opacity: .8; }
-.xflyby__trail::before, .xflyby__trail::after { content: "✦"; position: absolute; color: #ffd54a; font-size: 16px; top: -10px; animation: trailTwinkle 1s ease-in-out infinite; }
-.xflyby__trail::before { left: 30%; } .xflyby__trail::after { left: 70%; animation-delay: .5s; }
-@keyframes trailTwinkle { 0%, 100% { opacity: .2; transform: scale(.6); } 50% { opacity: 1; transform: scale(1.1); } }
-@keyframes flyAcross { 0% { transform: translateX(-340px) translateY(30px) rotate(-6deg); opacity: 1; } 50% { transform: translateX(50vw) translateY(-20px) rotate(-3deg); } 100% { transform: translateX(calc(100vw + 340px)) translateY(-60px) rotate(-8deg); opacity: 1; } }
 @keyframes sleighBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+/* off-screen decorations stop animating */
+.xpaused, .xpaused * { animation-play-state: paused !important; }
 
 /* homepage night scene */
 .xscene { position: relative; margin: 34px 0 10px; min-height: 470px; overflow: hidden; color: #fff; background: linear-gradient(180deg, #0a1a3a 0%, #17306a 52%, #3a5ea6 100%); }
@@ -1533,7 +1527,6 @@ html.theme-xmas {
   .xscene__tillo { left: 26%; width: 104px; }
   .xscene__tillo .tillo { width: 104px !important; }
   .xfooter__tree.t3, .xfooter__gifts { display: none; }
-  .xflyby { width: 200px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .logo__sway, .logo__spark, .tillo, .tillo img, .xb, .xtree__star, .xs-legs, .xs-arm, .xs-nose, .xd-bulb ellipse, .xmas-baubles span, .xscene__fly, .xscene__sky i, .xscene__shoot, .xsm-arm { animation: none !important; }
