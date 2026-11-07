@@ -233,32 +233,44 @@ document.addEventListener('site:ready', () => {
 
   // draw each flake look once into a small image, then just stamp it every frame
   const sprite = (size, draw) => { const c = document.createElement('canvas'); c.width = c.height = size; draw(c.getContext('2d'), size); return c; };
-  const DOTS = [2, 3, 4, 5.5].map(r => sprite(Math.ceil(r * 2 + 6), (g, n) => {
-    const m = n / 2, grd = g.createRadialGradient(m, m, 0, m, m, m);
-    grd.addColorStop(0, '#fff'); grd.addColorStop(r / m * 0.75, '#fff'); grd.addColorStop(r / m, 'rgba(220,235,250,.9)'); grd.addColorStop(1, 'rgba(90,130,170,0)');
-    g.fillStyle = grd; g.fillRect(0, 0, n, n);
-  }));
-  const STARS = [10, 15].map(n => sprite(n + 4, (g, size) => {
-    const m = size / 2, r = n / 2;
-    g.translate(m, m); g.strokeStyle = '#fff'; g.lineWidth = 1.4; g.lineCap = 'round';
-    g.shadowColor = 'rgba(60,100,140,.5)'; g.shadowBlur = 2;
+  // three snowflake designs, each pre-drawn in four sizes with a soft blue-grey edge (visible on white)
+  function snowflake(g, r, design) {
+    g.lineCap = 'round'; g.lineJoin = 'round';
     for (let i = 0; i < 6; i++) {
       g.rotate(Math.PI / 3);
       g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -r);
-      g.moveTo(0, -r * 0.55); g.lineTo(r * 0.3, -r * 0.82); g.moveTo(0, -r * 0.55); g.lineTo(-r * 0.3, -r * 0.82);
+      if (design === 0) {          // classic: two pairs of branches
+        g.moveTo(0, -r * 0.42); g.lineTo(r * 0.26, -r * 0.62); g.moveTo(0, -r * 0.42); g.lineTo(-r * 0.26, -r * 0.62);
+        g.moveTo(0, -r * 0.7); g.lineTo(r * 0.2, -r * 0.86); g.moveTo(0, -r * 0.7); g.lineTo(-r * 0.2, -r * 0.86);
+      } else if (design === 1) {   // arrow tips around a little hexagon
+        g.moveTo(r * 0.24, -r * 0.82); g.lineTo(0, -r * 0.58); g.lineTo(-r * 0.24, -r * 0.82);
+        g.moveTo(0, -r * 0.28); g.lineTo(r * 0.24, -r * 0.14);
+      } else {                     // simple branches with round tips
+        g.moveTo(0, -r * 0.55); g.lineTo(r * 0.3, -r * 0.78); g.moveTo(0, -r * 0.55); g.lineTo(-r * 0.3, -r * 0.78);
+      }
       g.stroke();
+      if (design === 2) { g.beginPath(); g.arc(0, -r, Math.max(1, r * 0.11), 0, 6.283); g.fill(); }
     }
-  }));
+  }
+  const FLAKES = [];
+  [10, 14, 19, 26].forEach((d, si) => [0, 1, 2].forEach(design => FLAKES.push(sprite(d + 8, (g, n) => {
+    g.translate(n / 2, n / 2);
+    g.strokeStyle = '#fff'; g.fillStyle = '#fff';
+    g.lineWidth = 1 + si * 0.35;
+    g.shadowColor = 'rgba(60,100,140,.55)'; g.shadowBlur = 2.5;
+    snowflake(g, d / 2, design);
+  }))));
 
   function sizeCanvas() { W = innerWidth; H = innerHeight; canvas.width = W; canvas.height = H; }
-  function seed() { flakes = Array.from({ length: Math.round(Math.min(150, W / 9)) }, () => flake(true)); }
+  function seed() { flakes = Array.from({ length: Math.round(Math.min(130, W / 10)) }, () => flake(true)); }
   function flake(anywhere) {
-    const star = Math.random() < 0.12;
-    const img = star ? STARS[Math.random() < 0.5 ? 0 : 1] : DOTS[Math.floor(Math.random() * DOTS.length)];
-    const k = img.width / 10;
-    return { x: Math.random() * W, y: anywhere ? Math.random() * H : -20, img, star, half: img.width / 2,
-             vy: 0.5 + k * 0.42, sway: Math.random() * 6.28, swaySpeed: 0.006 + Math.random() * 0.014,
-             rot: Math.random() * 6.28, spin: (Math.random() - 0.5) * 0.03, a: 0.65 + Math.random() * 0.35, k };
+    // small flakes are common, big ones rarer (and fall a bit faster, as if closer)
+    const roll = Math.random(), size = roll < 0.45 ? 0 : roll < 0.78 ? 1 : roll < 0.94 ? 2 : 3;
+    const img = FLAKES[size * 3 + Math.floor(Math.random() * 3)];
+    const k = img.width / 16;
+    return { x: Math.random() * W, y: anywhere ? Math.random() * H : -24, img, half: img.width / 2,
+             vy: 0.45 + k * 0.38, sway: Math.random() * 6.28, swaySpeed: 0.006 + Math.random() * 0.014,
+             rot: Math.random() * 6.28, spin: (Math.random() - 0.5) * 0.028, a: 0.7 + Math.random() * 0.3, k };
   }
   function draw(t) {
     const dt = Math.min(48, t - (last || t)) / 16.7; last = t;
@@ -273,14 +285,12 @@ document.addEventListener('site:ready', () => {
       if (f.y > H + 20) Object.assign(f, flake(false));
       if (f.x > W + 20) f.x = -16; else if (f.x < -20) f.x = W + 16;
       ctx.globalAlpha = f.a;
-      if (f.star) {
-        f.rot += f.spin * dt;
-        const c = Math.cos(f.rot), sn = Math.sin(f.rot);
-        ctx.setTransform(c, sn, -sn, c, f.x, f.y);
-        ctx.drawImage(f.img, -f.half, -f.half);
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-      } else ctx.drawImage(f.img, f.x - f.half, f.y - f.half);
+      f.rot += f.spin * dt;
+      const c = Math.cos(f.rot), sn = Math.sin(f.rot);
+      ctx.setTransform(c, sn, -sn, c, f.x, f.y);
+      ctx.drawImage(f.img, -f.half, -f.half);
     }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     raf = requestAnimationFrame(draw);
   }
   function start() { if (!raf && !document.hidden) { last = 0; raf = requestAnimationFrame(draw); } }
