@@ -554,7 +554,7 @@
         <span class="pay"><span>Cash on delivery</span><span class="pay__whish"><img class="pay-logo" src="assets/img/pay/whish-money.svg" alt="Whish Money" width="80" height="18"></span></span>
       </div>
     </footer>
-    <button class="to-top" id="toTop" aria-label="Back to top">${balloon('#e8222b', 56)}</button>
+    <button class="to-top" id="toTop" aria-label="Back to top"><img class="to-top__tillo" src="${tilloSrc(false)}" alt="" width="64" height="96"><span class="to-top__up" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg></span></button>
     <nav class="mbar" aria-label="Quick links">
       <a href="index.html" class="${location.pathname.endsWith('shop.html') ? '' : 'is-current'}">${icon('home')}Home</a>
       <button type="button" data-open="menu">${icon('grid')}Shop</button>

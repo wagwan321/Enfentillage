@@ -782,13 +782,17 @@ ul { list-style: none; margin: 0; padding: 0; }
 
 /* back to top balloon */
 .to-top {
-  position: fixed; right: 20px; bottom: 20px; z-index: 45;
-  width: 56px; height: 72px;
+  position: fixed; right: 20px; bottom: 16px; z-index: 45;
+  width: 64px; height: 96px;
   opacity: 0; transform: translateY(40px); pointer-events: none;
   transition: opacity .3s, transform .5s var(--ease-bounce);
 }
 .to-top.is-shown { opacity: 1; transform: none; pointer-events: auto; }
 .to-top:hover { animation: floaty 1.6s ease-in-out infinite; }
+/* back-to-top: Tillo, flipped so he points left toward the page */
+.to-top__tillo { display: block; width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); filter: drop-shadow(0 6px 8px rgba(30,40,90,.25)); }
+.to-top__up { position: absolute; top: -4px; left: -6px; width: 26px; height: 26px; border-radius: 50%; background: var(--red); color: #fff; display: grid; place-items: center; border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.18); }
+.to-top__up svg { width: 14px; height: 14px; }
 
 /* ==========================================================================
    Quick view modal
@@ -979,8 +983,9 @@ ul { list-style: none; margin: 0; padding: 0; }
   .mbar .is-current { background: var(--navy-soft); }
   .mbar .action__count { top: -2px; right: 2px; }
   body { padding-bottom: 80px; }
-  .to-top { bottom: 92px; right: 12px; width: 42px; height: 56px; }
-  .to-top svg { width: 42px; }
+  .to-top { bottom: 88px; right: 10px; width: 48px; height: 72px; }
+  .to-top__up { width: 22px; height: 22px; left: -6px; }
+  .to-top__up svg { width: 12px; height: 12px; }
   .toast { bottom: 96px; }
 }
 
@@ -1462,7 +1467,7 @@ html.theme-xmas {
 
 /* snow on things */
 .xmas-snow { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 52; pointer-events: none; }
-.xmas-snow-toggle { position: fixed; right: 20px; bottom: 94px; z-index: 47; background: #fff; color: var(--navy); border: 2px solid var(--navy-soft); border-radius: 999px; padding: 6px 12px; font-weight: 900; font-size: 13px; box-shadow: var(--shadow-sm); transition: transform .3s var(--ease-bounce); }
+.xmas-snow-toggle { position: fixed; right: 20px; bottom: 128px; z-index: 47; background: #fff; color: var(--navy); border: 2px solid var(--navy-soft); border-radius: 999px; padding: 6px 12px; font-weight: 900; font-size: 13px; box-shadow: var(--shadow-sm); transition: transform .3s var(--ease-bounce); }
 .xmas-snow-toggle:hover { transform: translateY(-2px); }
 .xmas-snow-toggle span { color: #4aa8ff; }
 .theme-xmas .card::before, .theme-xmas .age-tile::before { content: ""; position: absolute; z-index: 3; left: 10px; right: 10px; top: -7px; height: 14px; pointer-events: none;
@@ -1534,7 +1539,7 @@ html.theme-xmas {
   .footer-tillo .tillo { width: 90px !important; }
   .footer-tillo__say { font-size: 12px; }
   .footer { margin-top: 110px; }
-  .xmas-snow-toggle { right: 12px; bottom: 156px; width: 38px; height: 38px; padding: 0; font-size: 0; display: grid; place-items: center; }
+  .xmas-snow-toggle { right: 12px; bottom: 174px; width: 38px; height: 38px; padding: 0; font-size: 0; display: grid; place-items: center; }
   .xmas-snow-toggle span { font-size: 18px; }
   .xmas-snow-toggle[aria-pressed="false"] span { opacity: .4; }
   .xmas-baubles span:nth-child(n+4) { display: none; }
