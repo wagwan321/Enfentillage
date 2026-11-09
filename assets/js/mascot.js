@@ -16,7 +16,7 @@ document.addEventListener('site:ready', () => {
   const ss = { get: k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
                set: (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) { /* private mode */ } } };
 
-  /* ---------- tap any Tillo: he jumps and says something ---------- */
+  /* ---------- tap any Tillo: he wiggles and says something ---------- */
   const QUIPS = XMAS
     ? ['Ho ho ho!', 'Merry Christmas!', 'Wheee!', 'Jingle bells!', 'Let it snow!', 'Gifts for everyone!']
     : ['Hi there!', 'Wheee!', 'Let’s play!', 'Boing!', 'You’re awesome!', 'Toys toys toys!'];
@@ -26,7 +26,6 @@ document.addEventListener('site:ready', () => {
     if (!t || t.closest('.tillo-peek')) return;
     t.classList.remove('is-boing'); void t.offsetWidth; t.classList.add('is-boing');
     say(t, QUIPS[q++ % QUIPS.length]);
-    window.ENF.burst(t, XMAS ? ['#c8102e', '#1f8a3e', '#f2b705', '#fff'] : undefined, 14);
   });
   function say(el, text) {
     const b = document.createElement('span');
