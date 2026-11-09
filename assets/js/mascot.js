@@ -4,7 +4,6 @@
    - homepage: welcome card, peeks over section titles, points at the Gift
      Finder and the club sign-up
    - shop/brands heroes, product tip card, checkout, cart drawer, footer
-   - tap any Tillo and he jumps and says something
    ========================================================================== */
 document.addEventListener('site:ready', () => {
   'use strict';
@@ -15,28 +14,6 @@ document.addEventListener('site:ready', () => {
   const $ = s => document.querySelector(s);
   const ss = { get: k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
                set: (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) { /* private mode */ } } };
-
-  /* ---------- tap any Tillo: he wiggles and says something ---------- */
-  const QUIPS = XMAS
-    ? ['Ho ho ho!', 'Merry Christmas!', 'Wheee!', 'Jingle bells!', 'Let it snow!', 'Gifts for everyone!']
-    : ['Hi there!', 'Wheee!', 'Let’s play!', 'Boing!', 'You’re awesome!', 'Toys toys toys!'];
-  let q = 0;
-  document.addEventListener('click', e => {
-    const t = e.target.closest('[data-tillo]');
-    if (!t || t.closest('.tillo-peek')) return;
-    t.classList.remove('is-boing'); void t.offsetWidth; t.classList.add('is-boing');
-    say(t, QUIPS[q++ % QUIPS.length]);
-  });
-  function say(el, text) {
-    const b = document.createElement('span');
-    b.className = 'tillo-quip';
-    b.textContent = text;
-    const r = el.getBoundingClientRect();
-    b.style.left = (r.left + r.width / 2) + 'px';
-    b.style.top = (r.top - 8) + 'px';
-    document.body.appendChild(b);
-    setTimeout(() => b.remove(), 1600);
-  }
 
   /* ---------- corner buddy ---------- */
   const TIPS = {

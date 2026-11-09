@@ -1235,7 +1235,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 /* ==========================================================================
    Tillo (figure, idle life, tap reaction)
    ========================================================================== */
-.tillo { position: relative; display: block; margin: 0 auto 8px; cursor: pointer; transform-origin: 50% 100%; animation: tilloBreathe 3.4s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
+.tillo { position: relative; display: block; margin: 0 auto 8px; pointer-events: none; transform-origin: 50% 100%; animation: tilloBreathe 3.4s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
 .tillo img { display: block; width: 100%; height: auto; filter: drop-shadow(0 8px 12px rgba(30,40,90,.22)); transform-origin: 50% 100%; animation: tilloIdle 6s ease-in-out infinite 1.5s; }
 .tillo__hat { display: none; position: absolute; z-index: 2; left: 20%; top: -9%; width: 62%; aspect-ratio: 64 / 56; transform: rotate(-14deg); pointer-events: none;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 56'%3E%3Cpath d='M8 44 C14 22 30 6 52 8 C46 16 44 26 46 40 Z' fill='%23c8102e'/%3E%3Ccircle cx='57' cy='20' r='6' fill='%23fff'/%3E%3Crect x='2' y='40' width='50' height='12' rx='6' fill='%23fff'/%3E%3C/svg%3E") center / contain no-repeat; }
@@ -1263,7 +1263,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 
 /* ---------- corner buddy (bigger, with a "new tip" badge) ---------- */
 .tillo-peek { --peek-w: clamp(104px, 15.5vh, 150px); position: fixed; left: 14px; bottom: 0; z-index: 46; pointer-events: none; }
-.tillo-peek__body .tillo { width: var(--peek-w) !important; }
+.tillo-peek__body .tillo { width: var(--peek-w) !important; pointer-events: auto; cursor: pointer; }
 .tillo-peek__body { pointer-events: auto; display: block; position: relative; transform: translateY(115%); transition: transform .9s var(--ease-bounce); }
 .tillo-peek__body .tillo { margin: 0; }
 .tillo-peek.is-up .tillo-peek__body { transform: translateY(18%); }
@@ -1327,7 +1327,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 .finder__grid > div:first-child { padding-bottom: 210px; }
 .club { position: relative; }
 .club:has(.club__tillo) { grid-template-columns: 118px 1.2fr 1fr; }
-.club__tillo { order: -1; align-self: end; width: 118px; margin-bottom: -48px; position: relative; z-index: 1; }
+.club__tillo { order: -1; align-self: center; justify-self: center; width: 118px; margin-left: -18px; position: relative; z-index: 1; }
 .club__tillo .tillo { margin: 0; width: 118px !important; }
 .shop-hero { position: relative; }
 .hero-tillo { position: absolute; right: 7%; bottom: -30px; z-index: 1; width: 130px; }
