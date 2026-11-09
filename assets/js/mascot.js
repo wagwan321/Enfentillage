@@ -1,7 +1,7 @@
 /* ==========================================================================
    Tillo, the Enfantillage mascot — he lives all over the site.
    - corner buddy: hops up with a page-specific tip and a "new message" badge
-   - homepage: welcome card, peeks over section titles, points at the Gift
+   - homepage: welcome card, points at the Gift
      Finder and the club sign-up
    - shop/brands heroes, product tip card, checkout, cart drawer, footer
    ========================================================================== */
@@ -103,15 +103,6 @@ document.addEventListener('site:ready', () => {
   /* ---------- helpers for placing Tillo in the page ---------- */
   const place = (target, where, html) => { if (target) target.insertAdjacentHTML(where, html); return target; };
 
-  // a head popping up over a section title (a little ledge hides his body)
-  function peekOverTitle(section, line) {
-    const head = section && section.querySelector('.section__head');
-    if (!head || head.querySelector('.tillo-ledge')) return;
-    head.style.position = 'relative';
-    place(head, 'beforeend', `<div class="tillo-ledge reveal" data-from="up" aria-hidden="false">
-      <span class="tillo-ledge__say">${line}</span><span class="tillo-ledge__win">${tillo('tillo--ledge', 96)}</span></div>`);
-  }
-
   /* ---------- page placements (one tick later: page scripts render first) ---------- */
   setTimeout(() => {
     if (page === 'home') {
@@ -132,10 +123,6 @@ document.addEventListener('site:ready', () => {
           </div>
         </div>`);
       const hello = $('.tillo-hello'); if (hello) awayFrom(hello);
-
-      peekOverTitle($('#ages'), 'Pick an age!');
-      peekOverTitle($('#characters'), 'My favourites!');
-      peekOverTitle($('#brands'), XMAS ? 'Santa’s brands!' : 'So many brands!');
 
       // Gift Finder
       const finder = $('#finder');
@@ -169,9 +156,6 @@ document.addEventListener('site:ready', () => {
         place(perks, 'beforebegin', `<div class="tillo-tip">${tillo('tillo--tip', 64)}<p><b>Tillo says:</b> ${line}</p></div>`);
       }
     }
-
-    // checkout: peeking over the order summary
-    place($('.co-summary'), 'afterbegin', `<div class="co-tillo" aria-hidden="true">${tillo('tillo--ledge', 84)}</div>`);
 
     // footer: sitting on the wave, waving
     place($('.footer'), 'afterbegin', `<div class="footer-tillo">${tillo('tillo--sit', 120)}<span class="footer-tillo__say">${XMAS ? 'Merry Christmas!' : 'See you soon!'}</span></div>`);
