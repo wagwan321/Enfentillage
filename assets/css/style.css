@@ -1013,6 +1013,45 @@ ul { list-style: none; margin: 0; padding: 0; }
 .modal__note b { color: var(--red); }
 
 .brands-page { padding: 26px 20px 60px; }
+
+/* ---------- help & store info page ---------- */
+.info { display: grid; grid-template-columns: 210px 1fr; gap: 28px; padding: 30px 20px 70px; align-items: start; }
+.info__nav { position: sticky; top: 140px; display: flex; flex-direction: column; gap: 4px; }
+.info__nav a { padding: 9px 14px; border-radius: 999px; font-weight: 800; color: var(--ink-soft); transition: background .2s, color .2s, transform .3s var(--ease-bounce); }
+.info__nav a:hover { background: #fff; color: var(--navy); transform: translateX(4px); box-shadow: var(--shadow-sm); }
+.info__nav a.is-on { background: var(--navy); color: #fff; }
+.info__body { display: grid; gap: 22px; min-width: 0; }
+.info__card { background: #fff; border-radius: var(--radius-lg); padding: 28px 30px; box-shadow: var(--shadow-sm); border-top: 6px solid var(--c); scroll-margin-top: 130px; }
+.info__card h2 { font-size: clamp(26px, 3vw, 34px); color: var(--c); margin-bottom: 8px; }
+.info__card h3 { font-size: 19px; color: var(--navy); margin: 18px 0 4px; }
+.info__card p { color: var(--ink-soft); font-size: 16px; line-height: 1.6; margin-top: 8px; }
+.info__card p b { color: var(--ink); }
+.info__card a:not(.btn) { color: var(--navy); font-weight: 800; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--navy) 30%, transparent); text-underline-offset: 3px; }
+.info__card a:not(.btn):hover { text-decoration-color: currentColor; }
+.info__contact { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 16px; }
+.info__contact li { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 18px; background: var(--pink-soft, #fde4f1); }
+.info__contact li > span:last-child { display: block; font-size: 15px; line-height: 1.7; }
+.info__contact b { display: block; color: var(--ink); font-size: 14px; text-transform: uppercase; letter-spacing: .5px; }
+.info__ic { flex: none; width: 40px; height: 40px; border-radius: 50%; background: #fff; display: grid; place-items: center; color: var(--c); }
+.info__ic .icon { width: 20px; height: 20px; }
+.info__facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 14px 0 6px; }
+.info__facts li { padding: 14px 16px; border-radius: 18px; background: color-mix(in srgb, var(--c) 10%, #fff); color: var(--ink-soft); font-size: 14px; font-weight: 700; }
+.info__facts b { display: block; font-family: var(--font-display); font-size: 20px; color: var(--c); }
+.info__list { margin: 8px 0 0 4px; color: var(--ink-soft); }
+.info__list li { position: relative; padding-left: 22px; margin-top: 4px; font-weight: 700; }
+.info__list li::before { content: ""; position: absolute; left: 4px; top: .6em; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.info details { border-bottom: 2px dashed var(--line); }
+.info summary { cursor: pointer; list-style: none; padding: 14px 34px 14px 0; font-weight: 800; color: var(--ink); position: relative; }
+.info summary::-webkit-details-marker { display: none; }
+.info summary::after { content: "+"; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; border-radius: 50%; background: color-mix(in srgb, var(--c) 14%, #fff); color: var(--c); display: grid; place-items: center; font-weight: 900; transition: transform .3s var(--ease-bounce); }
+.info details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
+.info details p { margin: 0 0 14px; }
+@media (max-width: 860px) {
+  .info { grid-template-columns: 1fr; padding-top: 18px; }
+  .info__nav { position: static; flex-direction: row; overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px 4px; }
+  .info__nav a { white-space: nowrap; background: #fff; box-shadow: var(--shadow-sm); }
+  .info__card { padding: 22px 18px; }
+}
 .brands-tools { position: sticky; top: 130px; z-index: 5; background: rgba(255,255,255,.96); backdrop-filter: blur(8px); padding: 12px 0; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; border-bottom: 2px dashed var(--line); margin-bottom: 10px; }
 .brands-search input { width: min(340px, 100%); padding: 11px 18px; border-radius: 999px; border: 2px solid var(--line); font-weight: 700; background: var(--blue-soft); }
 .brands-search input:focus { outline: none; border-color: var(--blue); background: #fff; }

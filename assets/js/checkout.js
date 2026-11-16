@@ -119,7 +119,7 @@ document.addEventListener('site:ready', () => {
           ${totalsHTML()}
           <button class="btn btn--green co-place" type="submit">Place order ${icon('arrow', 'icon', 2.6)}</button>
           <div class="co-accept"><span>We accept</span><span class="co-accept__cod">${CASH_ICON} Cash</span><img src="assets/img/pay/whish-money.svg" alt="Whish Money" width="88" height="20"></div>
-          <p class="co-small">By placing your order you agree to our <a href="https://enfantillagestore.com/terms-and-conditions/">terms</a>. Returns within 30 days, unused and in the original box.</p>
+          <p class="co-small">By placing your order you agree to our <a href="info.html#terms">terms</a>. Exchanges within 30 days, unused and in the original box (no refunds).</p>
         </aside>
       </form>`;
     wire();

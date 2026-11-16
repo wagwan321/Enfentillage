@@ -10,7 +10,10 @@
   /* pictures are stored with the site: sm = card thumbnail, lg = quick-view gallery */
   /* pictures: on-sale items are stored with the site (sm = card, lg = gallery);
      sold-out items (p.r) still load theirs from the current store */
+  // product photos that aren't stored in this site yet still load from the WordPress/WooCommerce media library.
+  // If WordPress moves (e.g. to a subdomain once this site takes over the main domain), change this one line.
   const UPLOADS = 'https://enfantillagestore.com/wp-content/uploads/';
+  const MAP_URL = 'https://www.google.com/maps/search/?api=1&query=Enfantillage%2C%20Mazraat%20Yachouh%2C%20Lebanon';
   P.forEach(p => { p.i = p.r ? UPLOADS + p.r : `assets/img/products/sm/${p.id}.webp`; });
   const imgLg = (p, k = 0) => `assets/img/products/lg/${p.id}-${k}.webp`;
   /* every picture of a product; sold-out items need their details loaded first */
@@ -464,7 +467,7 @@
           <div class="search__suggest" id="suggest"></div>
         </div>
         <nav class="actions" aria-label="Account">
-          <a class="action action--hide-sm" href="https://enfantillagestore.com/my-account/">${icon('user')}<span class="action__label">Account</span></a>
+          <a class="action action--hide-sm" href="info.html#contact">${icon('phone')}<span class="action__label">Help</span></a>
           <a class="action" href="${shopUrl({ fav: 1 })}" id="favAction">${icon('heart')}<span class="action__label">Wishlist</span><span class="action__count" data-fav-count>0</span></a>
           <button class="action" data-open="cart" id="cartAction">${icon('cart')}<span class="action__label">Cart</span><span class="action__count" data-cart-count>0</span></button>
         </nav>
@@ -495,7 +498,7 @@
         <a class="macc__btn" href="${shopUrl({ sale: 1 })}" style="color:var(--red)"><span><span class="dot"></span>Offer Zone</span><span class="nav__pill">-${maxOff}%</span></a>
       </div>
       <div class="drawer__foot" style="display:flex;gap:10px">
-        <a class="btn btn--navy btn--sm" href="https://enfantillagestore.com/my-account/">${icon('user', 'icon', 2.4)} My account</a>
+        <a class="btn btn--navy btn--sm" href="info.html">${icon('sparkle', 'icon', 2.4)} Help & info</a>
         <a class="btn btn--pink btn--sm" href="tel:+9613720233">${icon('phone', 'icon', 2.4)} Call us</a>
       </div>
     </aside>
@@ -538,15 +541,17 @@
           <li><a href="${shopUrl({ sale: 1 })}">Offer Zone</a></li>
         </ul></div>
         <div><h4>Help</h4><ul>
-          <li><a href="https://enfantillagestore.com/about-us/">About us</a></li>
-          <li><a href="https://enfantillagestore.com/contact-us/">Contact us</a></li>
-          <li><a href="https://enfantillagestore.com/delivery-policy/">Delivery Policy</a></li>
-          <li><a href="https://enfantillagestore.com/return-policy/">Return Policy</a></li>
-          <li><a href="https://enfantillagestore.com/faq/">FAQ</a></li>
+          <li><a href="info.html#about">About us</a></li>
+          <li><a href="info.html#contact">Contact us</a></li>
+          <li><a href="info.html#delivery">Delivery</a></li>
+          <li><a href="info.html#returns">Exchanges</a></li>
+          <li><a href="info.html#faq">FAQ</a></li>
+          <li><a href="info.html#terms">Terms & privacy</a></li>
         </ul></div>
         <div><h4>Visit us</h4><ul class="footer__contact">
-          <li>${icon('pin')}<span>Mazraat Yachouh, Chattat Center, Lebanon</span></li>
+          <li>${icon('pin')}<span><a href="${MAP_URL}" target="_blank" rel="noopener">Mazraat Yachouh, Chattat Center, Lebanon</a></span></li>
           <li>${icon('phone')}<span><a href="tel:+9614921863">+961 4 921 863</a><br><a href="tel:+9613720233">+961 3 720 233</a></span></li>
+          <li>${icon('mail')}<span><a href="mailto:info@enfantillagestore.com">info@enfantillagestore.com</a></span></li>
         </ul></div>
       </div>
       <div class="wrap footer__bottom">

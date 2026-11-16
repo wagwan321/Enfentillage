@@ -32,6 +32,8 @@ document.addEventListener('site:ready', () => {
               ['Use my code TILLO12 at checkout to save 12%.', '', '']],
     brands: [['Looking for a brand? Type its name in the box above!', '', ''],
              ['Tap any logo to see all of that brand’s toys.', '', '']],
+    info: [['Can’t find your answer? Call us on +961 3 720 233!', 'Call the store', 'tel:+9613720233'],
+           ['Free delivery on orders above 50 $!', '', '']],
     checkout: [['Don’t forget my code TILLO12 for 12% off!', '', ''],
                ['Want it gift-wrapped? Tick the box under the address.', '', '']],
   };
