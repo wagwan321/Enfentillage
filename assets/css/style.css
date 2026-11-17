@@ -1720,3 +1720,17 @@ a[href^="tel:"] { white-space: nowrap; }
 
 /* grid items may always shrink to their column (Safari otherwise grows a column to fit a loaded photo) */
 .card, .char, .cat-bubble, .coin, .perk, .brand-chip, .brand-tile { min-width: 0; }
+@media (max-width: 760px) {
+  /* hero: the faint see-through circles sat on top of the toy pictures on phones */
+  .slide__deco i { display: none; }
+  /* Tillo a size smaller on phones */
+  .tillo-peek { --peek-w: 72px; }
+  .tillo-hello__fig { height: 136px; }
+  .tillo-hello__fig .tillo { width: 104px !important; margin-left: -52px; bottom: -34px; }
+  .footer-tillo { width: 74px; top: -94px; }
+  .footer-tillo .tillo { width: 74px !important; }
+}
+@media (max-width: 360px) {
+  .footer-tillo { width: 66px; top: -86px; }
+  .footer-tillo .tillo { width: 66px !important; }
+}
