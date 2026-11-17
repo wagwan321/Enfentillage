@@ -136,7 +136,7 @@ document.addEventListener('site:ready', () => {
   const header = $('#header');
   function drapeLights() {
     const old = header.querySelector('.xmas-drape'); if (old) old.remove();
-    const W = innerWidth, swag = W < 760 ? 90 : 130, dip = W < 760 ? 12 : 16, n = Math.ceil(W / swag);
+    const W = document.documentElement.clientWidth, swag = W < 760 ? 90 : 130, dip = W < 760 ? 12 : 16, n = Math.ceil(W / swag);
     let path = '', bulbs = '', k = 0;
     for (let i = 0; i < n; i++) {
       const x0 = i * swag, x1 = x0 + swag, cx = x0 + swag / 2;

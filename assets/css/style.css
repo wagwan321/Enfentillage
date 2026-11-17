@@ -310,6 +310,10 @@ ul { list-style: none; margin: 0; padding: 0; }
   box-shadow: var(--shadow-lg);
   visibility: hidden;
 }
+/* the menu and cart wait just off screen while closed. They sit in a full-screen frame that clips them,
+   so no phone browser can scroll sideways into the empty space where the closed cart waits */
+.drawer-clip { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 100; }
+.drawer-clip > .drawer { position: absolute; pointer-events: auto; }
 .drawer--left { left: 0; transform: translateX(-105%); border-radius: 0 28px 28px 0; }
 .drawer--right { right: 0; transform: translateX(105%); border-radius: 28px 0 0 28px; }
 .drawer.is-open { transform: none; visibility: visible; }
@@ -383,6 +387,11 @@ ul { list-style: none; margin: 0; padding: 0; }
 .reveal[data-from="up"] { transform: translateY(50px); }
 .reveal[data-from="pop"] { transform: scale(.7) rotate(-6deg); transition-timing-function: var(--ease-out), var(--ease-bounce); }
 .reveal.is-in { opacity: 1; transform: none; }
+/* phones and tablets: nothing slides in from the sides. Elements waiting off to the right made the page wider
+   than the screen on some phone browsers (sideways scrolling into white space), so they fade up instead */
+@media (max-width: 1024px) {
+  .reveal[data-from="left"]:not(.is-in), .reveal[data-from="right"]:not(.is-in) { transform: translateY(36px); }
+}
 
 /* ==========================================================================
    HERO
@@ -1432,7 +1441,7 @@ html.theme-xmas {
 .theme-xmas .tillo-hello { background: radial-gradient(circle at 12% 70%, #fff 0 30%, transparent 31%), linear-gradient(120deg, #fde6e8, #e1f3e5); }
 
 /* draped string lights */
-.xmas-drape { position: absolute; left: 0; top: 100%; margin-top: -6px; pointer-events: none; z-index: 3; overflow: visible; }
+.xmas-drape { position: absolute; left: 0; top: 100%; margin-top: -6px; pointer-events: none; z-index: 3; overflow: hidden; max-width: 100%; }
 .xd-bulb { animation: bulbBlink 1.8s ease-in-out infinite; animation-delay: var(--d); }
 @keyframes bulbBlink { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
@@ -1670,25 +1679,22 @@ html.theme-xmas {
   input, select, textarea, .search input, .co-field input, .co-field textarea, .co-select { font-size: 16px !important; }
   /* character rings a touch thicker on small circles */
   .char__ring { padding: 6px; }
-  /* gift finder: each question is one swipeable row, results are a swipeable row of cards */
-  .finder { padding: 24px 0 22px; }
-  .finder__grid > div:first-child > h2, .finder__grid > div:first-child > p, .finder__step label { padding: 0 18px; }
+  /* gift finder on phones: every option visible at once (no sideways scrolling), results as a 2-column grid */
+  .finder { padding: 24px 16px 22px; }
   .finder__grid > div:first-child > p { margin-bottom: 14px; font-size: 15px; }
-  .finder__step { margin-bottom: 14px; }
+  .finder__step { margin-bottom: 16px; }
   .finder__step label { font-size: 16px; }
-  .finder .chips { flex-wrap: nowrap; overflow-x: auto; padding: 4px 18px 6px; scrollbar-width: none; scroll-padding: 0 18px; }
-  .finder .chips::-webkit-scrollbar { display: none; }
-  .finder .chip { flex: none; padding: 9px 15px; }
+  .finder .chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .finder .chips[data-group="interest"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .finder .chip { padding: 10px 6px; text-align: center; font-size: 14px; line-height: 1.15; }
   .finder .chip.is-on { transform: none; }
   .finder__grid { gap: 6px; grid-template-columns: minmax(0, 1fr); }
   .finder__grid > * { min-width: 0; }
   .finder__results { display: block; min-height: 0; }
-  .finder__count { padding: 0 18px; margin-bottom: 10px; font-size: 18px; }
+  .finder__count { margin-bottom: 12px; font-size: 18px; gap: 10px; }
   .finder__count a { font-size: 15px; white-space: nowrap; }
-  .finder__cards { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 18px 8px; scroll-padding: 0 18px; scrollbar-width: none; }
-  .finder__cards::-webkit-scrollbar { display: none; }
-  .finder__cards .card { flex: 0 0 min(62%, 230px); scroll-snap-align: start; }
-  .finder__empty { margin: 0 18px; }
+  .finder__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .finder__empty { margin: 0; }
 }
 @media (max-width: 1024px) {
   /* filter panel on phones/tablets: fill the screen height and scroll inside, so "Show N toys" is always reachable */

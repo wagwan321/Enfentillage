@@ -500,6 +500,7 @@
     </header>
 
     <div class="drawer-backdrop" data-close></div>
+    <div class="drawer-clip">
     <aside class="drawer drawer--left" id="menuDrawer" aria-label="Menu">
       <div class="drawer__head"><img src="assets/img/logo.png" alt="Enfantillage" style="height:52px"><button class="drawer__close" data-close aria-label="Close menu">${icon('x')}</button></div>
       <div class="drawer__body">
@@ -521,6 +522,7 @@
       <div class="drawer__body" id="cartBody"></div>
       <div class="drawer__foot" id="cartFoot"></div>
     </aside>
+    </div>
 
     <div class="modal" id="quick" aria-hidden="true">
       <div class="modal__backdrop" data-close-modal></div>
