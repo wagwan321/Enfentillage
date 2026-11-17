@@ -194,7 +194,6 @@ document.addEventListener('site:ready', () => {
             ${TREE('xscene__tree xscene__tree--4')}${TREE('xscene__tree xscene__tree--5')}
             ${SNOWMAN('xscene__snowman')}
             <span class="xscene__gifts">${GIFT('#c8102e', '#f2b705', 'g1')}${GIFT('#1f8a3e', '#fff', 'g2')}${GIFT('#4aa8ff', '#ff6ac1', 'g3')}</span>
-            <span class="xscene__tillo">${tillo('tillo--sit', 150)}</span>
           </div>
         </section>`);
     }

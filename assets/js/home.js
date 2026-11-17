@@ -271,7 +271,7 @@ document.addEventListener('site:ready', () => {
     if (b) { params.min = b.min; if (b.max < 1e9) params.max = b.max; }
     if (sel.interest) params.cat = sel.interest;
     if (!all.length) {
-      out.innerHTML = `<div class="finder__empty">${window.ENF.tillo('tillo--wave', 90)}<h3 style="font-size:24px;margin:10px 0 4px">Hmm, no exact match!</h3><p>Try a different budget or interest — there’s plenty more to discover.</p></div>`;
+      out.innerHTML = `<div class="finder__empty"><div class="empty-art" aria-hidden="true">${window.ENF.balloon('#e8222b', 54)}${window.ENF.balloon('#ffc83d', 44)}${window.ENF.balloon('#00a6e4', 50)}</div><h3 style="font-size:24px;margin:10px 0 4px">Hmm, no exact match!</h3><p>Try a different budget or interest — there’s plenty more to discover.</p></div>`;
       return;
     }
     // shuffle a little so "surprise me" feels alive, but keep it stable per selection

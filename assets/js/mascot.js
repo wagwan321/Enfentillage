@@ -127,25 +127,9 @@ document.addEventListener('site:ready', () => {
         </div>`);
       const hello = $('.tillo-hello'); if (hello) awayFrom(hello);
 
-      // Gift Finder
-      const finder = $('#finder');
-      if (finder && !finder.querySelector('.finder__tillo')) {
-        place(finder, 'beforeend', `<div class="finder__tillo reveal" data-from="left">
-          <span class="finder__say">${XMAS ? 'Let’s find the perfect Christmas gift!' : 'Let me help you pick!'}</span>${tillo('tillo--point', 160)}</div>`);
-        awayFrom(finder.querySelector('.finder__tillo'));
-      }
-      // club sign-up: Tillo points at the form
-      place($('#club'), 'beforeend', `<div class="club__tillo reveal" data-from="up">${tillo('tillo--point', 150)}</div>`);
     }
 
-    // shop + brands heroes
-    const hero = $('.shop-hero');
-    if (page === 'brands' && hero && !hero.querySelector('.hero-tillo')) {
-      hero.querySelectorAll('.para').forEach(b => b.remove());
-      place(hero, 'beforeend', `<div class="hero-tillo">${tillo('tillo--hero', 130)}<span class="hero-tillo__say">${page === 'brands' ? 'Which one is your favourite?' : 'Ooh, look at all these toys!'}</span></div>`);
-    }
-
-    // product page: Tillo's tip
+    // product page: a little tip card (no Tillo picture: the site keeps just 2 Tillos)
     if (page === 'product') {
       const id = +new URLSearchParams(location.search).get('id');
       const p = window.ENF.byId.get(id);
@@ -153,16 +137,11 @@ document.addEventListener('site:ready', () => {
       if (p && perks) {
         const line = !p.s ? 'This one is sold out right now. Call us and we’ll tell you when it’s back!'
           : !p.p ? 'Ask us for the price: we’re happy to help!'
-          : `With my code <b>${C.code}</b> it’s only <b>${money(Math.round(p.p * (100 - C.pct)) / 100)}</b>, plus ${C.cashback}% cashback in store!`;
-        place(perks, 'beforebegin', `<div class="tillo-tip">${tillo('tillo--tip', 64)}<p><b>Tillo says:</b> ${line}</p></div>`);
+          : `With code <b>${C.code}</b> it’s only <b>${money(Math.round(p.p * (100 - C.pct)) / 100)}</b>, plus ${C.cashback}% cashback in store!`;
+        place(perks, 'beforebegin', `<div class="tillo-tip tillo-tip--plain"><span class="tillo-tip__icon" aria-hidden="true">${icon('sparkle', 'icon', 2.4)}</span><p><b>Tip:</b> ${line}</p></div>`);
       }
     }
 
-    // footer: sitting on the wave, waving
-    place($('.footer'), 'afterbegin', `<div class="footer-tillo">${tillo('tillo--sit', 120)}<span class="footer-tillo__say">${XMAS ? 'Merry Christmas!' : 'See you soon!'}</span></div>`);
-
     window.ENF.observeReveals();
-    // the Christmas scene adds its own Tillo a moment later
-    setTimeout(() => ['.xscene__tillo', '.footer-tillo', '.club__tillo', '.hero-tillo'].forEach(sel => awayFrom($(sel))), 200);
   }, 0);
 });

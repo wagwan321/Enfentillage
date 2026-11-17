@@ -518,7 +518,7 @@
     </aside>
 
     <aside class="drawer drawer--right" id="cartDrawer" aria-label="Shopping cart">
-      <div class="drawer__head"><h3 class="drawer__title-tillo">${tillo('tillo--head', 54)} Your Toy Box</h3><button class="drawer__close" data-close aria-label="Close cart">${icon('x')}</button></div>
+      <div class="drawer__head"><h3 class="drawer__title-tillo"><span class="drawer__title-icon" aria-hidden="true">${icon('gift', 'icon', 2.4)}</span> Your Toy Box</h3><button class="drawer__close" data-close aria-label="Close cart">${icon('x')}</button></div>
       <div class="drawer__body" id="cartBody"></div>
       <div class="drawer__foot" id="cartFoot"></div>
     </aside>
@@ -528,7 +528,7 @@
       <div class="modal__backdrop" data-close-modal></div>
       <div class="modal__card" role="dialog" aria-modal="true" aria-label="Product quick view"></div>
     </div>
-    <div class="toast" id="toast" role="status" aria-live="polite"><span class="toast__tillo" aria-hidden="true"><img src="${tilloSrc(false)}" alt=""></span><span class="toast__msg"></span></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"><span class="toast__tillo toast__icon" aria-hidden="true">${icon('gift', 'icon', 2.4)}</span><span class="toast__msg"></span></div>
     `;
   }
   function macc(title, color, links) {
@@ -574,7 +574,7 @@
         <span class="pay"><span>Cash on delivery</span><span class="pay__whish"><img class="pay-logo" src="assets/img/pay/whish-money.svg" alt="Whish Money" width="80" height="18"></span></span>
       </div>
     </footer>
-    <button class="to-top" id="toTop" aria-label="Back to top"><img class="to-top__tillo" src="${tilloSrc(false)}" alt="" width="64" height="96"><span class="to-top__up" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg></span></button>
+    <button class="to-top to-top--plain" id="toTop" aria-label="Back to top"><span class="to-top__up" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg></span></button>
     <nav class="mbar" aria-label="Quick links">
       <a href="index.html" class="${location.pathname.endsWith('shop.html') ? '' : 'is-current'}">${icon('home')}Home</a>
       <button type="button" data-open="menu">${icon('grid')}Shop</button>
@@ -603,7 +603,7 @@
     const lines = Object.entries(cart).filter(([id]) => byId.has(+id));
     const total = cartTotal();
     if (!lines.length) {
-      body.innerHTML = `<div class="cart-empty">${tillo('tillo--wave', 110)}<h3 style="color:var(--navy);font-size:24px;margin:10px 0 4px">Your toy box is empty!</h3><p>Let’s fill it with something fun.</p><br><a class="btn btn--red" href="shop.html">Start shopping</a></div>`;
+      body.innerHTML = `<div class="cart-empty"><div class="empty-art" aria-hidden="true">${balloon('#e8222b', 54)}${balloon('#ffc83d', 44)}${balloon('#00a6e4', 50)}</div><h3 style="color:var(--navy);font-size:24px;margin:10px 0 4px">Your toy box is empty!</h3><p>Let’s fill it with something fun.</p><br><a class="btn btn--red" href="shop.html">Start shopping</a></div>`;
       foot.innerHTML = '';
       return;
     }
@@ -834,7 +834,7 @@
       const chips = [...cats, ...chars, ...brands];
       box.innerHTML = (chips.length ? `<div class="suggest__label">Jump to</div><div class="suggest__chips">${chips.map(([t, p]) => `<a class="suggest__chip" href="${shopUrl(p)}">${esc(t)}</a>`).join('')}</div>` : '') +
         (prods.length ? `<div class="suggest__label">Toys</div>${prods.map(itemHTML).join('')}<a class="suggest__chip" style="display:block;text-align:center;margin:8px" href="${shopUrl({ q: input.value.trim() })}">See all results for “${esc(input.value.trim())}”</a>`
-          : `<div class="suggest__empty">${tillo('tillo--tiny', 44)}<br>No toys found for “${esc(input.value)}” — try another word!</div>`);
+          : `<div class="suggest__empty">No toys found for “${esc(input.value)}” — try another word!</div>`);
     }
     const itemHTML = p => `<a class="suggest__item" href="${productUrl(p)}"><img src="${esc(p.i)}" alt=""><span><small>${esc(brandName(p.b))}</small>${esc(p.n)}</span><b>${!p.s ? 'Sold out' : p.p ? money(p.p) : 'Ask'}</b></a>`;
     input.addEventListener('focus', () => { render(); wrap.classList.add('is-open'); });

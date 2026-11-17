@@ -81,7 +81,6 @@ document.addEventListener('site:ready', () => {
     const hero = $('#shopHero');
     hero.style.cssText = colorVars(color);
     hero.innerHTML = `
-      <div class="hero-tillo">${window.ENF.tillo('tillo--hero', 130)}<span class="hero-tillo__say">${st.fav ? 'Your favourites!' : st.sale ? 'Bargains!' : 'Ooh, look at all these toys!'}</span></div>
       <div class="wrap" style="position:relative;z-index:1">
         <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a><span>›</span><a href="shop.html">Shop</a>${title !== 'All Toys' ? `<span>›</span><span>${esc(title)}</span>` : ''}</nav>
         <h1 class="reveal" data-from="left">${esc(title)}</h1>
@@ -148,7 +147,7 @@ document.addEventListener('site:ready', () => {
       (hiddenOut ? ` <button type="button" class="count-out" id="showOut">+ ${hiddenOut} sold out</button>` : '');
     const grid = $('#grid');
     if (!r.length) {
-      grid.innerHTML = `<div class="empty-state">${window.ENF.tillo('tillo--wave', 110)}<h3>${st.fav ? 'No hearts yet!' : 'No toys match… yet!'}</h3><p style="color:var(--ink-soft)">${st.fav ? 'Tap the heart on any toy to save it here.' : 'Try removing a filter or searching for something else.'}</p><br><a class="btn btn--navy" href="shop.html">See all toys</a></div>`;
+      grid.innerHTML = `<div class="empty-state"><div class="empty-art" aria-hidden="true">${window.ENF.balloon('#e8222b', 54)}${window.ENF.balloon('#ffc83d', 44)}${window.ENF.balloon('#00a6e4', 50)}</div><h3>${st.fav ? 'No hearts yet!' : 'No toys match… yet!'}</h3><p style="color:var(--ink-soft)">${st.fav ? 'Tap the heart on any toy to save it here.' : 'Try removing a filter or searching for something else.'}</p><br><a class="btn btn--navy" href="shop.html">See all toys</a></div>`;
       $('#more').innerHTML = '';
       return;
     }
