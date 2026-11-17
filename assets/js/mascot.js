@@ -84,7 +84,7 @@ document.addEventListener('site:ready', () => {
   cta.addEventListener('click', hush);
 
   // pops up quickly; after that he offers a new tip now and then (until you close him)
-  setTimeout(appear, 2500);
+  setTimeout(appear, 300);   // Tillo is there right away (his tip bubble follows a moment later)
   addEventListener('scroll', function first() { if (scrollY > 300) { appear(); removeEventListener('scroll', first); } }, { passive: true });
   let nudges = 0;
   setInterval(() => {

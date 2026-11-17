@@ -1734,3 +1734,8 @@ a[href^="tel:"] { white-space: nowrap; }
   .footer-tillo { width: 66px; top: -86px; }
   .footer-tillo .tillo { width: 66px !important; }
 }
+@media (max-width: 760px) {
+  /* corner Tillo sits fully above the bottom menu bar on phones (it used to hide his legs) */
+  .tillo-peek { bottom: 84px; }
+  .tillo-peek.is-up .tillo-peek__body { transform: none; }
+}
