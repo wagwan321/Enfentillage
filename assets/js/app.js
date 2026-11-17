@@ -7,18 +7,26 @@
   'use strict';
 
   const P = window.PRODUCTS || [];
-  /* pictures are stored with the site: sm = card thumbnail, lg = quick-view gallery */
-  /* pictures: on-sale items are stored with the site (sm = card, lg = gallery);
-     sold-out items (p.r) still load theirs from the current store */
-  // product photos that aren't stored in this site yet still load from the WordPress/WooCommerce media library.
-  // If WordPress moves (e.g. to a subdomain once this site takes over the main domain), change this one line.
-  const UPLOADS = 'https://enfantillagestore.com/wp-content/uploads/';
+  /* pictures: in-stock toys are stored with the site (sm = card, lg = gallery).
+     Sold-out toys (p.r) had their photos in the old WordPress media library, which went offline when this
+     site took over enfantillagestore.com. Until that library is back somewhere, they show a placeholder.
+     To bring them back: set OLD_PHOTOS to the library's new address, e.g. 'https://shop.enfantillagestore.com/wp-content/uploads/'. */
+  /* the 30% campaign: 20% off straight away with a code + a 10% cashback voucher to spend in store.
+     Change the code or the numbers here and the whole site follows. */
+  const CAMPAIGN = { code: 'TILLO20', pct: 20, cashback: 10 };
+  const OLD_PHOTOS = '';
+  const NO_PHOTO = 'assets/img/no-photo.svg';
   const MAP_URL = 'https://www.google.com/maps/search/?api=1&query=Enfantillage%2C%20Mazraat%20Yachouh%2C%20Lebanon';
-  P.forEach(p => { p.i = p.r ? UPLOADS + p.r : `assets/img/products/sm/${p.id}.webp`; });
+  P.forEach(p => { p.i = !p.r ? `assets/img/products/sm/${p.id}.webp` : OLD_PHOTOS ? OLD_PHOTOS + p.r : NO_PHOTO; });
   const imgLg = (p, k = 0) => `assets/img/products/lg/${p.id}-${k}.webp`;
   /* every picture of a product; sold-out items need their details loaded first */
-  const gallery = (p, d) => d && d.img ? d.img.map(u => /^https?:/.test(u) ? u : UPLOADS + u)
-    : p.r ? [p.i] : Array.from({ length: p.g || 1 }, (_, k) => imgLg(p, k));
+  const gallery = (p, d) => !p.r ? Array.from({ length: p.g || 1 }, (_, k) => imgLg(p, k))
+    : OLD_PHOTOS && d && d.img ? d.img.map(u => /^https?:/.test(u) ? u : OLD_PHOTOS + u) : [p.i];
+  // any picture that fails to load falls back to the placeholder instead of a broken icon
+  addEventListener('error', e => {
+    const im = e.target;
+    if (im && im.tagName === 'IMG' && !im.dataset.noPhoto && /assets\/img\/products|wp-content/.test(im.src)) { im.dataset.noPhoto = 1; im.src = NO_PHOTO; }
+  }, true);
   /* descriptions, refs and sold-out galleries live in 20 small files (id % 20), loaded on demand */
   const detailChunks = {};
   const loadDetail = id => (detailChunks[id % 20] || (detailChunks[id % 20] =
@@ -297,7 +305,12 @@
   /* brand logo <img> (official logos live in assets/img/brands) */
   const brandLogo = (b, cls = '') => b.logo ? `<img class="${cls}" src="assets/img/brands/${b.logo}" alt="${b.name}">` : '';
   const brandMatch = (p, key) => p.b === key;
-  const imgOf = (id, fallbackFilter) => (byId.get(id) || (fallbackFilter && P.find(fallbackFilter)) || P[0] || {}).i;
+  // a picture for a section tile: the chosen toy if we have its photo, otherwise another matching toy that has one
+  const imgOf = (id, fallbackFilter) => {
+    const own = byId.get(id);
+    if (own && !own.r) return own.i;
+    return ((fallbackFilter && P.find(p => !p.r && fallbackFilter(p))) || P.find(p => !p.r) || {}).i;
+  };
 
   /* ---------- icons ---------- */
   const PATHS = {
@@ -440,8 +453,8 @@
     return `
     <div class="ticker" role="region" aria-label="Store announcements"><div class="ticker__track">
       ${[0, 1].map(() => `
-        <span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span>Save <b>12%</b> today with code <b>TILLO12</b> at checkout</span>
-        <span class="ticker__item"><span class="ticker__dot" style="--c:var(--green)"></span><b>Free delivery</b> on orders above 50 $</span>
+        <span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span><b>Get 30% back:</b> <b>${CAMPAIGN.pct}% off</b> now with code <b>${CAMPAIGN.code}</b> + <b>${CAMPAIGN.cashback}% cashback</b> in store</span>
+        <span class="ticker__item"><span class="ticker__dot" style="--c:var(--green)"></span><a href="index.html#club">Get your <b>${CAMPAIGN.cashback}% cashback voucher</b> with your email →</a></span>
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--pink)"></span>Holiday wishlists are open — find the perfect gift with our <b>Gift Finder</b></span>
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--blue)"></span>Visit our store in <b>Mazraat Yachouh</b>, Chattat Center</span>
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--red)"></span>Up to <b>${maxOff}% off</b> in the Offer Zone</span>`).join('')}
@@ -572,7 +585,6 @@
   /* ==========================================================================
      Cart + wishlist
      ========================================================================== */
-  const FREE_SHIP = 50;
   const cartCount = () => Object.values(cart).reduce((a, b) => a + b, 0);
   const cartTotal = () => Object.entries(cart).reduce((s, [id, q]) => s + (byId.get(+id)?.p || 0) * q, 0);
 
@@ -593,10 +605,8 @@
       foot.innerHTML = '';
       return;
     }
-    const left = Math.max(0, FREE_SHIP - total);
     body.innerHTML = `
-      <div class="ship-meter">${left > 0 ? `You’re only <b>${money(left)}</b> away from <b>free delivery!</b>` : 'Woohoo! You’ve unlocked <b>free delivery</b>'}
-        <div class="ship-meter__bar"><div class="ship-meter__fill" style="width:${Math.min(100, (total / FREE_SHIP) * 100)}%"></div></div></div>
+      <div class="ship-meter">Use code <b>${CAMPAIGN.code}</b> at checkout for <b>${CAMPAIGN.pct}% off</b>, plus a <b>${CAMPAIGN.cashback}% cashback</b> voucher for the store.</div>
       ${lines.map(([id, q]) => { const p = byId.get(+id); return `
         <div class="cart-line">
           <img src="${esc(p.i)}" alt="">
@@ -606,7 +616,7 @@
           <div class="cart-line__price">${money(p.p * q)}</div>
         </div>`; }).join('')}`;
     foot.innerHTML = `<div class="cart-total"><span>Subtotal</span><span>${money(total)}</span></div>
-      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Use code <b style="color:var(--red)">TILLO12</b> at checkout to save 12%.</p>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Delivery: 3 $ anywhere in Lebanon.</p>
       <a class="btn btn--green" style="width:100%" href="checkout.html">Checkout ${icon('arrow', 'icon', 2.6)}</a>
       <p class="cart-pay">Pay by <b>cash on delivery</b> or <img src="assets/img/pay/whish-money.svg" alt="Whish Money" width="62" height="14"></p>`;
   }
@@ -710,7 +720,8 @@
   }
   /* description block from the old store (plain text, keeps line breaks) */
   const descHTML = d => d && d.d
-    ? `<p>${esc(d.d).replace(/\n/g, '<br>')}</p>${d.sku ? `<small>Ref. ${esc(d.sku)}</small>` : ''}`
+    // the store's texts sometimes have a ? where an apostrophe was (you?ve, it?s): put the apostrophe back
+    ? `<p>${esc(d.d.replace(/([A-Za-z])\?(s|t|ve|re|ll|m|d)\b/g, '$1’$2')).replace(/\n/g, '<br>')}</p>${d.sku ? `<small>Ref. ${esc(d.sku)}</small>` : ''}`
     : (d && d.sku ? `<small>Ref. ${esc(d.sku)}</small>` : '');
 
   function openQuick(id) {
@@ -960,7 +971,7 @@
 
   window.ENF = {
     P, byId, COLORS, colorVars, hashColor, CATEGORIES, AGES, BRANDS, CHARACTERS,
-    tillo, brandMatch, brandLogo, imgOf, imgLg, gallery, galleryHTML, descHTML, loadDetail, productUrl, priceHTML, titleCase, addToCart, getCart: () => cart, setCart: c => { cart = c; store.set('enf_cart', cart); renderCart(); syncCounts(); }, FREE_SHIP, cartTotal, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
+    tillo, brandMatch, brandLogo, imgOf, imgLg, gallery, galleryHTML, descHTML, loadDetail, productUrl, priceHTML, titleCase, addToCart, getCart: () => cart, setCart: c => { cart = c; store.set('enf_cart', cart); renderCart(); syncCounts(); }, CAMPAIGN, cartTotal, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
     observeReveals, initRail, burst, toast, NEW_IDS, getFavs: () => favs,
   };
 

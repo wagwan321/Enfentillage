@@ -3,13 +3,16 @@
    ========================================================================== */
 document.addEventListener('site:ready', () => {
   'use strict';
-  const { P, byId, COLORS, colorVars, CATEGORIES, AGES, BRANDS, CHARACTERS, brandMatch, brandLogo, imgOf, icon, balloon, starSvg, esc, money, card, shopUrl, observeReveals, initRail, burst, toast, NEW_IDS } = window.ENF;
+  const { P, byId, COLORS, colorVars, CATEGORIES, AGES, BRANDS, CHARACTERS, brandMatch, brandLogo, imgOf, icon, balloon, starSvg, esc, money, card, shopUrl, observeReveals, initRail, burst, toast, NEW_IDS, CAMPAIGN } = window.ENF;
   const $ = s => document.querySelector(s);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const img = id => esc(imgOf(id));
 
   /* ---------------- HERO CAROUSEL ---------------- */
-  const topDeals = P.filter(p => p.o).sort((a, b) => (1 - b.p / b.o) - (1 - a.p / a.o)).slice(0, 3);
+  // biggest in-stock markdowns, topped up with favourites so the offer slide always has 3 toys
+  const topDeals = [...P.filter(p => p.o && p.s && !p.r).sort((a, b) => (1 - b.p / b.o) - (1 - a.p / a.o)),
+    ...[30977, 54021, 30954].map(id => byId.get(id)).filter(p => p && p.s && !p.r)]
+    .filter((p, i, a) => a.indexOf(p) === i).slice(0, 3);
   const SLIDES = [
     {
       bg: 'linear-gradient(135deg,#eef1fc 0%,#dce3fa 100%)', accent: '#1d6fd1',
@@ -31,15 +34,15 @@ document.addEventListener('site:ready', () => {
       bg: 'linear-gradient(135deg,#ecf9ee 0%,#cdeed4 100%)', accent: '#23893a',
       kicker: `${icon('bike', 'icon', 2.4)} Ride-ons & bikes`,
       title: 'Ready, set, <em>ride!</em>',
-      desc: 'Cozy Coupes for little drivers and Huffy bikes for big adventures.',
+      desc: 'Step2 coupes for little drivers and Huffy bikes for big adventures.',
       cta: ['Shop ride-ons', shopUrl({ cat: 'rideon' }), 'btn--green'],
-      imgs: [52531, 52203, 52554],
+      imgs: [31917, 52203, 52554],
     },
     {
       bg: 'linear-gradient(135deg,#fff1f1 0%,#ffd9dc 100%)', accent: '#d81e27',
       kicker: `${icon('tag', 'icon', 2.4)} Offer Zone`,
-      title: 'Save <em>12%</em> today',
-      desc: 'Use code TILLO12 at checkout — plus real markdowns on top toys right now.',
+      title: 'Get <em>30%</em> back',
+      desc: `${CAMPAIGN.pct}% off right now with code ${CAMPAIGN.code}, plus a ${CAMPAIGN.cashback}% cashback voucher to spend in our store.`,
       cta: ['Shop the offers', shopUrl({ sale: 1 }), 'btn--red'],
       imgs: topDeals.map(p => p.id),
       burst: true,
@@ -66,8 +69,8 @@ document.addEventListener('site:ready', () => {
         cta: ['Shop baby gifts', shopUrl({ cat: 'baby' }), 'btn--navy'], imgs: [55205, 20700, 55164] },
       { bg: 'linear-gradient(135deg,#fff6e3 0%,#ffe4a8 100%)', accent: '#c8102e', xmas: 'gold',
         kicker: `${icon('tag', 'icon', 2.4)} Christmas offers`,
-        title: 'Save <em>12%</em> with Tillo',
-        desc: 'Use code TILLO12 at checkout, plus real markdowns on top toys.',
+        title: 'Get <em>30%</em> back',
+        desc: `${CAMPAIGN.pct}% off with code ${CAMPAIGN.code}, plus a ${CAMPAIGN.cashback}% cashback voucher for the store.`,
         cta: ['Shop the offers', shopUrl({ sale: 1 }), 'btn--red'], imgs: topDeals.map(p => p.id), burst: true });
   }
   const DUR = 6500;
@@ -88,7 +91,7 @@ document.addEventListener('site:ready', () => {
         <a class="btn ${s.cta[2]}" href="${s.cta[1]}">${s.cta[0]} ${icon('arrow', 'icon', 2.6)}</a>
       </div>
       <div class="slide__art">
-        ${s.burst ? `<div class="price-burst"><span>CODE<b>-12%</b>TILLO12</span></div>` : ''}
+        ${s.burst ? `<div class="price-burst"><span>CODE<b>-${CAMPAIGN.pct}%</b>${CAMPAIGN.code}</span></div>` : ''}
         ${s.imgs.map((id, k) => `<div class="blob blob--${'abc'[k]}" data-quick="${id}" style="cursor:pointer"><span><img src="${img(id)}" alt="${esc(byId.get(id)?.n || '')}"></span></div>`).join('')}
       </div>
     </div>`).join('') + `
@@ -137,8 +140,8 @@ document.addEventListener('site:ready', () => {
   const onSale = P.filter(p => p.s);
   const brandCount = new Set(onSale.map(p => p.b).filter(Boolean)).size;
   const PERKS = [
-    ['truck', 'green', 'Free delivery', 'On orders above 50 $'],
-    ['tag', 'red', '12% off today', 'Code TILLO12 at checkout'],
+    ['tag', 'red', `${CAMPAIGN.pct}% off now`, `Code ${CAMPAIGN.code} at checkout`],
+    ['gift', 'green', `+${CAMPAIGN.cashback}% cashback`, 'A voucher to spend in store'],
     ['blocks', 'blue', `${Math.floor(onSale.length / 100) * 100}+ toys`, `From ${Math.floor(brandCount / 10) * 10}+ brands`],
     ['pin', 'pink', 'Visit our store', 'Mazraat Yachouh, Chattat Center'],
   ];
@@ -306,28 +309,51 @@ document.addEventListener('site:ready', () => {
   ];
   $('#budgets').innerHTML = COINS.map(([s, b, q, c], i) => `<a class="coin reveal" data-from="pop" style="${colorVars(c)};--d:${i * 0.08}s" href="${shopUrl(q)}"><small>${s}</small><b>${b}</b></a>`).join('');
 
-  /* ---------------- CLUB ---------------- */
+  /* ---------------- CLUB: 10% cashback voucher ---------------- */
+  // NOTE: there is no mailing service behind this form yet, so the voucher is shown on screen
+  // (and kept in this browser). Connect a mailing service to also email it and collect the list.
+  const V_KEY = 'enf_voucher';
+  const readVoucher = () => { try { return JSON.parse(localStorage.getItem(V_KEY) || 'null'); } catch (e) { return null; } };
+  const voucherHTML = v => `
+    <div class="voucher" role="status">
+      <span class="voucher__kicker">${icon('gift', 'icon', 2.4)} Enfantillage Club</span>
+      <b class="voucher__big">${CAMPAIGN.cashback}% cashback</b>
+      <span class="voucher__for">Voucher for <b>${esc(v.email)}</b></span>
+      <span class="voucher__how">Show this screen at our store in Mazraat Yachouh to use it.</span>
+      <button class="voucher__again" type="button" data-voucher-reset>Use another email</button>
+    </div>`;
+  const formHTML = () => `
+    <form id="clubForm" novalidate>
+      <label class="sr-only" for="clubEmail">Email address</label>
+      <input id="clubEmail" type="email" placeholder="Your email address" required autocomplete="email">
+      <button class="btn btn--navy" type="submit">Get my voucher</button>
+    </form>
+    <p class="club__note">For our store in Mazraat Yachouh. No spam, only smiles.</p>`;
   $('#club').innerHTML = `
     <div class="club__balloons"><span class="para" data-speed="-.1" style="position:relative">${balloon('#e8222b', 60)}</span><span class="para" data-speed="-.05" style="position:relative;margin-top:30px">${balloon('#3db54a', 46)}</span><span class="para" data-speed="-.14" style="position:relative;margin-top:10px">${balloon('#ffc83d', 52)}</span></div>
     <div>
-      <h2>Join the Enfantillage Club</h2>
-      <p>Be first to hear about new arrivals, birthday surprises and members-only offers.</p>
+      <span class="club__kicker">Get 30% back</span>
+      <h2>Get your ${CAMPAIGN.cashback}% cashback voucher</h2>
+      <p>${CAMPAIGN.pct}% off online with code <b>${CAMPAIGN.code}</b>, plus a ${CAMPAIGN.cashback}% cashback voucher to spend in our store. Join the Enfantillage Club with your email to get it.</p>
     </div>
-    <div>
-      <form id="clubForm" novalidate>
-        <label class="sr-only" for="clubEmail">Email address</label>
-        <input id="clubEmail" type="email" placeholder="Your email address" required>
-        <button class="btn btn--navy" type="submit">Join the fun</button>
-      </form>
-      <p class="club__note">No spam, only smiles. Unsubscribe anytime.</p>
-    </div>`;
-  $('#clubForm').addEventListener('submit', e => {
+    <div id="clubAction">${readVoucher() ? voucherHTML(readVoucher()) : formHTML()}</div>`;
+  const action = $('#clubAction');
+  action.addEventListener('submit', e => {
+    if (e.target.id !== 'clubForm') return;
     e.preventDefault();
     const inp = $('#clubEmail');
-    if (!/^\S+@\S+\.\S+$/.test(inp.value)) { inp.focus(); inp.parentElement.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-10px)' }, { transform: 'translateX(10px)' }, { transform: 'translateX(0)' }], { duration: 300 }); return; }
+    if (!/^\S+@\S+\.\S+$/.test(inp.value.trim())) { inp.focus(); inp.parentElement.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-10px)' }, { transform: 'translateX(10px)' }, { transform: 'translateX(0)' }], { duration: 300 }); return; }
+    const v = { email: inp.value.trim(), at: new Date().toISOString() };
+    try { localStorage.setItem(V_KEY, JSON.stringify(v)); } catch (err) { /* private mode */ }
     burst(e.submitter || inp, undefined, 60);
-    toast('Welcome to the club! Check your inbox soon');
-    inp.value = '';
+    action.innerHTML = voucherHTML(v);
+    toast(`Here’s your ${CAMPAIGN.cashback}% cashback voucher!`);
+  });
+  action.addEventListener('click', e => {
+    if (!e.target.closest('[data-voucher-reset]')) return;
+    try { localStorage.removeItem(V_KEY); } catch (err) { /* private mode */ }
+    action.innerHTML = formHTML();
+    $('#clubEmail').focus();
   });
 
   observeReveals();

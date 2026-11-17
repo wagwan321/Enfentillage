@@ -8,6 +8,7 @@
 document.addEventListener('site:ready', () => {
   'use strict';
   const { tillo, shopUrl, icon, money } = window.ENF;
+  const C = window.ENF.CAMPAIGN;
   const XMAS = window.ENF_THEME === 'christmas';
   const page = document.body.dataset.current || 'home';
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -19,22 +20,22 @@ document.addEventListener('site:ready', () => {
   const TIPS = {
     home: XMAS
       ? [['Ho ho ho! I’m Tillo. Want help picking a Christmas gift?', 'Open the Gift Finder', 'index.html#gift-finder'],
-         ['Psst… my code TILLO12 takes 12% off your Christmas shopping!', 'See the offers', shopUrl({ sale: 1 })],
+         [`Psst… my code ${C.code} takes ${C.pct}% off your Christmas shopping, plus ${C.cashback}% cashback in store!`, 'Get my voucher', 'index.html#club'],
          ['Gift wrapping is on request: just tick it at checkout.', 'Start shopping', 'shop.html']]
       : [['Hi, I’m Tillo! Need a gift idea? I can help.', 'Open the Gift Finder', 'index.html#gift-finder'],
-         ['Psst… use my code TILLO12 to save 12% today!', 'See the offers', shopUrl({ sale: 1 })],
-         ['Free delivery on orders above 50 $, anywhere in Lebanon.', 'Start shopping', 'shop.html']],
+         [`Psst… use my code ${C.code} for ${C.pct}% off, then get ${C.cashback}% cashback in store!`, 'Get my voucher', 'index.html#club'],
+         ['We deliver anywhere in Lebanon, and you pay when it arrives.', 'Start shopping', 'shop.html']],
     shop: [['Use the filters to shop by age, brand or character!', '', ''],
-           ['Free delivery on orders above 50 $!', '', ''],
+           [`Use code ${C.code} at checkout for ${C.pct}% off!`, '', ''],
            ['Tap the heart to save toys for later.', 'My wishlist', shopUrl({ fav: 1 })]],
     product: [['Want it later? Tap the heart and it goes to your wishlist.', '', ''],
               ['Pay when it arrives: cash on delivery or Whish Money.', '', ''],
-              ['Use my code TILLO12 at checkout to save 12%.', '', '']],
+              [`Use my code ${C.code} at checkout to save ${C.pct}%.`, '', '']],
     brands: [['Looking for a brand? Type its name in the box above!', '', ''],
              ['Tap any logo to see all of that brand’s toys.', '', '']],
     info: [['Can’t find your answer? Call us on +961 3 720 233!', 'Call the store', 'tel:+9613720233'],
-           ['Free delivery on orders above 50 $!', '', '']],
-    checkout: [['Don’t forget my code TILLO12 for 12% off!', '', ''],
+           ['We deliver anywhere in Lebanon for 3 $.', '', '']],
+    checkout: [[`Don’t forget my code ${C.code} for ${C.pct}% off!`, '', ''],
                ['Want it gift-wrapped? Tick the box under the address.', '', '']],
   };
   const tips = TIPS[page] || TIPS.home;
@@ -150,11 +151,9 @@ document.addEventListener('site:ready', () => {
       const p = window.ENF.byId.get(id);
       const perks = $('.pdp__perks');
       if (p && perks) {
-        const left = 50 - p.p;
         const line = !p.s ? 'This one is sold out right now. Call us and we’ll tell you when it’s back!'
           : !p.p ? 'Ask us for the price: we’re happy to help!'
-          : left <= 0 ? 'Great pick! This one gets free delivery.'
-          : `Add ${money(left)} more to your cart and delivery is free!`;
+          : `With my code <b>${C.code}</b> it’s only <b>${money(Math.round(p.p * (100 - C.pct)) / 100)}</b>, plus ${C.cashback}% cashback in store!`;
         place(perks, 'beforebegin', `<div class="tillo-tip">${tillo('tillo--tip', 64)}<p><b>Tillo says:</b> ${line}</p></div>`);
       }
     }

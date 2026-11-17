@@ -410,20 +410,19 @@ ul { list-style: none; margin: 0; padding: 0; }
 .blob {
   position: absolute;
   border-radius: 50%;
-  background: #fff;
   display: grid; place-items: center;
-  box-shadow: 0 18px 40px rgba(0,0,0,.15);
   opacity: 0; transform: translateX(80px) scale(.8);
   transition: opacity .7s var(--ease-out), transform 1s var(--ease-bounce);
 }
-.blob img { width: 68%; height: 68%; object-fit: contain; mix-blend-mode: multiply; }
+.blob img { width: 64%; height: 64%; object-fit: contain; mix-blend-mode: multiply; }
 .slide.is-active .blob { opacity: 1; transform: none; }
 .slide.is-active .blob:nth-child(2) { transition-delay: .12s; }
 .slide.is-active .blob:nth-child(3) { transition-delay: .24s; }
 .blob--a { width: 62%; aspect-ratio: 1; right: 14%; top: 4%; }
 .blob--b { width: 34%; aspect-ratio: 1; left: 0; bottom: 4%; }
 .blob--c { width: 30%; aspect-ratio: 1; right: 0; bottom: 0; }
-.blob > span { animation: floaty 6s ease-in-out infinite; display: grid; place-items: center; width: 100%; height: 100%; }
+/* the white circle and its picture float together, so the toy never drifts outside its circle */
+.blob > span { animation: floaty 6s ease-in-out infinite; display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: #fff; box-shadow: 0 18px 40px rgba(0,0,0,.15); overflow: hidden; }
 .blob--b > span { animation-delay: -2s; }
 .blob--c > span { animation-delay: -4s; }
 @keyframes floaty { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-12px) rotate(3deg); } }
@@ -758,6 +757,18 @@ ul { list-style: none; margin: 0; padding: 0; }
 .club form { display: flex; gap: 8px; background: #fff; padding: 6px; border-radius: 999px; position: relative; z-index: 2; }
 .club input { flex: 1; border: 0; outline: none; padding: 10px 16px; border-radius: 999px; font-weight: 700; min-width: 0; color: var(--ink); }
 .club__note { font-size: 13px; margin-top: 10px; opacity: .9; position: relative; z-index: 2; }
+.club__kicker { display: inline-block; background: var(--sun); color: var(--navy); font-weight: 900; font-size: 13px; padding: 4px 12px; border-radius: 999px; margin-bottom: 8px; }
+.club form .btn { justify-content: center; white-space: nowrap; flex: none; }
+/* cashback voucher shown after signing up: a little ticket */
+.voucher { position: relative; z-index: 2; display: grid; gap: 4px; background: #fff; color: var(--navy); border-radius: 20px; padding: 18px 22px; border: 3px dashed var(--sun); box-shadow: 0 10px 24px rgba(0,0,0,.15); text-align: left; }
+.voucher::before, .voucher::after { content: ""; position: absolute; top: 50%; width: 22px; height: 22px; margin-top: -11px; border-radius: 50%; background: var(--teal); }
+.voucher::before { left: -14px; } .voucher::after { right: -14px; }
+.voucher__kicker { display: inline-flex; align-items: center; gap: 6px; font-weight: 900; font-size: 13px; color: var(--red); text-transform: uppercase; letter-spacing: .5px; }
+.voucher__kicker .icon { width: 18px; height: 18px; }
+.voucher__big { font-family: var(--font-display); font-size: clamp(30px, 4vw, 40px); line-height: 1; color: var(--navy); }
+.voucher__for { font-size: 14px; color: var(--ink-soft); word-break: break-all; }
+.voucher__how { font-size: 14px; font-weight: 800; color: var(--ink); }
+.voucher__again { justify-self: start; margin-top: 4px; font-size: 13px; font-weight: 800; color: var(--ink-soft); text-decoration: underline; }
 .club__balloons { position: absolute; right: 30px; top: -10px; display: flex; gap: 10px; pointer-events: none; }
 
 .confetti { position: fixed; z-index: 300; width: 10px; height: 14px; pointer-events: none; border-radius: 2px; }
@@ -1155,7 +1166,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 .co-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .co-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; font-weight: 800; font-size: 14px; color: var(--ink); }
 .co-field em { color: var(--red); font-style: normal; }
-.co-field input, .co-field textarea, .co-select { width: 100%; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--line); font-weight: 700; background-color: #fff; resize: vertical; }
+.co-field input, .co-field textarea, .co-select { font: inherit; width: 100%; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--line); font-weight: 700; background-color: #fff; resize: vertical; }
 .co-field input:focus, .co-field textarea:focus, .co-select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px rgba(0,166,228,.12); }
 .co-hintline { color: var(--ink-soft); font-weight: 700; font-size: 12px; }
 .co-err { display: none; color: var(--red); font-size: 12px; font-weight: 800; }
@@ -1384,7 +1395,6 @@ ul { list-style: none; margin: 0; padding: 0; }
 .tillo-tip .tillo__hat { top: -4%; left: 16%; width: 70%; }
 .tillo-tip p { font-weight: 700; color: var(--ink); font-size: 14px; }
 .tillo-tip b { color: var(--red); }
-.co-summary { position: relative; }
 .co-tillo { position: absolute; right: 18px; top: -62px; width: 84px; height: 64px; overflow: hidden; }
 .co-tillo .tillo { margin: 0; }
 .footer-tillo { position: absolute; right: max(6%, 160px); top: -150px; width: 120px; z-index: 2; }
@@ -1606,4 +1616,43 @@ html.theme-xmas {
   .reveal { opacity: 1; transform: none; }
   .brands__row, .ticker__track { animation: none; }
   .brands__mask { overflow-x: auto; }
+}
+
+/* ==========================================================================
+   Phone fixes (review Nov 2026)
+   ========================================================================== */
+@media (max-width: 760px) {
+  /* hero: room for the toys AND the dots, arrows hidden (swipe works) */
+  .slider { min-height: 620px; }
+  .slide { padding-bottom: 54px; }
+  .slide__art { height: 176px; }
+  .blob--a { width: 158px; margin-left: -79px; }
+  .blob--b { width: 88px; }
+  .blob--c { width: 84px; }
+  .slider__arrows { display: none; }
+  .slider__nav { left: 50%; transform: translateX(-50%); bottom: 20px; }
+  /* outdoor / arts blocks: the small second circle sat under the button */
+  .split__imgs .blob:nth-child(2) { display: none; }
+  /* club + cashback voucher: stack the email field and the button */
+  .club, .club:has(.club__tillo) { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .club form { flex-direction: column; border-radius: 22px; padding: 8px; }
+  .club input { padding: 12px 14px; text-align: center; }
+  .club form .btn { width: 100%; }
+  .club__note { text-align: center; }
+  .voucher { text-align: center; justify-items: center; }
+  .voucher__again { justify-self: center; }
+  /* back-to-top Tillo: smaller on phones so it hides less of the page */
+  .to-top { width: 40px; height: 60px; right: 8px; }
+  .to-top__up { width: 20px; height: 20px; left: -8px; top: -6px; border-width: 2px; }
+  .to-top__up svg { width: 11px; height: 11px; }
+}
+@media (max-width: 760px) {
+  /* product page: Wishlist under Add to cart, full width and centred */
+  .pdp__fav { flex: 1 1 100%; }
+  /* Christmas: the hanging baubles covered the breadcrumb at the top of the shop/brands/info pages */
+  .theme-xmas .shop-hero { padding-top: 64px; }
+}
+@media (max-width: 1180px) {
+  /* outdoor / arts blocks: on narrower screens the small second circle bumps into the button */
+  .split__imgs .blob:nth-child(2) { display: none; }
 }

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <rect width="300" height="300" fill="#f4f6fd"/>
+  <g stroke="#c5cae6" stroke-width="2" fill="none">
+    <path d="M118 150 Q122 185 140 205"/>
+    <path d="M150 140 Q150 180 145 205"/>
+    <path d="M184 150 Q178 185 150 205"/>
+  </g>
+  <ellipse cx="114" cy="118" rx="26" ry="31" fill="#e8222b" opacity=".85"/>
+  <ellipse cx="186" cy="118" rx="26" ry="31" fill="#3db54a" opacity=".85"/>
+  <ellipse cx="150" cy="102" rx="28" ry="33" fill="#00a6e4" opacity=".9"/>
+  <ellipse cx="141" cy="90" rx="7" ry="10" fill="#fff" opacity=".45"/>
+  <text x="150" y="246" text-anchor="middle" font-family="Nunito, Arial, sans-serif" font-weight="800" font-size="19" fill="#5a6090">Photo coming soon</text>
+</svg>

@@ -10,8 +10,6 @@
 const PREVIEW = true;
 const STORE_PHONE = '+961 3 720 233';
 const DELIVERY_FEE = 3;          // $ anywhere in Lebanon (store delivery policy)
-const FREE_DELIVERY_FROM = 50;   // $ free delivery above this subtotal
-const PROMO = { code: 'TILLO12', pct: 12 };
 /* banknote + padlock drawn inline so they match the site's icon style */
 const CASH_ICON = '<svg viewBox="0 0 48 32" width="44" height="30" aria-hidden="true"><rect x="2" y="4" width="44" height="24" rx="4" fill="#3db54a"/><rect x="6" y="8" width="36" height="16" rx="2" fill="none" stroke="#fff" stroke-width="1.6" opacity=".7"/><circle cx="24" cy="16" r="5.5" fill="#fff"/><text x="24" y="19.6" font-size="9" font-family="Arial, sans-serif" font-weight="700" text-anchor="middle" fill="#3db54a">$</text></svg>';
 const LOCK_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
@@ -21,13 +19,14 @@ document.addEventListener('site:ready', () => {
   'use strict';
   const { byId, esc, money, icon, balloon, burst, getCart, setCart, brandName, productUrl } = window.ENF;
   const main = document.getElementById('checkoutMain');
+  const PROMO = window.ENF.CAMPAIGN;   // { code, pct, cashback } set in app.js
   let promoOn = false;
 
   const lines = () => Object.entries(getCart()).map(([id, q]) => [byId.get(+id), q]).filter(([p]) => p && p.p);
   const totals = () => {
     const sub = lines().reduce((s, [p, q]) => s + p.p * q, 0);
     const disc = promoOn ? Math.round(sub * PROMO.pct) / 100 : 0;
-    const ship = sub >= FREE_DELIVERY_FROM ? 0 : DELIVERY_FEE;
+    const ship = sub ? DELIVERY_FEE : 0;
     return { sub, disc, ship, total: Math.max(0, sub - disc + ship) };
   };
   const notice = PREVIEW ? `<div class="co-preview">${icon('sparkle', 'icon', 2.4)}<span><b>Preview of the new website.</b> Orders placed here aren’t sent to the store yet. To order now, call <a href="tel:+9613720233">${STORE_PHONE}</a> or visit us in Mazraat Yachouh.</span></div>` : '';
@@ -135,9 +134,9 @@ document.addEventListener('site:ready', () => {
     return `<dl class="co-totals" id="coTotals">
       <dt>Subtotal</dt><dd>${money(t.sub)}</dd>
       ${t.disc ? `<dt>Code ${PROMO.code} (−${PROMO.pct}%)</dt><dd class="co-save">−${money(t.disc)}</dd>` : ''}
-      <dt>Delivery</dt><dd>${t.ship ? money(t.ship) : '<span class="co-free">Free</span>'}</dd>
+      <dt>Delivery</dt><dd>${money(t.ship)}</dd>
       <dt class="co-total">Total</dt><dd class="co-total">${money(t.total)}</dd></dl>
-      ${t.ship ? `<p class="co-small">Add ${money(FREE_DELIVERY_FROM - t.sub)} more for free delivery.</p>` : ''}`;
+      <p class="co-small">+ a <b>${PROMO.cashback}% cashback voucher</b> to spend in our store: <a href="index.html#club">get yours here</a>.</p>`;
   }
 
   function wire() {
