@@ -278,7 +278,8 @@ document.addEventListener('site:ready', () => {
     const seed = JSON.stringify(sel).length;
     const picks = all.slice().sort((x, y) => ((x.id * 7 + seed) % 13) - ((y.id * 7 + seed) % 13)).slice(0, 6);
     out.innerHTML = `<div class="finder__count"><span>${all.length} gift idea${all.length > 1 ? 's' : ''} found!</span><a href="${shopUrl(params)}">See them all →</a></div>` +
-      picks.map((p, i) => card(p, { delay: i * 0.06 })).join('');
+      `<div class="finder__cards">${picks.map((p, i) => card(p, { delay: i * 0.06 })).join('')}</div>`;
+    out.querySelector('.finder__cards').scrollLeft = 0;
   }
   finder.addEventListener('click', e => {
     const c = e.target.closest('.chip'); if (!c) return;
