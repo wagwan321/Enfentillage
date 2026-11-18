@@ -626,7 +626,7 @@
       return;
     }
     body.innerHTML = `
-      <div class="ship-meter">Use code <b>${CAMPAIGN.code}</b> at checkout for <b>${CAMPAIGN.pct}% off</b>, plus a <b>${CAMPAIGN.cashback}% cashback</b> voucher for the store.</div>
+      <div class="ship-meter">Free delivery in Lebanon. Final prices and availability are checked at checkout.</div>
       ${lines.map(([id, q]) => { const p = byId.get(+id); return `
         <div class="cart-line">
           <img src="${esc(p.i)}" alt="">
@@ -636,7 +636,7 @@
           <div class="cart-line__price">${money(p.p * q)}</div>
         </div>`; }).join('')}`;
     foot.innerHTML = `<div class="cart-total"><span>Subtotal</span><span>${money(total)}</span></div>
-      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Delivery: 3 $ anywhere in Lebanon.</p>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Free delivery in Lebanon.</p>
       <a class="btn btn--green" style="width:100%" href="checkout.html">Checkout ${icon('arrow', 'icon', 2.6)}</a>
       <p class="cart-pay">Pay by <b>cash on delivery</b> or <img src="assets/img/pay/whish-money.svg" alt="Whish Money" width="62" height="14"></p>`;
   }
@@ -981,6 +981,8 @@
     const h = document.getElementById('site-header');
     const f = document.getElementById('site-footer');
     if (h) h.outerHTML = headerHTML(document.body.dataset.current);
+    // Checkout must not advertise an unverified coupon or cashback promise.
+    if (document.body.dataset.current === 'checkout') document.querySelector('.ticker')?.remove();
     if (f) f.outerHTML = footerHTML();
     if (window.ENF_COMMERCE?.failed) {
       const notice = document.createElement('p'); notice.setAttribute('role', 'alert'); notice.className = 'co-preview';

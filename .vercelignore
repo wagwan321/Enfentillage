@@ -1,2 +1,6 @@
 .claude
 .env*
+
+wordpress/
+tests/
+WOOCOMMERCE-CONNECTION.md

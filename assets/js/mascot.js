@@ -35,8 +35,8 @@ document.addEventListener('site:ready', () => {
              ['Tap any logo to see all of that brand’s toys.', '', '']],
     info: [['Can’t find your answer? Call us on +961 3 720 233!', 'Call the store', 'tel:+9613720233'],
            ['We deliver anywhere in Lebanon for 3 $.', '', '']],
-    checkout: [[`Don’t forget my code ${C.code} for ${C.pct}% off!`, '', ''],
-               ['Want it gift-wrapped? Tick the box under the address.', '', '']],
+    checkout: [['Delivery in Lebanon is free for now.', '', ''],
+               ['Whish payments are checked manually by the store.', '', '']],
   };
   const tips = TIPS[page] || TIPS.home;
   let tipIndex = 0;

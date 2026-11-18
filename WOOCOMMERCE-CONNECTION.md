@@ -1,32 +1,35 @@
-# WooCommerce connection — draft branch, not deployed
+# WooCommerce integration — preview draft
 
-This branch begins the integration. It is not ready for production or domain cutover.
+Preview branch: `codex/woocommerce-connection`. Draft PR: https://github.com/wagwan321/Enfentillage/pull/1 . Nothing merged into main; no DNS, live WordPress or Wizard changes made.
 
-## Prepared
+## Catalog
 
-- Public Store API catalog reader in api/commerce.js; opt-in via WOO_ENABLE_CATALOG=true and WOO_STORE_URL (HTTPS origin).
-- Bounded pagination, complete-response validation, timeout handling, no forwarding of cookies/credentials, 60-second CDN caching.
-- Browser adapter replaces the snapshot's product names, prices, images, ages, availability and brand values with WooCommerce data before page initialization.
-- New products appear in the catalog; actual WooCommerce categories appear in the shop's Store categories filter. Existing curated category/character assignments are retained as presentation hints for existing products; these hints still require reconciliation against current taxonomy.
-- API failure disables purchase buttons. Only simple products can be added in this initial draft. Variable products require a real options selector and are blocked from adding.
-- Removed the ability to display a fake successful order: checkout keeps the cart and directs customers to call until a real order path has been implemented and tested.
-- No API key is needed for public product reads. No WordPress or Wizard changes made.
+Public Store API catalog and live descriptions are implemented. The named Vercel preview is opt-in enabled by both its Preview environment and exact Git branch. Production remains disabled unless explicitly configured. Failed reads disable purchasing. Pagination rejects incomplete/duplicate responses; public catalog reads require no API key.
 
-## Still required
+The read-only live download returned 1,407 products: 1,389 published in-stock + 18 published backorder in the CSV. The CSV also contains 2,530 published out-of-stock products and one draft outside that default catalog. Storefront categories include WooCommerce categories; curated snapshot category/character hints still require reconciliation.
 
-1. Full hosting files/database backup (product CSV is already saved separately).
-2. Hosting login is verified, but cPanel backup pages render blank. After a full backup, configure a stable backend hostname/certificate and safely migrate WordPress URLs, media and callbacks. Do not move main-domain DNS to Vercel first.
-3. Investigate the spam content on the existing WordPress site before trusting it as a production backend.
-4. Implement and test customer cart handoff to native WooCommerce checkout, or a complete Store API checkout with compatible payment integration. No orders/payments have been tested.
-5. Complete variation selection and stock quantity validation. Live product descriptions now use the single-product Store API, rendered as escaped text; browser verification is still required.
-6. Reconcile snapshot catalog/category hints and static marketing: the existing site advertises a 20% coupon, cashback, fixed delivery prices and Whish. These claims have not been verified against WooCommerce (which currently shows Stripe active and MontyPay inactive). Remove or validate them before launch.
-7. Live default Store API catalog returned 1,407 products (1,347 simple, 60 variable) in 11.8 seconds on 18 November. Export reconciliation: 1,389 published in-stock + 18 published backorder = 1,407; 2,530 published out-of-stock products and one draft are outside this default catalog. Confirm whether the new site should also display out-of-stock products before changing this behavior.
-8. Deploy only to a verified preview of the correct Vercel project; test end to end before production cutover.
+## Checkout draft
+
+- Confirmed policy: free Lebanon delivery; COD; Whish to **+961 78 881 100**, with payment screenshot and order number sent to the same number; Whish waits for manual verification.
+- Replaced the simulated checkout with cart review and payment preference. No fabricated order numbers, customer PII in local storage, local discount promises or fake successful orders.
+- `/api/checkout` verifies the WordPress handoff plugin's readiness and policy before enabling Continue. It fails closed if the backend is absent, disabled, unavailable or inconsistent. Production checkout remains opt-in.
+- Prepared `wordpress/enfantillage-checkout/`: a separately installed WordPress plugin that validates the entire cart and transfers only product IDs/quantities to WooCommerce. WooCommerce's dedicated classic checkout collects addresses and creates orders with its normal session/nonce/stock checks. No WordPress admin credentials or API keys are embedded in the frontend.
+- The plugin is disabled by default and requires an administrator to enable it. Only allowlisted frontend origins may hand off carts. Free shipping and offline gateways are scoped to the handoff session; existing sessions keep their configured shipping/payments.
+- Whish orders are on hold; COD orders use processing with an explicit note that payment is due on delivery. Repeated gateway processing must not reduce stock again. Native WooCommerce order receipt validates the order key; receipt links remain accessible after handoff-session expiry.
+- No plugin has been uploaded/activated on the live store. Real order creation, native checkout redirects, order emails, shipping and stock behavior have NOT been validated end to end in an actual WooCommerce installation.
 
 ## Validation
 
-Run: node --test tests/*.test.cjs
+11 JavaScript tests pass (`node --test tests/*.test.cjs`). PHP syntax checks and isolated PHP 8.2 cart/gateway tests passed. The PHP tests use stubs for WordPress/WooCommerce and are not a staging integration test. Native PHP runners: `php tests/checkout-validation.php` and `php tests/checkout-gateway.php`.
 
-Seven tests cover opt-in configuration, invalid store URLs/IDs, pagination completeness, duplicate rejection, failure handling, new-product adaptation, currency units and not forwarding credentials. Live catalog and two single-product read checks passed. Syntax checks passed for edited JavaScript. Browser UI and full checkout tests are pending.
+A local browser fixture verified add-to-cart → review, free delivery, Whish instructions and disabled submission when readiness fails. It used a synthetic product, not the client's live order system.
 
-The connected Vercel tool account does not expose this project; the correct project is accessible in the browser. Shell GitHub authentication lacks write access, so pushing the draft is blocked. The correct repository is https://github.com/wagwan321/Enfentillage . Local branch: codex/woocommerce-connection. No push, deployment or DNS change has been made.
+## Before launch
+
+1. Complete/verify website file backup; two SQL downloads passed decompression checks, but a restoration test has not run. Full account archive and home-directory download were still incomplete at the last backup check.
+2. Install and test the checkout plugin on a backed-up staging copy first. See its README for test cases. Installing/activating custom WordPress code is a separate server change, not accomplished by pushing the Vercel branch.
+3. Finish variable-product option selection; these products remain blocked. Test stock quantities, duplicate submission, failed/cancelled orders, both offline payment choices and client payment confirmation.
+4. Handle frontend cart cleanup only after a verified purchase; currently it is retained on handoff to prevent losing it on a failed redirect.
+5. Investigate unrelated SEO spam seen on the old WordPress storefront before relying on it for production. Do not copy arbitrary old scripts/HTML.
+6. Reconcile static marketing/coupon/cashback claims elsewhere in the site. Checkout no longer advertises those unverified promises.
+7. Configure a separate stable WordPress backend hostname, certificate, WordPress/media URLs and callbacks, preserving email and existing integrations. DNS alone is not sufficient. Only then switch the main domain to Vercel after end-to-end tests.
