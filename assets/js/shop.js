@@ -7,6 +7,8 @@ document.addEventListener('site:ready', () => {
   'use strict';
   const { P, colorVars, CATEGORIES, AGES, BRANDS, CHARACTERS, brandMatch, icon, balloon, esc, card, getFavs, NEW_IDS } = window.ENF;
   const $ = s => document.querySelector(s);
+  const STORE_CATEGORIES = window.ENF_COMMERCE?.categories || [];
+  const ALL_CATEGORIES = [...CATEGORIES, ...STORE_CATEGORIES];
   const PAGE = 24;
 
   /* ---------- state <-> URL ---------- */
@@ -68,7 +70,7 @@ document.addEventListener('site:ready', () => {
   function renderHero() {
     let title = 'All Toys', sub = 'Everything fun, all in one place', color = 'blue';
     const one = (k, arr) => st[k].length === 1 && arr.find(x => x.key === st[k][0]);
-    const c = one('cat', CATEGORIES), a = one('age', AGES), b = one('brand', BRANDS), h = one('char', CHARACTERS);
+    const c = one('cat', ALL_CATEGORIES), a = one('age', AGES), b = one('brand', BRANDS), h = one('char', CHARACTERS);
     if (st.fav) { title = 'Your Wishlist'; sub = 'All the toys you’ve hearted, saved in this browser'; color = 'pink'; }
     else if (st.sale) { title = 'Offer Zone'; sub = `Real savings on top toys, plus ${window.ENF.CAMPAIGN.pct}% off with code ${window.ENF.CAMPAIGN.code}`; color = 'red'; }
     else if (st.q) { title = `“${st.q}”`; sub = 'Search results'; color = 'navy'; }
@@ -110,6 +112,7 @@ document.addEventListener('site:ready', () => {
       <div class="drawer__head filter-btn" style="padding:0 0 12px;display:none;justify-content:space-between;align-items:center"><h3 style="font-size:24px;color:var(--navy)">Filters</h3><button class="drawer__close" type="button" data-close aria-label="Close filters">${icon('x')}</button></div>
       ${group('age', 'Age', `<div class="age-chips">${AGES.map(a => `<button type="button" style="${colorVars(a.color)}" class="${st.age.includes(a.key) ? 'is-on' : ''}" data-age="${a.key}">${a.num}</button>`).join('')}</div>`, isClosed('age', false))}
       ${group('cat', 'Category', CATEGORIES.map(c => check('cat', c.key, c.name, facetCount('cat', p => p.c.includes(c.key)), c.color)).join(''), isClosed('cat', false))}
+      ${STORE_CATEGORIES.length ? group('store-categories', 'Store categories', '<div class="fgroup__inner--scroll">' + STORE_CATEGORIES.map(c => check('cat', c.key, c.name, facetCount('cat', p => p.c.includes(c.key)), c.color)).join('') + '</div>', isClosed('store-categories', true)) : ''}
       ${group('price', 'Price', `
         <div class="range"><input type="number" min="0" placeholder="Min $" id="pmin" value="${esc(st.min)}" aria-label="Minimum price"><span>–</span><input type="number" min="0" placeholder="Max $" id="pmax" value="${esc(st.max)}" aria-label="Maximum price"></div>
         <div class="chips" style="margin-top:10px">${[[0, 10], [0, 25], [25, 50], [50, 100], [100, '']].map(([a, b]) => `<button type="button" class="suggest__chip" data-price="${a},${b}">${b === '' ? a + ' $+' : a ? a + '–' + b + ' $' : 'Under ' + b + ' $'}</button>`).join('')}</div>
@@ -125,7 +128,7 @@ document.addEventListener('site:ready', () => {
   function renderActive() {
     const chips = [];
     const add = (label, color, fn) => chips.push({ label, color, fn });
-    st.cat.forEach(k => { const c = CATEGORIES.find(x => x.key === k); c && add(c.name, c.color, () => st.cat = st.cat.filter(x => x !== k)); });
+    st.cat.forEach(k => { const c = ALL_CATEGORIES.find(x => x.key === k); c && add(c.name, c.color, () => st.cat = st.cat.filter(x => x !== k)); });
     st.age.forEach(k => { const a = AGES.find(x => x.key === k); a && add(`Ages ${a.num}`, a.color, () => st.age = st.age.filter(x => x !== k)); });
     st.brand.forEach(k => { const b = BRANDS.find(x => x.key === k); add(b ? b.name : k, b ? b.color : 'navy', () => st.brand = st.brand.filter(x => x !== k)); });
     st.char.forEach(k => { const c = CHARACTERS.find(x => x.key === k); c && add(c.name, c.color, () => st.char = st.char.filter(x => x !== k)); });

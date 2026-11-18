@@ -3,9 +3,10 @@
    Header, mega menus, search, cart, wishlist, product cards, quick view,
    scroll reveal + parallax. Used by every page.
    ========================================================================== */
-(function () {
+(async function () {
   'use strict';
 
+  await window.ENF_COMMERCE?.ready;
   const P = window.PRODUCTS || [];
   /* pictures: in-stock toys are stored with the site (sm = card, lg = gallery).
      Sold-out toys (p.r) had their photos in the old WordPress media library, which went offline when this
@@ -17,10 +18,10 @@
   const OLD_PHOTOS = '';
   const NO_PHOTO = 'assets/img/no-photo.svg';
   const MAP_URL = 'https://www.google.com/maps/search/?api=1&query=Enfantillage%2C%20Mazraat%20Yachouh%2C%20Lebanon';
-  P.forEach(p => { p.i = !p.r ? `assets/img/products/sm/${p.id}.webp` : OLD_PHOTOS ? OLD_PHOTOS + p.r : NO_PHOTO; });
+  P.forEach(p => { p.i = p._live ? p.i : !p.r ? `assets/img/products/sm/${p.id}.webp` : OLD_PHOTOS ? OLD_PHOTOS + p.r : NO_PHOTO; });
   const imgLg = (p, k = 0) => `assets/img/products/lg/${p.id}-${k}.webp`;
   /* every picture of a product; sold-out items need their details loaded first */
-  const gallery = (p, d) => !p.r ? Array.from({ length: p.g || 1 }, (_, k) => imgLg(p, k))
+  const gallery = (p, d) => p._live ? (p._images.length ? p._images : [p.i]) : !p.r ? Array.from({ length: p.g || 1 }, (_, k) => imgLg(p, k))
     : OLD_PHOTOS && d && d.img ? d.img.map(u => /^https?:/.test(u) ? u : OLD_PHOTOS + u) : [p.i];
   // any picture that fails to load falls back to the placeholder instead of a broken icon
   addEventListener('error', e => {
@@ -29,7 +30,23 @@
   }, true);
   /* descriptions, refs and sold-out galleries live in 20 small files (id % 20), loaded on demand */
   const detailChunks = {};
-  const loadDetail = id => (detailChunks[id % 20] || (detailChunks[id % 20] =
+  const liveDetails = new Map();
+  const loadDetail = id => window.ENF_COMMERCE?.enabled
+    ? (liveDetails.get(id) || (() => {
+      const request = fetch('/api/commerce?resource=product&id=' + encodeURIComponent(id), { signal: AbortSignal.timeout(15000) })
+        .then(r => { if (!r.ok) throw new Error('Details unavailable'); return r.json(); })
+        .then(({ product }) => {
+          if (product.id !== id) throw new Error('Invalid product');
+          const doc = new DOMParser().parseFromString(product.description || product.short_description || '', 'text/html');
+          doc.querySelectorAll('script,style,iframe,object').forEach(el => el.remove());
+          doc.querySelectorAll('br').forEach(el => el.replaceWith('\n'));
+          doc.querySelectorAll('p,div,li,h1,h2,h3,h4').forEach(el => el.append('\n'));
+          return { d: (doc.body.textContent || '').trim(), sku: String(product.sku || ''), cat: product.categories.map(c => c.name) };
+        }).catch(() => { liveDetails.delete(id); return null; });
+      liveDetails.set(id, request);
+      return request;
+    })())
+    : (detailChunks[id % 20] || (detailChunks[id % 20] =
     fetch(`assets/data/details/${id % 20}.json`).then(r => r.json()).catch(() => ({})))).then(all => all[id]);
   const productUrl = p => `product.html?id=${p.id}`;
   const byId = new Map(P.map(p => [p.id, p]));
@@ -65,6 +82,7 @@
 
   const AGES = [
     { key: '0-3',   num: '0–3',   unit: 'years', label: 'Babies & Toddlers', color: 'pink' },
+    { key: '3-5', num: '3–5', unit: 'years', label: 'Preschoolers', color: 'blue' },
     { key: '3-6',   num: '3–6',   unit: 'years', label: 'Preschoolers',      color: 'blue' },
     { key: '5-8',   num: '5–8',   unit: 'years', label: 'Little Explorers',  color: 'green' },
     { key: '8-11',  num: '8–11',  unit: 'years', label: 'Big Kids',          color: 'red' },
@@ -408,7 +426,7 @@
         <h3 class="card__name"><a href="${productUrl(p)}">${esc(p.n)}</a></h3>
         <div class="card__foot">
           ${priceHTML(p)}
-          ${p.p && p.s ? `<button class="add-btn${added}" data-add="${p.id}" type="button" aria-label="Add ${esc(p.n)} to cart">
+          ${p.p && p.s && (!p._live || p._canAdd) ? `<button class="add-btn${added}" data-add="${p.id}" type="button" aria-label="Add ${esc(p.n)} to cart">
             ${icon('cart', 'icon i-cart', 2.4)}${icon('check', 'icon i-check', 3)}
           </button>` : `<a class="ask-btn" href="tel:+9613720233" aria-label="${p.s ? 'Call the store about' : 'Sold out. Call the store about'} ${esc(p.n)}">${icon('phone', 'icon', 2.4)}</a>`}
         </div>
@@ -626,6 +644,8 @@
   function addToCart(id, fromEl, qty = 1) {
     const prod = byId.get(id);
     if (!prod || !prod.p || !prod.s) return;
+    if (window.ENF_COMMERCE?.failed) return;
+    if (prod._live && !prod._canAdd) { toast('Please contact the store to select the available options.'); return; }
     cart[id] = (cart[id] || 0) + qty;
     store.set('enf_cart', cart);
     renderCart();
@@ -750,7 +770,7 @@
         <span class="stock${p.s ? '' : ' is-out'}">${p.s ? 'In stock — ready to play' : 'Sold out for now'}</span>
         <div class="modal__desc" id="qvDesc"><span class="modal__loading">Loading details…</span></div>
         <div class="modal__actions">
-          ${p.p && p.s ? `<button class="btn btn--red" type="button" data-add="${p.id}">${icon('cart', 'icon', 2.4)} Add to cart</button>`
+          ${p.p && p.s && (!p._live || p._canAdd) ? `<button class="btn btn--red" type="button" data-add="${p.id}">${icon('cart', 'icon', 2.4)} Add to cart</button>`
                 : `<a class="btn btn--red" href="tel:+9613720233">${icon('phone', 'icon', 2.4)} Call the store</a>`}
           <button class="btn btn--white" type="button" data-fav-btn="${p.id}">${icon('heart', 'icon', 2.4)} ${favs.has(p.id) ? 'Saved' : 'Wishlist'}</button>
         </div>
@@ -962,6 +982,10 @@
     const f = document.getElementById('site-footer');
     if (h) h.outerHTML = headerHTML(document.body.dataset.current);
     if (f) f.outerHTML = footerHTML();
+    if (window.ENF_COMMERCE?.failed) {
+      const notice = document.createElement('p'); notice.setAttribute('role', 'alert'); notice.className = 'co-preview';
+      notice.textContent = 'Live stock and prices are unavailable. Online ordering is paused. Please call the store.'; document.body.prepend(notice);
+    }
     initEvents();
     initSearch();
     syncCounts();

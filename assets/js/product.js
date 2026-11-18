@@ -23,7 +23,7 @@ document.addEventListener('site:ready', () => {
   const ages = AGES.filter(a => p.a.includes(a.key));
   const chars = CHARACTERS.filter(c => p.h.includes(c.key));
   const pct = p.o ? Math.round((1 - p.p / p.o) * 100) : 0;
-  const buyable = p.p && p.s;
+  const buyable = p.p && p.s && (!p._live || p._canAdd);
   const tint = cats[0] ? cats[0].color : hashColor(p.b);
 
   document.title = `${brand ? brand.name + ' – ' : ''}${p.n} — Enfantillage Lebanon`;
@@ -61,7 +61,7 @@ document.addEventListener('site:ready', () => {
                   : '<b class="price--ask">Ask in store for the price</b>'}
           </div>
           <span class="stock${p.s ? '' : ' is-out'}">${p.s ? 'In stock — ready to play' : 'Sold out for now. Call us and we’ll let you know when it’s back.'}</span>
-          ${p.v ? '<p class="pdp__note">This toy comes in several options (colour or size). Tell us your choice in the order notes at checkout.</p>' : ''}
+          ${p.v ? '<p class="pdp__note">This toy comes in several options. Please call the store to confirm your choice and availability.</p>' : ''}
 
           <div class="pdp__buy">
             ${buyable ? `

@@ -19,6 +19,9 @@ document.addEventListener('site:ready', () => {
   'use strict';
   const { byId, esc, money, icon, balloon, burst, getCart, setCart, brandName, productUrl } = window.ENF;
   const main = document.getElementById('checkoutMain');
+  // No real order transport has been installed or verified. Never show a false order confirmation.
+  main.innerHTML = `<div class="wrap empty-state" style="padding:60px 20px"><h1>Online checkout is not available yet</h1><p>Your cart has been kept. Please call the store to place your order.</p><br><a class="btn btn--red" href="tel:+9613720233">Call +961 3 720 233</a></div>`;
+  return;
   const PROMO = window.ENF.CAMPAIGN;   // { code, pct, cashback } set in app.js
   let promoOn = false;
 
