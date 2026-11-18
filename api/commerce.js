@@ -1,8 +1,11 @@
 // Public catalog only. Never forwards WordPress cookies, credentials or arbitrary URLs.
 const FIELDS = 'id,name,type,permalink,prices,is_in_stock,is_purchasable,images,categories,brands,attributes,variations';
 function settings(env = process.env) {
-  if (env.WOO_ENABLE_CATALOG !== 'true') return { enabled: false };
-  const url = new URL(env.WOO_STORE_URL || '');
+  // Temporary read-only preview configuration. Both conditions are required:
+  // merging this branch must never activate the production storefront.
+  const testingBranch = env.VERCEL_ENV === 'preview' && env.VERCEL_GIT_COMMIT_REF === 'codex/woocommerce-connection';
+  if (env.WOO_ENABLE_CATALOG === 'false' || (env.WOO_ENABLE_CATALOG !== 'true' && !testingBranch)) return { enabled: false };
+  const url = new URL(env.WOO_STORE_URL || (testingBranch ? 'https://enfantillagestore.com' : ''));
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || url.pathname !== '/') throw new Error('Invalid store URL');
   return { enabled: true, storeUrl: url.origin };
 }

@@ -8,6 +8,14 @@ test('catalog is opt-in and store addresses must be HTTPS origins', () => {
  assert.equal(settings({ WOO_ENABLE_CATALOG: 'true', WOO_STORE_URL: 'https://example.com' }).storeUrl, 'https://example.com');
 });
 const product = id => ({ id, prices: {}, categories: [] });
+test('temporary preview configuration cannot activate production or another branch', () => {
+ const preview = { VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'codex/woocommerce-connection' };
+ assert.equal(settings(preview).storeUrl, 'https://enfantillagestore.com');
+ assert.equal(settings({ ...preview, VERCEL_ENV: 'production' }).enabled, false);
+ assert.equal(settings({ ...preview, VERCEL_ENV: 'development' }).enabled, false);
+ assert.equal(settings({ ...preview, VERCEL_GIT_COMMIT_REF: 'main' }).enabled, false);
+ assert.equal(settings({ ...preview, WOO_ENABLE_CATALOG: 'false' }).enabled, false);
+});
 const response = (rows, pages = 2, ok = true) => ({ ok, json: async () => rows, headers: { get: () => String(pages) } });
 test('collects all pages without forwarding cookies or credentials', async () => {
  const rows = await readProducts({ storeUrl: 'https://example.com' }, async (url, options) => {
