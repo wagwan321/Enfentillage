@@ -42,7 +42,7 @@ document.addEventListener('site:ready', () => {
       bg: 'linear-gradient(135deg,#fff1f1 0%,#ffd9dc 100%)', accent: '#d81e27',
       kicker: `${icon('tag', 'icon', 2.4)} Limited time · until ${CAMPAIGN.until}`,
       title: 'Get <em>30%</em> back',
-      desc: `${CAMPAIGN.pct}% off right now ${CAMPAIGN.how}, plus a ${CAMPAIGN.cashback}% cashback voucher to spend in our store. Only until ${CAMPAIGN.until}!`,
+      desc: `${CAMPAIGN.pct}% off right now ${CAMPAIGN.how}, plus ${CAMPAIGN.cashback}% of what you spend back as a voucher for our store. Only until ${CAMPAIGN.until}!`,
       cta: ['Shop 20% off everything', shopUrl({ promo: 1 }), 'btn--red'],
       imgs: topDeals.map(p => p.id),
       burst: true,
@@ -70,7 +70,7 @@ document.addEventListener('site:ready', () => {
       { bg: 'linear-gradient(135deg,#fff6e3 0%,#ffe4a8 100%)', accent: '#c8102e', xmas: 'gold',
         kicker: `${icon('tag', 'icon', 2.4)} Christmas offer · until ${CAMPAIGN.until}`,
         title: 'Get <em>30%</em> back',
-        desc: `${CAMPAIGN.pct}% off ${CAMPAIGN.how}, plus a ${CAMPAIGN.cashback}% cashback voucher for the store. Only until ${CAMPAIGN.until}!`,
+        desc: `${CAMPAIGN.pct}% off ${CAMPAIGN.how}, plus ${CAMPAIGN.cashback}% of what you spend back as a store voucher. Only until ${CAMPAIGN.until}!`,
         cta: ['Shop 20% off everything', shopUrl({ promo: 1 }), 'btn--red'], imgs: topDeals.map(p => p.id), burst: true });
   }
   // while the 30% campaign runs, the banner shows only that offer; afterwards the other slides come back without it
@@ -147,7 +147,7 @@ document.addEventListener('site:ready', () => {
   const PERKS = [
     ...(CAMPAIGN.active ? [
       ['tag', 'red', `${CAMPAIGN.pct}% off now`, CAMPAIGN.auto ? `On everything, until ${CAMPAIGN.until}` : `Code ${CAMPAIGN.code}, until ${CAMPAIGN.until}`],
-      ['gift', 'green', `+${CAMPAIGN.cashback}% cashback`, 'A voucher to spend in store'],
+      ['gift', 'green', `+${CAMPAIGN.cashback}% back`, 'On your order, as a store voucher'],
     ] : [
       ['truck', 'red', 'Delivery 5 $', 'Anywhere in Lebanon'],
       ['gift', 'green', 'Gift wrapping', 'Just tick it at checkout'],
@@ -319,53 +319,21 @@ document.addEventListener('site:ready', () => {
   ];
   $('#budgets').innerHTML = COINS.map(([s, b, q, c], i) => `<a class="coin reveal" data-from="pop" style="${colorVars(c)};--d:${i * 0.08}s" href="${shopUrl(q)}"><small>${s}</small><b>${b}</b></a>`).join('');
 
-  /* ---------------- CLUB: 10% cashback voucher (only while the campaign runs) ---------------- */
+  /* ---------------- CLUB: how the 30% works (only while the campaign runs) ----------------
+     The 10% cashback is earned by buying: the store gives 10% of the order back as a voucher. */
   if (!CAMPAIGN.active) { $('#club')?.remove(); observeReveals(); return; }
-  // NOTE: there is no mailing service behind this form yet, so the voucher is shown on screen
-  // (and kept in this browser). Connect a mailing service to also email it and collect the list.
-  const V_KEY = 'enf_voucher';
-  const readVoucher = () => { try { return JSON.parse(localStorage.getItem(V_KEY) || 'null'); } catch (e) { return null; } };
-  const voucherHTML = v => `
-    <div class="voucher" role="status">
-      <span class="voucher__kicker">${icon('gift', 'icon', 2.4)} Enfantillage Club</span>
-      <b class="voucher__big">${CAMPAIGN.cashback}% cashback</b>
-      <span class="voucher__for">Voucher for <b>${esc(v.email)}</b></span>
-      <span class="voucher__how">Show this screen at our store in Mazraat Yachouh to use it.</span>
-      <button class="voucher__again" type="button" data-voucher-reset>Use another email</button>
-    </div>`;
-  const formHTML = () => `
-    <form id="clubForm" novalidate>
-      <label class="sr-only" for="clubEmail">Email address</label>
-      <input id="clubEmail" type="email" placeholder="Your email address" required autocomplete="email">
-      <button class="btn btn--navy" type="submit">Get my voucher</button>
-    </form>
-    <p class="club__note">For our store in Mazraat Yachouh. Your voucher stays in this browser; it is not emailed.</p>`;
   $('#club').innerHTML = `
     <div class="club__balloons"><span class="para" data-speed="-.1" style="position:relative">${balloon('#e8222b', 60)}</span><span class="para" data-speed="-.05" style="position:relative;margin-top:30px">${balloon('#3db54a', 46)}</span><span class="para" data-speed="-.14" style="position:relative;margin-top:10px">${balloon('#ffc83d', 52)}</span></div>
     <div>
       <span class="club__kicker">Get 30% back · until ${CAMPAIGN.until}</span>
-      <h2>Get your ${CAMPAIGN.cashback}% cashback voucher</h2>
-      <p>${CAMPAIGN.auto ? `${CAMPAIGN.pct}% off everything online (no code needed)` : `${CAMPAIGN.pct}% off online with code <b>${CAMPAIGN.code}</b>`}, plus a ${CAMPAIGN.cashback}% cashback voucher to spend in our store. Join the Enfantillage Club with your email to get it.</p>
+      <h2>How your 30% works</h2>
+      <p>Two treats on everything you buy until ${CAMPAIGN.until}.</p>
     </div>
-    <div id="clubAction">${readVoucher() ? voucherHTML(readVoucher()) : formHTML()}</div>`;
-  const action = $('#clubAction');
-  action.addEventListener('submit', e => {
-    if (e.target.id !== 'clubForm') return;
-    e.preventDefault();
-    const inp = $('#clubEmail');
-    if (!/^\S+@\S+\.\S+$/.test(inp.value.trim())) { inp.focus(); inp.parentElement.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-10px)' }, { transform: 'translateX(10px)' }, { transform: 'translateX(0)' }], { duration: 300 }); return; }
-    const v = { email: inp.value.trim(), at: new Date().toISOString() };
-    try { localStorage.setItem(V_KEY, JSON.stringify(v)); } catch (err) { /* private mode */ }
-    burst(e.submitter || inp, undefined, 60);
-    action.innerHTML = voucherHTML(v);
-    toast(`Here’s your ${CAMPAIGN.cashback}% cashback voucher!`);
-  });
-  action.addEventListener('click', e => {
-    if (!e.target.closest('[data-voucher-reset]')) return;
-    try { localStorage.removeItem(V_KEY); } catch (err) { /* private mode */ }
-    action.innerHTML = formHTML();
-    $('#clubEmail').focus();
-  });
+    <div class="club__treats">
+      <div class="club__treat"><b>${CAMPAIGN.pct}%</b><span><strong>Off everything</strong>${CAMPAIGN.auto ? 'Already taken off every price, no code needed.' : `Enter code <em>${CAMPAIGN.code}</em> at checkout.`}</span></div>
+      <div class="club__treat"><b>+${CAMPAIGN.cashback}%</b><span><strong>Back after you buy</strong>${CAMPAIGN.cashback}% of what you spend comes back as a voucher for your next visit to our store.</span></div>
+      <a class="btn btn--white" href="${shopUrl({ promo: 1 })}">Shop the offer ${icon('arrow', 'icon', 2.6)}</a>
+    </div>`;
 
   observeReveals();
 });

@@ -13,7 +13,7 @@
      Sold-out toys (p.r) had their photos in the old WordPress media library, which went offline when this
      site took over enfantillagestore.com. Until that library is back somewhere, they show a placeholder.
      To bring them back: set OLD_PHOTOS to the library's new address, e.g. 'https://shop.enfantillagestore.com/wp-content/uploads/'. */
-  /* the 30% campaign: 20% off straight away with a code + a 10% cashback voucher to spend in store.
+  /* the 30% campaign: 20% off everything + 10% of what you spend back as a voucher for the store (earned by buying).
      Change the code or the numbers here and the whole site follows. */
   // limited time: until the end of 25 December 2026 (Beirut time); after that the offer banner and Tillo's reminder switch off
   const CAMPAIGN = { code: 'TILLO20', pct: 20, cashback: 10, until: '25 December', active: Date.now() < Date.parse('2026-12-26T00:00:00+02:00') && !/[?&]campaign=off\b/.test(location.search) };
@@ -486,7 +486,7 @@
     <div class="ticker" role="region" aria-label="Store announcements"><div class="ticker__track">
       ${[0, 1].map(() => `
         ${CAMPAIGN.active ? `<span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span><b>Get 30% back until ${CAMPAIGN.until}:</b> <b>${CAMPAIGN.pct}% off</b> ${CAMPAIGN.auto ? '<b>everything</b>, no code needed' : `now with code <b>${CAMPAIGN.code}</b>`} + <b>${CAMPAIGN.cashback}% cashback</b> in store</span>
-        <span class="ticker__item"><span class="ticker__dot" style="--c:var(--green)"></span><a href="index.html#club">Get your <b>${CAMPAIGN.cashback}% cashback voucher</b> with your email →</a></span>` : `<span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span>Delivery anywhere in Lebanon for <b>5 $</b></span>`}
+        <span class="ticker__item"><span class="ticker__dot" style="--c:var(--green)"></span><a href="index.html#club"><b>+${CAMPAIGN.cashback}% back</b> on what you buy, as a store voucher →</a></span>` : `<span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span>Delivery anywhere in Lebanon for <b>5 $</b></span>`}
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--pink)"></span>Holiday wishlists are open — find the perfect gift with our <b>Gift Finder</b></span>
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--blue)"></span>Visit our store in <b>Mazraat Yachouh</b>, Chattat Center</span>
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--red)"></span>Up to <b>${maxOff}% off</b> in the Offer Zone</span>`).join('')}

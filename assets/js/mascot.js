@@ -20,10 +20,10 @@ document.addEventListener('site:ready', () => {
   const TIPS = {
     home: XMAS
       ? [['Ho ho ho! I’m Tillo. Want help picking a Christmas gift?', 'Open the Gift Finder', 'index.html#gift-finder'],
-         [`Psst… my code ${C.code} takes ${C.pct}% off your Christmas shopping, plus ${C.cashback}% cashback in store!`, 'Get my voucher', 'index.html#club'],
+         [`Psst… my code ${C.code} takes ${C.pct}% off your Christmas shopping, plus ${C.cashback}% back on what you buy!`, 'How it works', 'index.html#club'],
          ['Gift wrapping is on request: just tick it at checkout.', 'Start shopping', 'shop.html']]
       : [['Hi, I’m Tillo! Need a gift idea? I can help.', 'Open the Gift Finder', 'index.html#gift-finder'],
-         [`Psst… use my code ${C.code} for ${C.pct}% off, then get ${C.cashback}% cashback in store!`, 'Get my voucher', 'index.html#club'],
+         [`Psst… use my code ${C.code} for ${C.pct}% off, plus ${C.cashback}% back on what you buy!`, 'How it works', 'index.html#club'],
          ['We deliver anywhere in Lebanon, and you pay when it arrives.', 'Start shopping', 'shop.html']],
     shop: [['Use the filters to shop by age, brand or character!', '', ''],
            [`Use code ${C.code} at checkout for ${C.pct}% off!`, '', ''],
@@ -146,8 +146,8 @@ document.addEventListener('site:ready', () => {
       if (p && perks) {
         const line = !p.s ? 'This one is sold out right now. Call us and we’ll tell you when it’s back!'
           : !p.p ? 'Ask us for the price: we’re happy to help!'
-          : C.auto ? `It’s already ${C.pct}% off, no code needed, plus ${C.cashback}% cashback in store! (until ${C.until})`
-          : C.active ? `With code <b>${C.code}</b> it’s only <b>${money(window.ENF.codePrice(p.p))}</b>, plus ${C.cashback}% cashback in store! (until ${C.until})`
+          : C.auto ? `It’s already ${C.pct}% off, no code needed, and you get ${C.cashback}% back as a store voucher! (until ${C.until})`
+          : C.active ? `With code <b>${C.code}</b> it’s only <b>${money(window.ENF.codePrice(p.p))}</b>, and you get ${C.cashback}% back as a store voucher! (until ${C.until})`
           : 'Pay when it arrives: cash on delivery or Whish Money. Delivery anywhere in Lebanon for 5 $.';
         place(perks, 'beforebegin', `<div class="tillo-tip tillo-tip--plain"><span class="tillo-tip__icon" aria-hidden="true">${icon('sparkle', 'icon', 2.4)}</span><p><b>Tip:</b> ${line}</p></div>`);
       }

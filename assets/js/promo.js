@@ -1,12 +1,13 @@
 /* ==========================================================================
    Welcome pop-up for the limited-time 30% offer (until 25 December):
-   30% back = 20% off everything + a 10% cashback voucher for the store (with your email).
-   Shows once when someone arrives; after it's closed it stays away for 3 days, and for good once
-   the voucher is taken. Off automatically when the campaign ends (CAMPAIGN.active).
+   30% back = 20% off everything + 10% of what you spend back as a voucher for the store.
+   (The cashback is earned by buying: nothing is handed out before a purchase.)
+   Shows once when someone arrives; after it's closed it stays away for 3 days.
+   Off automatically when the campaign ends (CAMPAIGN.active). Preview again with ?promo-popup.
    ========================================================================== */
 document.addEventListener('site:ready', () => {
   'use strict';
-  const { CAMPAIGN: C, icon, balloon, esc, shopUrl, burst, toast } = window.ENF;
+  const { CAMPAIGN: C, icon, balloon, starSvg, esc, shopUrl, imgOf, byId } = window.ENF;
   if (!C.active) return;
   const page = document.body.dataset.current || 'home';
   if (page === 'checkout') return;
@@ -15,21 +16,15 @@ document.addEventListener('site:ready', () => {
     get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } },
   };
-  const V_KEY = 'enf_voucher', SEEN_KEY = 'enf_promo_closed', AWAY = 3 * 24 * 60 * 60 * 1000;
-  const readVoucher = () => { try { return JSON.parse(ls.get(V_KEY) || 'null'); } catch (e) { return null; } };
-  const preview = /[?&]promo-popup\b/.test(location.search);   // ?promo-popup shows it again (for checking)
-  if (!preview && (readVoucher() || Date.now() - Number(ls.get(SEEN_KEY) || 0) < AWAY)) return;
+  const SEEN_KEY = 'enf_promo_closed', AWAY = 3 * 24 * 60 * 60 * 1000;
+  const preview = /[?&]promo-popup\b/.test(location.search);
+  if (!preview && Date.now() - Number(ls.get(SEEN_KEY) || 0) < AWAY) return;
 
-  const twenty = C.auto
-    ? ['20% off everything', 'Already taken off every price. No code needed!']
-    : [`${C.pct}% off everything`, `Use code <b>${esc(C.code)}</b> at checkout`];
-  const voucherHTML = v => `
-    <div class="voucher" role="status">
-      <span class="voucher__kicker">${icon('gift', 'icon', 2.4)} Enfantillage Club</span>
-      <b class="voucher__big">${C.cashback}% cashback</b>
-      <span class="voucher__for">Voucher for <b>${esc(v.email)}</b></span>
-      <span class="voucher__how">Show this screen at our store in Mazraat Yachouh to use it.</span>
-    </div>`;
+  const END = Date.parse('2026-12-26T00:00:00+02:00');
+  const days = Math.max(1, Math.ceil((END - Date.now()) / 86400000));
+  const left = days === 1 ? 'Last day!' : `${days} days left`;
+  // three favourites with photos (falls back to other in-stock toys)
+  const pics = [30954, 31379, 54021].map(id => ({ src: imgOf(id), alt: byId.get(id)?.n || '' }));
 
   const pop = document.createElement('div');
   pop.className = 'promo-pop';
@@ -40,26 +35,30 @@ document.addEventListener('site:ready', () => {
     <div class="promo-pop__backdrop" data-promo-close></div>
     <div class="promo-pop__card">
       <button class="promo-pop__x" type="button" data-promo-close aria-label="Close">${icon('x', 'icon', 2.8)}</button>
-      <div class="promo-pop__balloons" aria-hidden="true">${balloon('#e8222b', 46)}${balloon('#ffc83d', 36)}${balloon('#00a6e4', 40)}</div>
-      <span class="promo-pop__kicker">${icon('tag', 'icon', 2.4)} Limited time · until ${C.until}</span>
-      <h2 class="promo-pop__title" id="promoTitle">Get <em>30%</em> back!</h2>
-      <p class="promo-pop__lead">Our Christmas offer comes in two parts:</p>
-      <div class="promo-pop__parts">
-        <div class="promo-pop__part" style="--c:var(--red)"><b>${twenty[0]}</b><small>${twenty[1]}</small></div>
-        <span class="promo-pop__plus" aria-hidden="true">+</span>
-        <div class="promo-pop__part" style="--c:var(--green)"><b>+${C.cashback}% cashback</b><small>A voucher to spend in our store</small></div>
+      <div class="promo-pop__art" aria-hidden="true">
+        <span class="promo-pop__star" style="left:12%;top:14%">${starSvg('#ffc83d', 22)}</span>
+        <span class="promo-pop__star" style="right:14%;top:58%">${starSvg('#fff', 14)}</span>
+        <span class="promo-pop__star" style="left:20%;bottom:12%">${starSvg('#fff', 12)}</span>
+        <div class="promo-pop__balloons">${balloon('#ffc83d', 34)}${balloon('#00a6e4', 28)}</div>
+        <div class="promo-pop__burst"><span>Get<b>30%</b>back</span></div>
+        <div class="promo-pop__pics">${pics.map((p, k) => `<span class="promo-pop__pic promo-pop__pic--${k}"><img src="${esc(p.src)}" alt=""></span>`).join('')}</div>
       </div>
-      <div class="promo-pop__action" id="promoAction">
-        <form class="promo-pop__form" id="promoForm" novalidate>
-          <label class="sr-only" for="promoEmail">Email address</label>
-          <input id="promoEmail" type="email" placeholder="Your email for the 10% voucher" required autocomplete="email">
-          <button class="btn btn--red" type="submit">Get my voucher</button>
-        </form>
-        <p class="promo-pop__note">Your voucher appears right here and stays in this browser.</p>
-      </div>
-      <div class="promo-pop__foot">
-        <a class="btn btn--navy btn--sm" href="${shopUrl({ promo: 1 })}" data-promo-close>Shop the offer ${icon('arrow', 'icon', 2.6)}</a>
-        <button class="promo-pop__skip" type="button" data-promo-close>No thanks</button>
+      <div class="promo-pop__body">
+        <span class="promo-pop__kicker">${icon('gift', 'icon', 2.4)} Christmas offer · ${left}</span>
+        <h2 class="promo-pop__title" id="promoTitle">Get <em>30%</em> back on every toy</h2>
+        <p class="promo-pop__lead">Until ${esc(C.until)}, every purchase comes with two treats:</p>
+        <ul class="promo-pop__treats">
+          <li style="--c:var(--red);--c-soft:var(--red-soft)">
+            <span class="promo-pop__num">${C.pct}%</span>
+            <span><b>Off everything</b><small>${C.auto ? 'Already taken off every price. No code needed!' : `Enter code <b>${esc(C.code)}</b> at checkout.`}</small></span>
+          </li>
+          <li style="--c:var(--green);--c-soft:var(--green-soft)">
+            <span class="promo-pop__num">+${C.cashback}%</span>
+            <span><b>Back after you buy</b><small>${C.cashback}% of what you spend comes back as a voucher for your next visit to our store.</small></span>
+          </li>
+        </ul>
+        <a class="btn btn--red promo-pop__cta" href="${shopUrl({ promo: 1 })}" data-promo-close>Shop the offer ${icon('arrow', 'icon', 2.6)}</a>
+        <button class="promo-pop__skip" type="button" data-promo-close>Maybe later</button>
       </div>
     </div>`;
   document.body.appendChild(pop);
@@ -68,7 +67,7 @@ document.addEventListener('site:ready', () => {
   const open = () => {
     lastFocus = document.activeElement;
     pop.classList.add('is-open');
-    pop.querySelector('.promo-pop__x').focus({ preventScroll: true });
+    pop.querySelector('.promo-pop__cta').focus({ preventScroll: true });
   };
   const close = () => {
     if (!pop.classList.contains('is-open')) return;
@@ -78,22 +77,6 @@ document.addEventListener('site:ready', () => {
   };
   pop.addEventListener('click', e => { if (e.target.closest('[data-promo-close]')) close(); });
   addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
-
-  pop.querySelector('#promoAction').addEventListener('submit', e => {
-    e.preventDefault();
-    const inp = pop.querySelector('#promoEmail');
-    const email = inp.value.trim();
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      inp.focus();
-      inp.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-10px)' }, { transform: 'translateX(10px)' }, { transform: 'translateX(0)' }], { duration: 300 });
-      return;
-    }
-    const v = { email, at: new Date().toISOString() };
-    ls.set(V_KEY, JSON.stringify(v));            // same voucher as the club section on the home page
-    burst(e.submitter || inp, undefined, 60);
-    pop.querySelector('#promoAction').innerHTML = voucherHTML(v);
-    toast(`Here’s your ${C.cashback}% cashback voucher!`);
-  });
 
   // a moment after arriving, so the page shows first
   setTimeout(open, preview ? 300 : 1200);

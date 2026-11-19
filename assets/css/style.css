@@ -1812,51 +1812,102 @@ a[href^="tel:"] { white-space: nowrap; }
 @media (max-width: 760px) { .price .price__code { font-size: 11.5px; } }
 
 /* ==========================================================================
-   Welcome pop-up: the 30% offer (20% off everything + 10% cashback voucher)
+   Welcome pop-up: the 30% offer (20% off everything + 10% back as a store voucher)
    ========================================================================== */
 .promo-pop { position: fixed; inset: 0; z-index: 160; display: grid; place-items: center; padding: 16px; visibility: hidden; }
 .promo-pop.is-open { visibility: visible; }
-.promo-pop__backdrop { position: absolute; inset: 0; background: rgba(26, 34, 102, .55); opacity: 0; transition: opacity .3s; }
+.promo-pop__backdrop { position: absolute; inset: 0; background: rgba(26, 34, 102, .6); backdrop-filter: blur(3px); opacity: 0; transition: opacity .35s; }
 .promo-pop.is-open .promo-pop__backdrop { opacity: 1; }
 .promo-pop__card {
-  position: relative; width: min(480px, 100%); max-height: calc(100dvh - 32px); overflow: auto;
-  background: linear-gradient(160deg, #fff7f7 0%, #ffe3e5 100%); border: 3px solid var(--sun); border-radius: 28px;
-  box-shadow: var(--shadow-lg); padding: 28px 26px 22px; text-align: center; color: var(--ink);
-  transform: translateY(18px) scale(.97); opacity: 0; transition: transform .45s var(--ease-out), opacity .3s;
+  position: relative; width: min(780px, 100%); max-height: calc(100dvh - 32px); overflow: auto;
+  display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  background: #fff; border-radius: 30px; box-shadow: 0 30px 80px rgba(26, 34, 102, .35);
+  transform: translateY(22px) scale(.97); opacity: 0; transition: transform .5s var(--ease-out), opacity .3s;
 }
 .promo-pop.is-open .promo-pop__card { transform: none; opacity: 1; }
-.promo-pop__x { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: var(--ink-soft); box-shadow: var(--shadow-sm); z-index: 2; }
+.promo-pop__x { position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--navy-soft); color: var(--navy); z-index: 3; transition: transform .2s; }
+@media (hover: hover) and (pointer: fine) { .promo-pop__x:hover { transform: rotate(90deg); } }
 .promo-pop__x .icon { width: 16px; height: 16px; }
-.promo-pop__balloons { position: absolute; top: -8px; left: 14px; display: flex; gap: 2px; align-items: flex-start; opacity: .95; pointer-events: none; }
-.promo-pop__balloons > * { animation: floaty 5s ease-in-out infinite; }
-.promo-pop__balloons > *:nth-child(2) { margin-top: 18px; animation-delay: -1.5s; }
-.promo-pop__balloons > *:nth-child(3) { margin-top: 6px; animation-delay: -3s; }
-.promo-pop__kicker { display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; padding: 6px 14px; border-radius: 999px; background: #fff; color: var(--red); font-weight: 900; font-size: 13px; box-shadow: var(--shadow-sm); }
-.promo-pop__kicker .icon { width: 16px; height: 16px; }
-.promo-pop__title { font-family: var(--font-display); font-size: clamp(36px, 8vw, 48px); line-height: 1.05; color: var(--navy); margin: 12px 0 4px; }
-.promo-pop__title em { font-style: normal; color: var(--red); }
-.promo-pop__lead { font-weight: 800; color: var(--ink-soft); margin-bottom: 14px; }
-.promo-pop__parts { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: stretch; margin-bottom: 16px; }
-.promo-pop__part { background: #fff; border-radius: 18px; padding: 14px 10px; border: 2px solid color-mix(in srgb, var(--c) 35%, #fff); display: grid; gap: 4px; align-content: center; }
-.promo-pop__part b { font-family: var(--font-display); font-size: 21px; line-height: 1.1; color: var(--c); }
-.promo-pop__part small { font-size: 13px; font-weight: 700; color: var(--ink-soft); line-height: 1.3; }
-.promo-pop__plus { align-self: center; font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--navy); }
-.promo-pop__form { display: flex; gap: 8px; }
-.promo-pop__form input { flex: 1; min-width: 0; padding: 13px 16px; border-radius: 999px; border: 2px solid var(--line); background: #fff; font: inherit; font-size: 16px; font-weight: 700; color: var(--ink); }
-.promo-pop__form input:focus { outline: none; border-color: var(--navy); }
-.promo-pop__form .btn { flex: none; white-space: nowrap; }
-.promo-pop__note { font-size: 12.5px; color: var(--ink-soft); margin-top: 8px; }
-.promo-pop__action .voucher { text-align: center; justify-items: center; }
-.promo-pop__action .voucher::before, .promo-pop__action .voucher::after { background: #ffe9ea; }
-.promo-pop__foot { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
-.promo-pop__skip { font-weight: 800; font-size: 14px; color: var(--ink-soft); text-decoration: underline; }
-@media (max-width: 480px) {
-  .promo-pop__card { padding: 24px 16px 18px; border-radius: 24px; }
-  .promo-pop__parts { grid-template-columns: minmax(0, 1fr); }
-  .promo-pop__plus { font-size: 22px; line-height: 1; }
-  .promo-pop__part { padding: 10px; }
-  .promo-pop__part b { font-size: 19px; }
-  .promo-pop__form { flex-direction: column; }
-  .promo-pop__form .btn { width: 100%; justify-content: center; }
+
+/* left: the festive picture panel */
+.promo-pop__art {
+  position: relative; min-height: 420px; overflow: hidden;
+  background: radial-gradient(circle at 30% 20%, #ff5a62 0%, transparent 55%), radial-gradient(circle at 80% 90%, #ff7aa8 0%, transparent 50%), linear-gradient(150deg, #e8222b 0%, #c4126b 100%);
 }
-@media (prefers-reduced-motion: reduce) { .promo-pop__card, .promo-pop__backdrop { transition: none; } .promo-pop__balloons > * { animation: none; } }
+.promo-pop__art::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.22) 1.5px, transparent 1.6px); background-size: 22px 22px; pointer-events: none; }
+.promo-pop__star { position: absolute; z-index: 1; animation: starTwinkle 3s ease-in-out infinite; }
+.promo-pop__star:nth-of-type(2) { animation-delay: -1s; } .promo-pop__star:nth-of-type(3) { animation-delay: -2s; }
+.promo-pop__balloons { position: absolute; right: 16px; top: 18px; display: flex; gap: 2px; z-index: 1; }
+.promo-pop__balloons > * { animation: floaty 5s ease-in-out infinite; }
+.promo-pop__balloons > *:nth-child(2) { margin-top: 16px; animation-delay: -2s; }
+.promo-pop__burst {
+  position: absolute; left: 50%; top: 22%; z-index: 2; width: 132px; height: 132px; margin-left: -66px;
+  display: grid; place-items: center; text-align: center; background: var(--sun); color: var(--navy); border-radius: 50%;
+  box-shadow: 0 0 0 8px rgba(255, 200, 61, .35), 0 14px 30px rgba(0,0,0,.2); transform: rotate(-10deg);
+  font-family: var(--font-display); font-weight: 800; font-size: 17px; line-height: 1; text-transform: uppercase;
+}
+.promo-pop__burst b { display: block; font-size: 50px; line-height: .95; color: var(--red); }
+.promo-pop__pics { position: absolute; left: 0; right: 0; bottom: 26px; height: 150px; z-index: 2; }
+.promo-pop__pic { position: absolute; bottom: 0; width: 116px; height: 116px; border-radius: 50%; background: #fff; border: 4px solid #fff; box-shadow: 0 12px 26px rgba(0,0,0,.22); overflow: hidden; display: grid; place-items: center; }
+.promo-pop__pic img { width: 86%; height: 86%; object-fit: contain; }
+.promo-pop__pic--0 { left: 8%; transform: rotate(-6deg); }
+.promo-pop__pic--1 { left: 50%; margin-left: -66px; width: 132px; height: 132px; bottom: 14px; z-index: 1; }
+.promo-pop__pic--2 { right: 8%; transform: rotate(6deg); }
+
+/* right: the offer, explained */
+.promo-pop__body { padding: 34px 32px 26px; display: grid; align-content: center; justify-items: start; gap: 0; }
+.promo-pop__kicker { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--sun-soft); color: #9a6a00; font-weight: 900; font-size: 13px; }
+.promo-pop__kicker .icon { width: 16px; height: 16px; color: var(--red); }
+.promo-pop__title { font-family: var(--font-display); font-size: clamp(30px, 4.2vw, 40px); line-height: 1.05; color: var(--navy); margin: 12px 0 6px; padding-right: 30px; }
+.promo-pop__title em { font-style: normal; color: var(--red); }
+.promo-pop__lead { font-weight: 700; color: var(--ink-soft); margin-bottom: 14px; }
+.promo-pop__treats { list-style: none; display: grid; gap: 10px; width: 100%; margin: 0 0 18px; padding: 0; }
+.promo-pop__treats li { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 14px 10px 10px; border-radius: 18px; background: var(--c-soft); }
+.promo-pop__num { display: grid; place-items: center; height: 58px; border-radius: 14px; background: var(--c); color: #fff; font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: -.5px; }
+.promo-pop__treats b { display: block; font-family: var(--font-display); font-size: 19px; line-height: 1.15; color: var(--navy); }
+.promo-pop__treats small { display: block; font-size: 13.5px; font-weight: 700; line-height: 1.35; color: var(--ink-soft); margin-top: 2px; }
+.promo-pop__treats small b { display: inline; font: inherit; font-weight: 900; color: var(--red); }
+.promo-pop__cta { width: 100%; justify-content: center; }
+.promo-pop__skip { justify-self: center; margin-top: 12px; font-weight: 800; font-size: 14px; color: var(--ink-soft); text-decoration: underline; }
+
+@media (max-width: 700px) {
+  .promo-pop { padding: 12px; }
+  .promo-pop__card { grid-template-columns: minmax(0, 1fr); border-radius: 26px; }
+  .promo-pop__art { min-height: 0; height: 170px; }
+  .promo-pop__burst { width: 96px; height: 96px; margin-left: 0; left: 18px; top: 18px; font-size: 13px; }
+  .promo-pop__burst b { font-size: 36px; }
+  .promo-pop__balloons { right: auto; left: 128px; top: 12px; }
+  .promo-pop__balloons > * { transform: scale(.85); }
+  .promo-pop__pics { left: 118px; height: 120px; bottom: 14px; }
+  .promo-pop__pic { width: 82px; height: 82px; border-width: 3px; }
+  .promo-pop__pic--0 { left: 4%; }
+  .promo-pop__pic--1 { width: 96px; height: 96px; margin-left: -48px; bottom: 10px; }
+  .promo-pop__pic--2 { right: 4%; }
+  .promo-pop__x { background: #fff; }
+  .promo-pop__body { padding: 20px 18px 18px; }
+  .promo-pop__title { font-size: 28px; padding-right: 0; margin-top: 10px; }
+  .promo-pop__lead { font-size: 14px; margin-bottom: 10px; }
+  .promo-pop__treats li { grid-template-columns: 60px minmax(0, 1fr); gap: 10px; padding: 8px 10px 8px 8px; }
+  .promo-pop__num { height: 50px; font-size: 20px; }
+  .promo-pop__treats b { font-size: 17px; }
+  .promo-pop__treats small { font-size: 12.5px; }
+}
+@media (max-width: 360px) {
+  .promo-pop__pics { left: 108px; }
+  .promo-pop__pic--0 { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .promo-pop__card, .promo-pop__backdrop { transition: none; }
+  .promo-pop__balloons > *, .promo-pop__star { animation: none; }
+}
+
+/* home: "How your 30% works" (replaces the email voucher form) */
+.club__treats { position: relative; z-index: 2; display: grid; gap: 10px; justify-items: stretch; }
+.club__treat { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; align-items: center; background: rgba(255,255,255,.96); color: var(--ink); border-radius: 18px; padding: 10px 14px 10px 10px; box-shadow: 0 8px 20px rgba(0,0,0,.12); }
+.club__treat b { display: grid; place-items: center; height: 56px; border-radius: 14px; background: var(--red); color: #fff; font-family: var(--font-display); font-size: 24px; }
+.club__treat:nth-child(2) b { background: var(--green); }
+.club__treat span { font-size: 14px; font-weight: 700; color: var(--ink-soft); line-height: 1.35; }
+.club__treat strong { display: block; font-family: var(--font-display); font-size: 18px; color: var(--navy); }
+.club__treat em { font-style: normal; font-weight: 900; color: var(--red); }
+.club__treats .btn { justify-self: start; }
+@media (max-width: 760px) { .club__treats .btn { justify-self: stretch; justify-content: center; } }

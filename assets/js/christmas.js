@@ -125,7 +125,7 @@ document.addEventListener('site:ready', () => {
     const items = `
       <span class="ticker__item"><span class="ticker__dot" style="--c:#ffd54a"></span><b>${countdown}</b> — the Christmas gift shop is open</span>
       ${C.active ? `<span class="ticker__item"><span class="ticker__dot" style="--c:#7ddc84"></span><b>Get 30% back until ${C.until}:</b> <b>${C.pct}% off</b> ${C.auto ? '<b>everything</b>, no code needed' : `with code <b>${C.code}</b>`} + <b>${C.cashback}% cashback</b> in store</span>
-      <span class="ticker__item"><span class="ticker__dot" style="--c:#fff"></span><a href="index.html#club">Get your <b>${C.cashback}% cashback voucher</b> →</a></span>` : `<span class="ticker__item"><span class="ticker__dot" style="--c:#7ddc84"></span>Delivery anywhere in Lebanon for <b>5 $</b></span>`}
+      <span class="ticker__item"><span class="ticker__dot" style="--c:#fff"></span><a href="index.html#club"><b>+${C.cashback}% back</b> on what you buy, as a store voucher →</a></span>` : `<span class="ticker__item"><span class="ticker__dot" style="--c:#7ddc84"></span>Delivery anywhere in Lebanon for <b>5 $</b></span>`}
       <span class="ticker__item"><span class="ticker__dot" style="--c:#ffd54a"></span>Gift wrapping on request — tick <b>“wrap my gifts”</b> at checkout</span>
       <span class="ticker__item"><span class="ticker__dot" style="--c:#7ddc84"></span>Visit our store in <b>Mazraat Yachouh</b>, Chattat Center</span>`;
     track.innerHTML = items + items;
