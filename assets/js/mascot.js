@@ -38,7 +38,12 @@ document.addEventListener('site:ready', () => {
     checkout: [[`Have code ${C.code}? Enter it on the next step for ${C.pct}% off.`, '', ''],
                ['Whish payments are checked manually by the store.', '', '']],
   };
-  const tips = TIPS[page] || TIPS.home;
+  const tips = [...(TIPS[page] || TIPS.home)];
+  // limited-time reminder: Tillo's first message on the home page and the shop, until 25 December
+  if (C.active && (page === 'home' || page === 'shop')) {
+    if (page === 'home') tips.splice(1, 1);   // the old code tip, replaced by the reminder
+    tips.unshift([`Hurry! Get 30% back until ${C.until}: ${C.pct}% off with code ${C.code} + ${C.cashback}% cashback in store.`, 'See the offers', shopUrl({ sale: 1 })]);
+  }
   let tipIndex = 0;
 
   const peek = document.createElement('div');
@@ -72,7 +77,13 @@ document.addEventListener('site:ready', () => {
     if (peek.classList.contains('is-up')) return;
     peek.classList.add('is-up');
     if (ss.get(closedKey)) { peek.classList.add('has-news'); return; }
-    setTimeout(() => showTip(tipIndex), reduce ? 0 : 900);
+    const first = () => { showTip(tipIndex); setTimeout(hush, 10000); };   // shows for 10 s, then tucks away
+    // home: the banner already shows the offer, so the reminder pops up once you scroll past it
+    // (on laptops it would otherwise cover the banner's button)
+    if (page === 'home' && scrollY < 500) {
+      const onScroll = () => { if (scrollY > 500) { removeEventListener('scroll', onScroll); setTimeout(first, 300); } };
+      addEventListener('scroll', onScroll, { passive: true });
+    } else setTimeout(first, reduce ? 0 : 900);
   }
   peek.querySelector('.tillo-peek__body').addEventListener('click', () => {
     const fig = peek.querySelector('[data-tillo]');
@@ -88,10 +99,10 @@ document.addEventListener('site:ready', () => {
   addEventListener('scroll', function first() { if (scrollY > 300) { appear(); removeEventListener('scroll', first); } }, { passive: true });
   let nudges = 0;
   setInterval(() => {
-    if (ss.get(closedKey) || peek.classList.contains('is-talking') || document.hidden || nudges >= 3) return;
+    if (ss.get(closedKey) || peek.classList.contains('is-talking') || document.hidden || nudges >= 2) return;
     nudges++; tipIndex = (tipIndex + 1) % tips.length; showTip(tipIndex);
-    setTimeout(hush, 9000);
-  }, 28000);
+    setTimeout(hush, 8000);
+  }, 35000);
 
   // stay out of the way of drawers, the quick view and big Tillos on screen
   const sync = () => peek.classList.toggle('is-hidden', !!$('.drawer.is-open, .modal.is-open, .filters.is-open'));

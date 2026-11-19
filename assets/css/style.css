@@ -1779,3 +1779,29 @@ a[href^="tel:"] { white-space: nowrap; }
 
 /* Respect semantic visibility for checkout instructions and receipt retry. */
 [hidden] { display: none !important; }
+
+/* ==========================================================================
+   Tillo's message: a slim strip beside him along the bottom edge
+   (it used to float above his head, in the middle of the screen)
+   ========================================================================== */
+.tillo-peek__bubble {
+  left: calc(var(--peek-w) * .9); bottom: 14px;
+  width: min(390px, calc(100vw - var(--peek-w) - 40px));
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: end;
+  padding: 10px 38px 11px 16px; border-radius: 20px 20px 20px 6px; transform-origin: 0% 100%;
+}
+.tillo-peek__name { grid-column: 1 / -1; }
+.tillo-peek__msg { grid-column: 1; font-size: 14px; line-height: 1.35; padding-right: 0; }
+.tillo-peek__cta { grid-column: 2; grid-row: 2; margin-top: 0; white-space: nowrap; }
+@media (max-width: 760px) {
+  /* phones: a strip right above the bottom menu bar, from Tillo to the screen edge */
+  .tillo-peek__bubble { left: calc(var(--peek-w) + 4px); bottom: 2px; width: calc(100vw - var(--peek-w) - 18px); padding: 8px 32px 9px 12px; column-gap: 8px; border-radius: 16px 16px 16px 5px; }
+  .tillo-peek__msg { font-size: 12.5px; line-height: 1.3; }
+  .tillo-peek__cta { padding: 6px 10px; font-size: 12px; }
+}
+@media (max-width: 380px) {
+  .tillo-peek__bubble { grid-template-columns: minmax(0, 1fr); }
+  .tillo-peek__cta { grid-column: 1; grid-row: auto; justify-self: start; margin-top: 6px; }
+}
+/* one banner only (the limited-time offer): no dots or arrows */
+.slider--single .slider__nav, .slider--single .slider__arrows { display: none; }

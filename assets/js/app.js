@@ -15,7 +15,8 @@
      To bring them back: set OLD_PHOTOS to the library's new address, e.g. 'https://shop.enfantillagestore.com/wp-content/uploads/'. */
   /* the 30% campaign: 20% off straight away with a code + a 10% cashback voucher to spend in store.
      Change the code or the numbers here and the whole site follows. */
-  const CAMPAIGN = { code: 'TILLO20', pct: 20, cashback: 10 };
+  // limited time: until the end of 25 December 2026 (Beirut time); after that the offer banner and Tillo's reminder switch off
+  const CAMPAIGN = { code: 'TILLO20', pct: 20, cashback: 10, until: '25 December', active: Date.now() < Date.parse('2026-12-26T00:00:00+02:00') };
   const OLD_PHOTOS = '';
   const NO_PHOTO = 'assets/img/no-photo.svg';
   const MAP_URL = 'https://www.google.com/maps/search/?api=1&query=Enfantillage%2C%20Mazraat%20Yachouh%2C%20Lebanon';

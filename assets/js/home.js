@@ -40,9 +40,9 @@ document.addEventListener('site:ready', () => {
     },
     {
       bg: 'linear-gradient(135deg,#fff1f1 0%,#ffd9dc 100%)', accent: '#d81e27',
-      kicker: `${icon('tag', 'icon', 2.4)} Offer Zone`,
+      kicker: `${icon('tag', 'icon', 2.4)} Limited time · until ${CAMPAIGN.until}`,
       title: 'Get <em>30%</em> back',
-      desc: `${CAMPAIGN.pct}% off right now with code ${CAMPAIGN.code}, plus a ${CAMPAIGN.cashback}% cashback voucher to spend in our store.`,
+      desc: `${CAMPAIGN.pct}% off right now with code ${CAMPAIGN.code}, plus a ${CAMPAIGN.cashback}% cashback voucher to spend in our store. Only until ${CAMPAIGN.until}!`,
       cta: ['Shop the offers', shopUrl({ sale: 1 }), 'btn--red'],
       imgs: topDeals.map(p => p.id),
       burst: true,
@@ -68,14 +68,19 @@ document.addEventListener('site:ready', () => {
         desc: 'Soft toys, first-learning sets and baby favourites to make it special.',
         cta: ['Shop baby gifts', shopUrl({ cat: 'baby' }), 'btn--navy'], imgs: [55205, 20700, 55164] },
       { bg: 'linear-gradient(135deg,#fff6e3 0%,#ffe4a8 100%)', accent: '#c8102e', xmas: 'gold',
-        kicker: `${icon('tag', 'icon', 2.4)} Christmas offers`,
+        kicker: `${icon('tag', 'icon', 2.4)} Christmas offer · until ${CAMPAIGN.until}`,
         title: 'Get <em>30%</em> back',
-        desc: `${CAMPAIGN.pct}% off with code ${CAMPAIGN.code}, plus a ${CAMPAIGN.cashback}% cashback voucher for the store.`,
+        desc: `${CAMPAIGN.pct}% off with code ${CAMPAIGN.code}, plus a ${CAMPAIGN.cashback}% cashback voucher for the store. Only until ${CAMPAIGN.until}!`,
         cta: ['Shop the offers', shopUrl({ sale: 1 }), 'btn--red'], imgs: topDeals.map(p => p.id), burst: true });
   }
+  // while the 30% campaign runs, the banner shows only that offer; afterwards the other slides come back without it
+  const offer = SLIDES.filter(s => s.burst);
+  if (CAMPAIGN.active) SLIDES.splice(0, SLIDES.length, ...offer);
+  else SLIDES.splice(0, SLIDES.length, ...SLIDES.filter(s => !s.burst));
   const DUR = 6500;
   const slider = $('#slider');
   slider.style.setProperty('--dur', DUR + 'ms');
+  slider.classList.toggle('slider--single', SLIDES.length === 1);
   slider.innerHTML = SLIDES.map((s, i) => `
     <div class="slide${i === 0 ? ' is-active' : ''}${s.xmas ? ' slide--xmas' : ''}" style="--bg:${s.bg};--accent:${s.accent}" role="group" aria-roledescription="slide" aria-label="${i + 1} of ${SLIDES.length}">
       <div class="slide__deco">
@@ -110,7 +115,7 @@ document.addEventListener('site:ready', () => {
     dots.forEach((d, i) => { d.classList.remove('is-active'); if (i === cur) { void d.offsetWidth; d.classList.add('is-active'); } });
     schedule();
   }
-  function schedule() { clearTimeout(timer); if (!reduce && !slider.classList.contains('is-paused')) timer = setTimeout(() => go(cur + 1), DUR); }
+  function schedule() { clearTimeout(timer); if (SLIDES.length > 1 && !reduce && !slider.classList.contains('is-paused')) timer = setTimeout(() => go(cur + 1), DUR); }
   slider.addEventListener('click', e => {
     const g = e.target.closest('[data-go]'); if (g) go(+g.dataset.go);
     const st = e.target.closest('[data-step]'); if (st) go(cur + +st.dataset.step);
