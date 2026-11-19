@@ -331,7 +331,7 @@ document.addEventListener('site:ready', () => {
     </div>
     <div class="club__treats">
       <div class="club__treat"><b>${CAMPAIGN.pct}%</b><span><strong>Off everything</strong>${CAMPAIGN.auto ? 'Already taken off every price, no code needed.' : `Enter code <em>${CAMPAIGN.code}</em> at checkout.`}</span></div>
-      <div class="club__treat"><b>+${CAMPAIGN.cashback}%</b><span><strong>Back after you buy</strong>${CAMPAIGN.cashback}% of what you spend comes back as a voucher for your next visit to our store.</span></div>
+      <div class="club__treat"><b>+${CAMPAIGN.cashback}%</b><span><strong>Back after you buy</strong>${CAMPAIGN.cashback}% of what you spend comes back as a store voucher in your order email. Use it in our store by ${CAMPAIGN.until}.</span></div>
       <a class="btn btn--white" href="${shopUrl({ promo: 1 })}">Shop the offer ${icon('arrow', 'icon', 2.6)}</a>
     </div>`;
 

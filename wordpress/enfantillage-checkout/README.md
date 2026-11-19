@@ -54,3 +54,9 @@ The client confirmed TILLO20 (20% off), 10% in-store cashback, gift wrapping and
 - The status endpoint reports `discount: { pct: 20, until: '2026-12-25' }` while it runs. The website only lowers its prices when it sees this, so before the upload it keeps the TILLO20 wording.
 - Includes 0.4.0: 5 $ delivery, no postcode, email required, "75 $" price display.
 - Install: Plugins → Add New → Upload Plugin → `enfantillage-checkout-0.5.0.zip` → "Replace current with uploaded".
+
+## 0.6.0 (20 November 2026)
+
+- 10% cashback voucher on new-storefront orders placed until the end of 25 December 2026: 10% of what the customer paid for the toys (after the 20% off, delivery not included), rounded to 0.1 $. Saved on the order ("Cashback voucher"), with a staff note: honour it only once the order is paid, not if cancelled.
+- Shown on the WooCommerce thank-you page and at the top of the customer order emails (not for cancelled/failed/refunded orders): "X $ to spend in our store … Show this email (order #…) at Enfantillage, Mazraat Yachouh … Valid until 25 December 2026."
+- Includes 0.5.0 and 0.4.0. Install `enfantillage-checkout-0.6.0.zip` with "Replace current with uploaded".

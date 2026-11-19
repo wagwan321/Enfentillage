@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Enfantillage Checkout Handoff
  * Description: An opt-in cart handoff to WooCommerce checkout, 5 $ Lebanon delivery, COD and manually confirmed Whish payments. Disabled until explicitly enabled by an administrator.
- * Version: 0.5.0
+ * Version: 0.6.0
  * Requires PHP: 8.1
  * Requires Plugins: woocommerce
  */
@@ -16,6 +16,29 @@ function enf_discount_active() {
     try { $end = new DateTimeImmutable( ENF_DISCOUNT_UNTIL, new DateTimeZone( 'Asia/Beirut' ) ); }
     catch ( Throwable $error ) { return false; }
     return time() < $end->getTimestamp();
+}
+// 10% cashback: a voucher to spend in the store, worth 10% of what the customer paid for the toys
+// (after the 20% off, delivery not included). Valid until the last day of the campaign.
+const ENF_CASHBACK_PCT = 10;
+const ENF_CASHBACK_VALID_UNTIL = '25 December 2026';
+function enf_cashback_for_order( $order ) {
+    $paid = (float) $order->get_subtotal() - (float) $order->get_discount_total();
+    foreach ( $order->get_fees() as $fee ) { $paid += (float) $fee->get_total(); }   // the "20% off everything" line is negative
+    return max( 0, round( $paid * ENF_CASHBACK_PCT / 100, 1 ) );
+}
+function enf_cashback_html( $order ) {
+    $amount = (float) $order->get_meta( '_enf_cashback' );
+    if ( $amount <= 0 ) { return ''; }
+    return '<div style="margin:16px 0;padding:16px 18px;border:3px dashed #ffc83d;border-radius:16px;background:#fff8e6;color:#1e2459">'
+        . '<p style="margin:0 0 4px;font-size:13px;font-weight:bold;color:#e8222b;text-transform:uppercase">Enfantillage cashback voucher</p>'
+        . '<p style="margin:0 0 6px;font-size:24px;font-weight:bold">' . wp_kses_post( wc_price( $amount ) ) . ' to spend in our store</p>'
+        . '<p style="margin:0;font-size:14px">That&rsquo;s ' . ENF_CASHBACK_PCT . '% of your order. Show this email (order #' . esc_html( $order->get_order_number() ) . ') at Enfantillage, Mazraat Yachouh, Chattat Center, to use it on your next purchase. Valid until ' . esc_html( ENF_CASHBACK_VALID_UNTIL ) . '.</p>'
+        . '</div>';
+}
+function enf_cashback_text( $order ) {
+    $amount = (float) $order->get_meta( '_enf_cashback' );
+    if ( $amount <= 0 ) { return ''; }
+    return 'Your cashback voucher: ' . html_entity_decode( wp_strip_all_tags( wc_price( $amount ) ) ) . ' to spend in our store (' . ENF_CASHBACK_PCT . '% of your order). Show this email (order #' . $order->get_order_number() . ') at Enfantillage, Mazraat Yachouh, to use it on your next purchase. Valid until ' . ENF_CASHBACK_VALID_UNTIL . ".\n\n";
 }
 // Discount per toy, rounded like the store's prices (0.1 $), so it matches the prices shown on the website.
 function enf_discount_for( $price ) {
@@ -234,6 +257,20 @@ add_action( 'woocommerce_checkout_create_order', function ( $order ) {
         }
         $order->update_meta_data( '_enf_storefront_origin', WC()->session->get( 'enf_checkout_context' )['origin'] );
         $order->update_meta_data( '_enf_storefront_cart_token', WC()->session->get( 'enf_checkout_context' )['cart_token'] ?? '' );
+        if ( enf_discount_active() ) {
+            $cashback = enf_cashback_for_order( $order );
+            if ( $cashback > 0 ) {
+                $order->update_meta_data( '_enf_cashback', $cashback );
+                $order->update_meta_data( 'Cashback voucher', wp_strip_all_tags( wc_price( $cashback ) ) . ' to spend in store, valid until ' . ENF_CASHBACK_VALID_UNTIL );
+            }
+        }
+    }
+} );
+// staff note: the voucher only counts once this order is paid (cash on delivery collected / Whish confirmed)
+add_action( 'woocommerce_checkout_order_created', function ( $order ) {
+    $amount = (float) $order->get_meta( '_enf_cashback' );
+    if ( $amount > 0 ) {
+        $order->add_order_note( 'Cashback voucher for the customer: ' . wp_strip_all_tags( wc_price( $amount ) ) . ' (' . ENF_CASHBACK_PCT . '% of the toys), to spend in store until ' . ENF_CASHBACK_VALID_UNTIL . '. Honour it only once this order is paid, and not if it is cancelled.' );
     }
 } );
 add_filter( 'woocommerce_get_checkout_url', function ( $url ) { return enf_checkout_session() ? enf_checkout_url() : $url; } );
@@ -287,6 +324,14 @@ function enf_whish_instructions( $order ) {
     echo '<p><strong>Whish payment awaiting confirmation.</strong> Send the order total to <strong>+961 78 881 100</strong>. Send the screenshot and order number to that same number. The store will verify the payment before confirming it.</p>';
 }
 add_action( 'woocommerce_thankyou_enf_whish', function ( $order_id ) { enf_whish_instructions( wc_get_order( $order_id ) ); } );
+add_action( 'woocommerce_thankyou', function ( $order_id ) {
+    $order = wc_get_order( $order_id );
+    if ( $order && 'yes' === $order->get_meta( '_enf_storefront_checkout' ) ) { echo enf_cashback_html( $order ); }
+}, 5 );
+add_action( 'woocommerce_email_before_order_table', function ( $order, $sent_to_admin, $plain_text ) {
+    if ( $sent_to_admin || ! is_object( $order ) || 'yes' !== $order->get_meta( '_enf_storefront_checkout' ) || $order->has_status( array( 'cancelled', 'failed', 'refunded' ) ) ) { return; }
+    echo $plain_text ? enf_cashback_text( $order ) : enf_cashback_html( $order );
+}, 5, 3 );
 add_action( 'woocommerce_email_before_order_table', function ( $order, $sent_to_admin, $plain_text ) {
     if ( $sent_to_admin || 'enf_whish' !== $order->get_payment_method() || $order->is_paid() ) { return; }
     if ( $plain_text ) { echo "Whish: send the order total to +961 78 881 100, then send the screenshot and order number to the same number. Await manual confirmation.\n"; }

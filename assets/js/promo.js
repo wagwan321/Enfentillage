@@ -54,7 +54,7 @@ document.addEventListener('site:ready', () => {
           </li>
           <li style="--c:var(--green);--c-soft:var(--green-soft)">
             <span class="promo-pop__num">+${C.cashback}%</span>
-            <span><b>Back after you buy</b><small>${C.cashback}% of what you spend comes back as a voucher for your next visit to our store.</small></span>
+            <span><b>Back after you buy</b><small>${C.cashback}% of what you spend comes back as a store voucher in your order email. Use it in our store by ${esc(C.until)}.</small></span>
           </li>
         </ul>
         <a class="btn btn--red promo-pop__cta" href="${shopUrl({ promo: 1 })}" data-promo-close>Shop the offer ${icon('arrow', 'icon', 2.6)}</a>
