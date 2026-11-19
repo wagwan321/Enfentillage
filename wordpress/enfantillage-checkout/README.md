@@ -67,3 +67,7 @@ The client confirmed TILLO20 (20% off), 10% in-store cashback, gift wrapping and
 - On this page only, theme and plugin stylesheets are switched off and other plugins' pop-ups at the end of the page are hidden. WooCommerce's scripts and the country picker keep working. No other WordPress page changes.
 - No coupon box while the automatic 20% runs; "Shipping" reads "Delivery".
 - How to install: wp-admin cannot upload plugins on this site, so copy the files over `wp-content/plugins/enfantillage-checkout/` in cPanel's File Manager (or Fileman API). Backup of 0.3.0: `~/enf-backup-2026-11-19/`.
+
+## 0.8.0 (19 November 2026)
+- The automatic 20% is now applied to each toy's price at checkout (10 $ becomes 8 $), exactly as the website shows it, instead of a separate "-20%" line. The usual price is shown crossed out, with a "You save / You saved" line under the total on the checkout page, the thank-you page and the order emails.
+- The usual price is kept on each order line as hidden meta `_enf_usual_price`; the cashback voucher still works out to 10% of what was paid.

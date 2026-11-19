@@ -116,6 +116,9 @@ body.enf-co-body > :not(.enf-top, .enf-co, .enf-foot, .select2-container, script
 .enf-co tfoot th { color: var(--ink-soft); font-weight: 800; }
 .enf-co tfoot tr.fee th, .enf-co tfoot tr.fee td { color: var(--red); }
 .enf-co tfoot tr.fee th::before { content: "🎄 "; }
+.enf-co table.shop_table td del, .enf-co .woocommerce-table--order-details td del { color: var(--ink-soft); font-weight: 700; font-size: .85em; margin-right: 4px; }
+.enf-co tfoot tr.enf-saved th, .enf-co tfoot tr.enf-saved td { color: var(--green); }
+.enf-co tfoot tr.enf-saved th::before { content: "🎄 "; }
 .enf-co tfoot .woocommerce-shipping-totals td { font-weight: 800; }
 .enf-co tfoot .woocommerce-shipping-totals ul { list-style: none; margin: 0; padding: 0; }
 .enf-co tfoot tr.order-total { margin-top: 4px; padding-top: 14px; border-top: 2px solid var(--navy-soft); }

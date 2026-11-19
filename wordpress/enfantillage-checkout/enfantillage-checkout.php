@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Enfantillage Checkout Handoff
  * Description: An opt-in cart handoff to WooCommerce checkout, 5 $ Lebanon delivery, COD and manually confirmed Whish payments. Disabled until explicitly enabled by an administrator.
- * Version: 0.7.0
+ * Version: 0.8.0
  * Requires PHP: 8.1
  * Requires Plugins: woocommerce
  */
@@ -227,16 +227,72 @@ add_filter( 'wc_price_args', function ( $args ) {
 add_filter( 'woocommerce_price_trim_zeros', function ( $trim ) {
     return ( enf_checkout_session() || enf_checkout_receipt_order() ) ? true : $trim;
 } );
-// 20% off everything: one discount line on the new-storefront checkout, no code needed.
-add_action( 'woocommerce_cart_calculate_fees', function ( $cart ) {
-    if ( ! enf_checkout_session() || ! enf_discount_active() ) { return; }
-    $off = 0.0;
-    foreach ( $cart->get_cart() as $item ) {
+// 20% off everything, no code: each toy is charged at its reduced price, exactly as the website shows it
+// (10 $ -> 8 $), so the checkout, thank-you page and emails list what the customer really pays.
+// The usual price is kept (crossed out) next to it, with a "You saved" line under the total.
+function &enf_base_prices() { static $prices = array(); return $prices; }
+function enf_usual_price( $item ) {
+    $id = ! empty( $item['variation_id'] ) ? $item['variation_id'] : ( $item['product_id'] ?? 0 );
+    $fresh = $id ? wc_get_product( $id ) : null;
+    return $fresh ? (float) $fresh->get_price() : 0.0;
+}
+add_action( 'woocommerce_before_calculate_totals', function ( $cart ) {
+    if ( ! enf_checkout_session() || ! enf_discount_active() || ! is_object( $cart ) ) { return; }
+    $prices = &enf_base_prices();
+    foreach ( $cart->get_cart() as $key => $item ) {
         if ( empty( $item['data'] ) || ! is_object( $item['data'] ) ) { continue; }
-        $off += enf_discount_for( $item['data']->get_price() ) * max( 0, (int) $item['quantity'] );
+        $usual = enf_usual_price( $item );   // always from the product itself, so repeated calculations never stack
+        if ( $usual <= 0 ) { continue; }
+        $prices[ $key ] = $usual;
+        $item['data']->set_price( round( $usual - enf_discount_for( $usual ), 2 ) );
     }
-    if ( $off > 0 ) { $cart->add_fee( ENF_DISCOUNT_PCT . '% off everything', -round( $off, 2 ), false ); }
+}, 20 );
+function enf_cart_saved() {
+    if ( ! function_exists( 'WC' ) || ! WC()->cart ) { return 0.0; }
+    $prices = &enf_base_prices(); $saved = 0.0;
+    foreach ( WC()->cart->get_cart() as $key => $item ) {
+        if ( isset( $prices[ $key ] ) && ! empty( $item['data'] ) ) { $saved += ( $prices[ $key ] - (float) $item['data']->get_price() ) * (int) $item['quantity']; }
+    }
+    return max( 0, round( $saved, 2 ) );
+}
+add_filter( 'woocommerce_cart_item_subtotal', function ( $subtotal, $item, $key ) {
+    $prices = &enf_base_prices();
+    if ( ! enf_checkout_session() || ! isset( $prices[ $key ] ) || empty( $item['data'] ) ) { return $subtotal; }
+    $usual = $prices[ $key ] * (int) $item['quantity'];
+    return $usual > (float) $item['data']->get_price() * (int) $item['quantity'] + 0.001 ? '<del>' . wc_price( $usual ) . '</del> ' . $subtotal : $subtotal;
+}, 10, 3 );
+add_action( 'woocommerce_review_order_after_order_total', function () {
+    $saved = enf_checkout_session() ? enf_cart_saved() : 0;
+    if ( $saved > 0 ) { echo '<tr class="enf-saved"><th>You save</th><td>' . wp_kses_post( wc_price( $saved ) ) . '</td></tr>'; }
 } );
+// keep the usual price on the order line (hidden meta), for the crossed-out price on the receipt and emails
+add_action( 'woocommerce_checkout_create_order_line_item', function ( $line, $key, $values, $order ) {
+    $prices = &enf_base_prices();
+    if ( enf_checkout_session() && isset( $prices[ $key ] ) ) { $line->add_meta_data( '_enf_usual_price', $prices[ $key ], true ); }
+}, 10, 4 );
+function enf_order_saved( $order ) {
+    $saved = 0.0;
+    foreach ( $order->get_items() as $line ) {
+        $usual = (float) $line->get_meta( '_enf_usual_price' );
+        if ( $usual > 0 ) { $saved += $usual * (int) $line->get_quantity() - (float) $line->get_subtotal(); }
+    }
+    return max( 0, round( $saved, 2 ) );
+}
+add_filter( 'woocommerce_order_formatted_line_subtotal', function ( $subtotal, $line, $order ) {
+    $usual = is_object( $line ) ? (float) $line->get_meta( '_enf_usual_price' ) * (int) $line->get_quantity() : 0;
+    return $usual > (float) $line->get_subtotal() + 0.001 ? '<del>' . wc_price( $usual, array( 'currency' => $order->get_currency() ) ) . '</del> ' . $subtotal : $subtotal;
+}, 10, 3 );
+add_filter( 'woocommerce_get_order_item_totals', function ( $rows, $order ) {
+    if ( ! is_object( $order ) || 'yes' !== $order->get_meta( '_enf_storefront_checkout' ) ) { return $rows; }
+    $saved = enf_order_saved( $order );
+    if ( $saved <= 0 ) { return $rows; }
+    $out = array();
+    foreach ( $rows as $id => $row ) {
+        $out[ $id ] = $row;
+        if ( 'order_total' === $id ) { $out['enf_saved'] = array( 'label' => 'You saved:', 'value' => wc_price( $saved, array( 'currency' => $order->get_currency() ) ) . ' (' . ENF_DISCOUNT_PCT . '% off everything)' ); }
+    }
+    return $out;
+}, 20, 2 );
 // The old TILLO20 code is retired on the new storefront (the 20% is automatic), so it can't be added on top.
 add_filter( 'woocommerce_coupon_is_valid', function ( $valid, $coupon ) {
     if ( enf_checkout_session() && is_object( $coupon ) && 'tillo20' === strtolower( (string) $coupon->get_code() ) ) {

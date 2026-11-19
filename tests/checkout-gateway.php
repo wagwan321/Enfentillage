@@ -56,19 +56,22 @@ verify( enf_checkout_receipt_order() === $order, 'Receipt key verification faile
 $_GET['key'] = 'wrong'; verify( false === enf_checkout_receipt_order(), 'Invalid receipt key accepted' );
 $enabled = '0'; $existing = array( 'old_rate' => 'preserve' );
 verify( $existing === $filters['woocommerce_package_rates'][0]( $existing, array() ), 'Existing shipping rates changed while disabled' );
-// automatic 20% (until 25 December): one discount line, rounded per toy like the website
+// automatic 20% (until 25 December): each toy is charged at its reduced price, rounded like the website
 $enabled = '1';
-class FakeProduct { public $price; function __construct( $p ) { $this->price = $p; } function get_price() { return $this->price; } }
-class FeeCart { public $fees = array(); public $items;
-    function __construct( $items ) { $this->items = $items; }
-    function get_cart() { return $this->items; }
-    function add_fee( $name, $amount, $taxable ) { $this->fees[] = array( $name, $amount ); } }
-$cart = new FeeCart( array( array( 'data' => new FakeProduct( 12.9 ), 'quantity' => 2 ), array( 'data' => new FakeProduct( 400 ), 'quantity' => 1 ) ) );
-$hooks['woocommerce_cart_calculate_fees'][0]( $cart );
+class FakeProduct { public $price; function __construct( $p ) { $this->price = $p; } function get_price() { return $this->price; } function set_price( $p ) { $this->price = $p; } }
+$catalog = array( 7 => 12.9, 8 => 400 );
+function wc_get_product( $id ) { global $catalog; return isset( $catalog[ $id ] ) ? new FakeProduct( $catalog[ $id ] ) : false; }
+class PriceCart { public $items; function __construct( $items ) { $this->items = $items; } function get_cart() { return $this->items; } }
+$cart = new PriceCart( array(
+    'a' => array( 'product_id' => 7, 'data' => new FakeProduct( 12.9 ), 'quantity' => 2 ),
+    'b' => array( 'product_id' => 8, 'data' => new FakeProduct( 400 ), 'quantity' => 1 ),
+) );
+$hooks['woocommerce_before_calculate_totals'][0]( $cart );
+$hooks['woocommerce_before_calculate_totals'][0]( $cart );   // WooCommerce recalculates often: must not stack
 if ( enf_discount_active() ) {
-    verify( 1 === count( $cart->fees ) && abs( $cart->fees[0][1] + 85.2 ) < 0.001, '20% discount line wrong' );
+    verify( abs( $cart->items['a']['data']->get_price() - 10.3 ) < 0.001 && abs( $cart->items['b']['data']->get_price() - 320 ) < 0.001, '20% price wrong or applied twice' );
 } else {
-    verify( array() === $cart->fees, 'Discount still applied after 25 December' );
+    verify( abs( $cart->items['b']['data']->get_price() - 400 ) < 0.001, 'Discount still applied after 25 December' );
 }
 class FakeCoupon { function get_code() { return 'TILLO20'; } }
 $blocked = false;
