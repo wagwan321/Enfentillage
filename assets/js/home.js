@@ -145,8 +145,13 @@ document.addEventListener('site:ready', () => {
   const onSale = P.filter(p => p.s);
   const brandCount = new Set(onSale.map(p => p.b).filter(Boolean)).size;
   const PERKS = [
-    ['tag', 'red', `${CAMPAIGN.pct}% off now`, `Code ${CAMPAIGN.code} at checkout`],
-    ['gift', 'green', `+${CAMPAIGN.cashback}% cashback`, 'A voucher to spend in store'],
+    ...(CAMPAIGN.active ? [
+      ['tag', 'red', `${CAMPAIGN.pct}% off now`, `Code ${CAMPAIGN.code}, until ${CAMPAIGN.until}`],
+      ['gift', 'green', `+${CAMPAIGN.cashback}% cashback`, 'A voucher to spend in store'],
+    ] : [
+      ['truck', 'red', 'Delivery 3 $', 'Anywhere in Lebanon'],
+      ['gift', 'green', 'Gift wrapping', 'Just tick it at checkout'],
+    ]),
     ['blocks', 'blue', `${Math.floor(onSale.length / 100) * 100}+ toys`, `From ${Math.floor(brandCount / 10) * 10}+ brands`],
     ['pin', 'pink', 'Visit our store', 'Mazraat Yachouh, Chattat Center'],
   ];
@@ -314,7 +319,8 @@ document.addEventListener('site:ready', () => {
   ];
   $('#budgets').innerHTML = COINS.map(([s, b, q, c], i) => `<a class="coin reveal" data-from="pop" style="${colorVars(c)};--d:${i * 0.08}s" href="${shopUrl(q)}"><small>${s}</small><b>${b}</b></a>`).join('');
 
-  /* ---------------- CLUB: 10% cashback voucher ---------------- */
+  /* ---------------- CLUB: 10% cashback voucher (only while the campaign runs) ---------------- */
+  if (!CAMPAIGN.active) { $('#club')?.remove(); observeReveals(); return; }
   // NOTE: there is no mailing service behind this form yet, so the voucher is shown on screen
   // (and kept in this browser). Connect a mailing service to also email it and collect the list.
   const V_KEY = 'enf_voucher';
@@ -337,7 +343,7 @@ document.addEventListener('site:ready', () => {
   $('#club').innerHTML = `
     <div class="club__balloons"><span class="para" data-speed="-.1" style="position:relative">${balloon('#e8222b', 60)}</span><span class="para" data-speed="-.05" style="position:relative;margin-top:30px">${balloon('#3db54a', 46)}</span><span class="para" data-speed="-.14" style="position:relative;margin-top:10px">${balloon('#ffc83d', 52)}</span></div>
     <div>
-      <span class="club__kicker">Get 30% back</span>
+      <span class="club__kicker">Get 30% back · until ${CAMPAIGN.until}</span>
       <h2>Get your ${CAMPAIGN.cashback}% cashback voucher</h2>
       <p>${CAMPAIGN.pct}% off online with code <b>${CAMPAIGN.code}</b>, plus a ${CAMPAIGN.cashback}% cashback voucher to spend in our store. Join the Enfantillage Club with your email to get it.</p>
     </div>

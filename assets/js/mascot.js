@@ -38,7 +38,8 @@ document.addEventListener('site:ready', () => {
     checkout: [[`Have code ${C.code}? Enter it on the next step for ${C.pct}% off.`, '', ''],
                ['Whish payments are checked manually by the store.', '', '']],
   };
-  const tips = [...(TIPS[page] || TIPS.home)];
+  // after the campaign, tips that mention the code or the cashback are dropped
+  const tips = (TIPS[page] || TIPS.home).filter(t => C.active || !/cashback|% off|save \d+%/i.test(t[0] + (t[2] || '')) && !t[0].includes(C.code));
   // limited-time reminder: Tillo's first message on the home page and the shop, until 25 December
   if (C.active && (page === 'home' || page === 'shop')) {
     if (page === 'home') tips.splice(1, 1);   // the old code tip, replaced by the reminder
@@ -148,7 +149,8 @@ document.addEventListener('site:ready', () => {
       if (p && perks) {
         const line = !p.s ? 'This one is sold out right now. Call us and we’ll tell you when it’s back!'
           : !p.p ? 'Ask us for the price: we’re happy to help!'
-          : `With code <b>${C.code}</b> it’s only <b>${money(Math.round(p.p * (100 - C.pct)) / 100)}</b>, plus ${C.cashback}% cashback in store!`;
+          : C.active ? `With code <b>${C.code}</b> it’s only <b>${money(Math.round(p.p * (100 - C.pct)) / 100)}</b>, plus ${C.cashback}% cashback in store! (until ${C.until})`
+          : 'Pay when it arrives: cash on delivery or Whish Money. Delivery anywhere in Lebanon for 3 $.';
         place(perks, 'beforebegin', `<div class="tillo-tip tillo-tip--plain"><span class="tillo-tip__icon" aria-hidden="true">${icon('sparkle', 'icon', 2.4)}</span><p><b>Tip:</b> ${line}</p></div>`);
       }
     }

@@ -16,7 +16,8 @@
   /* the 30% campaign: 20% off straight away with a code + a 10% cashback voucher to spend in store.
      Change the code or the numbers here and the whole site follows. */
   // limited time: until the end of 25 December 2026 (Beirut time); after that the offer banner and Tillo's reminder switch off
-  const CAMPAIGN = { code: 'TILLO20', pct: 20, cashback: 10, until: '25 December', active: Date.now() < Date.parse('2026-12-26T00:00:00+02:00') };
+  const CAMPAIGN = { code: 'TILLO20', pct: 20, cashback: 10, until: '25 December', active: Date.now() < Date.parse('2026-12-26T00:00:00+02:00') && !/[?&]campaign=off\b/.test(location.search) };
+  // everything that mentions the 30% / TILLO20 / 10% cashback checks CAMPAIGN.active (preview the after-state with ?campaign=off)
   const OLD_PHOTOS = '';
   const NO_PHOTO = 'assets/img/no-photo.svg';
   const MAP_URL = 'https://www.google.com/maps/search/?api=1&query=Enfantillage%2C%20Mazraat%20Yachouh%2C%20Lebanon';
@@ -477,8 +478,8 @@
     return `
     <div class="ticker" role="region" aria-label="Store announcements"><div class="ticker__track">
       ${[0, 1].map(() => `
-        <span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span><b>Get 30% back:</b> <b>${CAMPAIGN.pct}% off</b> now with code <b>${CAMPAIGN.code}</b> + <b>${CAMPAIGN.cashback}% cashback</b> in store</span>
-        <span class="ticker__item"><span class="ticker__dot" style="--c:var(--green)"></span><a href="index.html#club">Get your <b>${CAMPAIGN.cashback}% cashback voucher</b> with your email →</a></span>
+        ${CAMPAIGN.active ? `<span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span><b>Get 30% back until ${CAMPAIGN.until}:</b> <b>${CAMPAIGN.pct}% off</b> now with code <b>${CAMPAIGN.code}</b> + <b>${CAMPAIGN.cashback}% cashback</b> in store</span>
+        <span class="ticker__item"><span class="ticker__dot" style="--c:var(--green)"></span><a href="index.html#club">Get your <b>${CAMPAIGN.cashback}% cashback voucher</b> with your email →</a></span>` : `<span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span>Delivery anywhere in Lebanon for <b>3 $</b></span>`}
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--pink)"></span>Holiday wishlists are open — find the perfect gift with our <b>Gift Finder</b></span>
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--blue)"></span>Visit our store in <b>Mazraat Yachouh</b>, Chattat Center</span>
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--red)"></span>Up to <b>${maxOff}% off</b> in the Offer Zone</span>`).join('')}
@@ -633,7 +634,7 @@
       return;
     }
     body.innerHTML = `
-      <div class="ship-meter">Use code <b>${CAMPAIGN.code}</b> at checkout for <b>${CAMPAIGN.pct}% off</b>. Final prices and availability are checked at checkout.</div>
+      <div class="ship-meter">${CAMPAIGN.active ? `Use code <b>${CAMPAIGN.code}</b> at checkout for <b>${CAMPAIGN.pct}% off</b> (until ${CAMPAIGN.until}). ` : ''}Final prices and availability are checked at checkout.</div>
       ${needsReview ? '<p role="alert">Some items or quantities need checking. Reduce quantities or remove unavailable items before checkout.</p>' : ''}
       ${lines.map(([id, q]) => { const p = byId.get(+id) || {id:Number(id),n:'Unavailable toy',i:NO_PHOTO,b:'',s:false,p:0}; return `
         <div class="cart-line">

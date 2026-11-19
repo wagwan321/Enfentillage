@@ -72,7 +72,7 @@ document.addEventListener('site:ready', () => {
     const one = (k, arr) => st[k].length === 1 && arr.find(x => x.key === st[k][0]);
     const c = one('cat', ALL_CATEGORIES), a = one('age', AGES), b = one('brand', BRANDS), h = one('char', CHARACTERS);
     if (st.fav) { title = 'Your Wishlist'; sub = 'All the toys you’ve hearted, saved in this browser'; color = 'pink'; }
-    else if (st.sale) { title = 'Offer Zone'; sub = `Real savings on top toys, plus ${window.ENF.CAMPAIGN.pct}% off with code ${window.ENF.CAMPAIGN.code}`; color = 'red'; }
+    else if (st.sale) { title = 'Offer Zone'; sub = window.ENF.CAMPAIGN.active ? `Real savings on top toys, plus ${window.ENF.CAMPAIGN.pct}% off with code ${window.ENF.CAMPAIGN.code} until ${window.ENF.CAMPAIGN.until}` : 'Real savings on top toys'; color = 'red'; }
     else if (st.q) { title = `“${st.q}”`; sub = 'Search results'; color = 'navy'; }
     else if (h) { title = h.name; sub = `Toys, playsets and goodies starring ${h.name}`; color = h.color; }
     else if (b) { title = b.name; sub = `Shop the ${b.name} collection at Enfantillage`; color = b.color; }
