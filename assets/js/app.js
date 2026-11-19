@@ -72,7 +72,7 @@
     { key: 'outdoor',  name: 'Outdoor & Pool',        color: 'blue',  img: 17148 },
     { key: 'rideon',   name: 'Ride-ons & Bikes',      color: 'red',   img: 52531 },
     { key: 'building', name: 'Building Sets',         color: 'navy',  img: 31572 },
-    { key: 'dolls',    name: 'Dolls & Dollhouses',    color: 'pink',  img: 55166 },
+    { key: 'dolls',    name: 'Dolls',                 color: 'pink',  img: 56039 },
     { key: 'stem',     name: 'STEM & Learning',       color: 'green', img: 26621 },
     { key: 'creative', name: 'Arts & Crafts',         color: 'teal',  img: 54119 },
     { key: 'vehicles', name: 'Cars & RC',             color: 'red',   img: 54669 },
@@ -80,6 +80,7 @@
     { key: 'plush',    name: 'Plush & Soft Toys',     color: 'green', img: 20577 },
     { key: 'figures',  name: 'Figures & Collectibles',color: 'navy',  img: 31156 },
     { key: 'pretend',  name: 'Pretend Play',          color: 'teal',  img: 55164 },
+    { key: 'style',    name: 'Beauty & Accessories',  color: 'pink',  img: 53794 },
   ];
 
   const AGES = [

@@ -1,0 +1,79 @@
+/* One website category per toy ("information silo").
+   The old WooCommerce categories overlap (staff ticked several per toy, some catch-alls hold hundreds),
+   so the website picks exactly one category from WooCommerce's own categories plus the toy's name.
+   Staff can always override: tick a category under "WEBSITE" in WooCommerce (e.g. WEBSITE > PRETEND PLAY).
+   Rules run top to bottom; the first that matches wins. */
+
+const KEYS = ['baby', 'outdoor', 'rideon', 'building', 'dolls', 'stem', 'creative', 'vehicles', 'games', 'plush', 'figures', 'pretend', 'style'];
+
+// WEBSITE > ... category names staff can tick in WooCommerce (any of these spellings)
+const OVERRIDES = {
+  baby: /BABY/, outdoor: /OUTDOOR|POOL/, rideon: /RIDE/, building: /BUILDING/, dolls: /^DOLLS?\b/, stem: /STEM|LEARNING/,
+  creative: /ART|CRAFT|CREATIVE/, vehicles: /CARS?\b|RC|VEHICLE/, games: /GAMES?|PUZZLE/, plush: /PLUSH|SOFT/,
+  figures: /FIGURE|COLLECT/, pretend: /PRETEND|ROLE/, style: /BEAUTY|ACCESSOR|FASHION/,
+};
+
+const has = (paths, re) => paths.some(p => re.test(p));
+
+const RULES = [
+  // ---- 1. the toy's name is the most reliable signal ----
+  ['style', (n) => /\b(LIP ?(GLOSS|BALM)|NAIL POLISH|PRESS[- ]ON NAILS|COSMETIC|MAKE-?UP|SHIMMER LOTION|GLITTER BALM|PERFUME|EAU DE|SOCKS|BACKPACK|SCHOOL BAG|LUNCH ?BOX|PENCIL CASE|WATER BOTTLE|TATTOOS?|HAIR (CLIPS?|ACCESSOR\w*|BOW)|SUNGLASSES|UMBRELLA|JEWELL?ERY BOX)\b/.test(n)],
+  ['baby', (n) => /\b(FEEDING )?BOTTLES?\b/.test(n) && /\b(ML|ANTI-COLIC|TEATS?|STERILI[SZ]ER|BRUSH|NIPPLE)\b/.test(n)],
+  ['baby', (n) => /\b(TEETHER|TEETHING|PACIFIER|SOOTHER|STROLLER|PUSHCHAIR|CAR SEAT|DIAPER|NAPPY|BREAST ?(PUMP|FEEDING)|NURSING|MATERNITY|PREGNANCY|HIGH ?CHAIR|BOUNCER|BABY WALKER|PLAY ?GYM|PLAYMAT|PLAY MAT|RATTLE|CRIB|COT MOBILE|BABY MONITOR|BIBS?|STERILI[SZ]ER|THERMOMETER|SUNSHADE|TODDLER BED)\b/.test(n) && !/\bDOLL\b/.test(n)],
+  ['baby', (n) => /^(INFANTINO|TINY LOVE|BABY EINSTEIN|LAMAZE|SKIP HOP|TAF TOYS) -/.test(n) && !/\b(RIDE|BIKE|SCOOTER|TRICYCLE)\b/.test(n)],
+  ['figures', (n) => /\b(BLIND BOX|BLIND BAG|FUNKO|DAADOOS|MOKOO|LABUBU)\b/.test(n)],
+  ['building', (n) => /\b(LEGO|DUPLO|MEGA BLOKS|MEGA BLOKS|MEGA CONSTRUX|MAGNA-?TILES|MAGFORMERS|GEOMAG|KAPLA|K'NEX|KNEX|BRICKS?|BUILDING (SET|BLOCKS?|KIT)|CONSTRUCTION SET|BLOKEES|PLAYMOBIL|CLICS|ENGINO)\b/.test(n)],
+  ['stem', (n) => /\b(NATIONAL GEOGRAPHIC|SCIENCE4YOU|SCIENCE 4 YOU|CLEMENTONI SCIENCE|SMARTMAX|LEARNING RESOURCES|^STEAM(?= -)|DIG KIT|EXCAVATION|CRYSTAL (GROWING|LAB)|GROWING KIT|TERRARIUM)\b/.test(n) && !/\b(VETERINARY|VET|DOCTOR|KITCHEN|COOKING)\b/.test(n)],
+  ['rideon', (n) => /\b(RIDE-?ON|BICYCLES?|BIKES?|TRICYCLES?|TRIKES?|SCOOTERS?|COZY COUPE|QUAD|VESPA|MOTORCYCLE|GO-?KART|WAGON|SKATEBOARD|ROLLER ?SKATES?|HOVERBOARD)\b/.test(n) && !/\b(HOVERBOARD HEROES|LEGO|PLUSH|FIGURE|KEYCHAIN|PLAYSET|RC\b|REMOTE)/.test(n)],
+  ['rideon', (n) => /\b(6|12|24) ?V\b/.test(n)],
+  ['pretend', (n) => /\b(KITCHEN|COOKING|COOK\b|CHEF|FOOD SET|PLAY FOOD|TEA SET|BBQ|BARBECUE|GRILL|CASH REGISTER|SUPERMARKET|GROCERY|SHOPPING (CART|TROLLEY)|ICE CREAM (CART|SHOP|STAND)|DOCTOR|NURSE|MEDICAL|VET(ERINARY)?\b|TOOL ?(SET|BOX|BENCH|KIT|BELT)|WORKBENCH|WORKSHOP|DRILL|CLEANING (SET|TROLLEY|CART)|VACUUM|IRONING|LAUNDRY|DOLL ?HOUSE|DREAMHOUSE|DREAM HOUSE|PLAYHOUSE|PLAY HOUSE|DRESS[- ]UP|COSTUME|MAKE-?BELIEVE|ROLE PLAY|POLICE (SET|STATION|KIT)|FIRE ?(STATION|FIGHTER SET)|BEAUTY SALON|HAIR SALON|HAIRDRESS\w*|HAIR ?DRYER|VANITY|PRINCESS CASTLE)\b/.test(n) && !/\b(LEGO|PUZZLE|BOOK|FIGURINE|BLIND BOX|STICKER|COLOU?RING|LIP|NAIL|PLUSH|POOL|SPA|SWINGS?|SWINGSET|SLIDE|CLIMBER)\b/.test(n)],
+  ['creative', (n) => /\b(PLAY-?DOH|DOUGH|CLAY|SLIME|KINETIC SAND|MAGIC SAND|COLOU?RING|PAINT(ING)?|CRAYONS?|MARKERS?|PENCILS?|DRAWING|SKETCH|STICKERS?|CRAFT|DIY|BEAD(S|ING)?|JEWEL(L)?ERY (MAKING|KIT|SET)|BRACELET (KIT|MAKER|CRAFT)|LOOM|SCRAPBOOK|DIARY|JOURNAL|STATIONERY|ORIGAMI|SEQUIN|BEDAZZL\w*|SPIROGRAPH|CHALK|EASEL|SQUISHY MAKER|NANO TAPE|STICKI ROLLS?|TRACING|AQUARELLUM|SENTOSPH\w*|ART LID|STYLESTIX)\b/.test(n) && !/\b(LEGO|PUZZLE|KITCHEN)\b/.test(n)],
+  ['dolls', (n) => /\b(DOLLS?|BARBIE|BABY BORN|BABY ANNABELL|RAINBOW HIGH|BRATZ|POLLY POCKET|ENCHANTIMALS|MY LITTLE PONY|LOL SURPRISE|L\.O\.L\.?|NANCY|CRY ?BABIES|REBORN|MONSTER HIGH|GABBY'S DOLLHOUSE|OUR GENERATION|DESIGN A FRIEND|TINY TREASURES)\b/.test(n) && !/\b(PLUSH|KEYCHAIN|BLIND BOX)\b/.test(n)],
+  ['vehicles', (n) => /\b(RC|R\/C|REMOTE[- ]CONTROL(LED)?|HOT ?WHEELS|MATCHBOX|DIE-?CAST|DRONES?|RACE ?TRACK|RACING TRACK|TRAIN SET|TRAINS?|MONSTER TRUCK|TRUCKS?|CARS?|JEEP|HELICOPTER|AIRPLANE|PLANE|BOAT|EXCAVATOR|TRACTOR|BULLDOZER|GARAGE|CAR TRANSPORTER|FIRE TRUCK|POLICE CAR)\b/.test(n) && !/\b(MY REMOTE CONTROL|PLUSH|DOLL|BARBIE|FIGURE|LEGO|PUZZLE|STICKER|BOOK|GAME CARDS?|DRAGON|BED)\b/.test(n)],
+  ['plush', (n) => /\b(PLUSH|SOFT TOY|CUDDL\w*|TEDDY|STUFFIES?|STUFFED|SQUISHMALLOWS?|BEANIE|JELLYCAT|ANIMAGIC)\b/.test(n)],
+  ['games', (n) => /\b(BOARD GAME|CARD GAME|CARDS GAME|GAME CARDS|TRADING CARD|PUZZLES?|JIGSAW|UNO|MONOPOLY|JENGA|SCRABBLE|CLUEDO|CHESS|DOMINO\w*|CONNECT ?4|TWISTER|BINGO|BABYFOOT|FOOSBALL|FOOTBALL TABLE|GAME TABLE|BILLIARDS?|POOL TABLE|DARTS?|DARTBOARD|PING[- ]PONG|AIR HOCKEY|TABLE TENNIS|PINBALL|SLOT MACHINE|TABLETOP POOL|FAMILY GAME|PARTY GAME|MEMORY GAME|MARBLE RUN|RUBIK|FIDGET|SQUISH(Y|IES)|STRESS BALL|ANTI-STRESS|STRETCH(Y|IES)|POP IT|YO-?YO|BEYBLADE|SPEED CUBE|NEXCUBE)\b/.test(n)],
+  ['outdoor', (n) => /\b(POOLS?|FLOATS?|SWIM\w*|INFLATABLE|LOUNGER|GOGGLES|SNORKEL|SLIDES?|SWINGS?|TRAMPOLINE|SANDBOX|SAND (AND|&) WATER|WATER TABLE|SAND TABLE|SEESAW|CLIMBER|CLIMBING|PICNIC TABLE|BASKETBALL (HOOP|SET)|GOAL\b|WATER GUN|WATER BLASTER|WATER BALLOONS?|SPRINKLER|BALL PIT|TUNNEL|TENT|ROCKER|AIR PUMP|PADDLING|WATERPARK|WATER PARK|GOALS?|SOLAR COVER)\b/.test(n) && !/\b(SLIDE CIRCLE|PLAYSET|FIGURE|LEGO|DOLLHOUSE|DOLL|MARBLE|RACE TRACK|PUZZLE)\b/.test(n)],
+  ['stem', (n) => /\b(SCIENCE|STEM|ROBOT\w*|CODING|MICROSCOPE|TELESCOPE|EXPERIMENT|CHEMISTRY|PHYSICS|NATIONAL GEOGRAPHIC|GEOMETRY|MATHS?|ALPHABET|LEARNING|EDUCATIONAL|GLOBE|SOLAR|CIRCUIT|ELECTRONIC|CAMERA|TABLET|LAPTOP|WALKIE|HEADPHONES?|MICROPHONE|KARAOKE|SPEAKER|SMARTWATCH|WATCH|PIANO|KEYBOARD|DRUMS?|GUITAR|XYLOPHONE|MUSICAL)\b/.test(n)],
+  ['figures', (n) => /\b(FUNKO|POP!|BLIND BOX|MYSTERY|SURPRISE|CAPSULE|ACTION FIGURES?|FIGURES?|FIGURINES?|COLLECTIBLES?|LABUBU|KEYCHAIN|KEY ?RING|BITZEE|TAMAGOTCHI|FINGERLINGS|UNTAMED|COLLECTOR EDITION|HEROES VS)\b/.test(n)],
+  ['baby', (n) => /\b(BABY|TODDLER|INFANT|NEWBORN|\d+ ?M\+|MONTHS?)\b/.test(n)],
+  // ---- 2. then WooCommerce's categories, most specific first ----
+  ['style', (n, p) => has(p, /> (MAKE-UP|NAIL ART|TATTOO|KNEE-HIGH SOCKS|BAGS|BEAUTY SET|BRACELETS - ACCESSORIES|CARRY-ON)\b/) && !/\b(KIT|CRAFT|DIY|MAKER|LOOM)\b/.test(n)],
+  ['baby', (n, p) => has(p, /^BABY > (BABY CARE|FEEDING|MOTHER CARE|BABY GALLERY|BABY FURNITURE)\b/)],
+  ['rideon', (n, p) => has(p, /^OUTDOOR > (ELECTRICAL RIDE-ON|PUSH RIDE-ON|RIDE-ON)\b|^OUTDDOR \/ INDOOR > RIDE ON\b/)],
+  ['outdoor', (n, p) => has(p, /^OUTDOOR > (POOL FUN|SPORTS & ACTIVE PLAY)\b/)],
+  ['pretend', (n, p) => has(p, /> PRETEND PLAY > (KITCHEN & FOOD|DOCTORS & NURSING|HOUSEKEEPING|TOOL SETS & WORKSHOPS|HOUSE|RESCUE & EMERGENCY SERVICES|BARN SETS|BAKING)/) && !/\b(LEGO|PUZZLE|FIGURE|DOLL|DOLLS|ENGINE|TRUCK|CAR|HELICOPTER)\b/.test(n)],
+  ['pretend', (n, p) => has(p, /> SCHOOLYARD & PLAY CENTER ADVENTURES > PLAYHOUSES/) && /HOUSE|COTTAGE|CABIN|KITCHEN|SHOP|MARKET/.test(n) && !/SWING|SLIDE|CLIMB/.test(n)],
+  ['building', (n, p) => has(p, /> BUILDING SETS\b|> PLAYSET > LEGO/)],
+  ['creative', (n, p) => has(p, /> CREATIVE ARTS\b|^CREATIVE ARTS|^DRAWING & PAINTING/)],
+  ['vehicles', (n, p) => has(p, /> (CARS, TRUCKS & MORE|CARS|RC BOATS|RC MOTO)\b|> PRETEND PLAY > (CONSTRUCTION VEHICLE|MILITARY)|^TRUCKS & MORE/)],
+  ['dolls', (n, p) => has(p, /> DOLLS & ACCESSORIES\b/)],
+  ['plush', (n, p) => has(p, /> PLUSH TOYS\b/)],
+  ['games', (n, p) => has(p, /> (BOARD GAMES & PUZZLES|FIDGET TOYS|SPORTS & ACTION FUN|BEYBLADE GAMES)\b/)],
+  ['figures', (n, p) => has(p, /> (CHARACTERS FIGURINES|COLLECTIBLES|KEYCHAIN)\b/) && !has(p, /> CHARACTERS FIGURINES > PRETEND PLAY PLAYSET/)],
+  ['stem', (n, p) => has(p, /> (STEM TOYS|EDUCATIVE OBJECTS|TECH TOYS)\b/)],
+  ['baby', (n, p) => has(p, /> TODDLER & BABY TOYS\b|^BABY > BABY DEVELOPMENT/)],
+  ['outdoor', (n, p) => has(p, /^OUTDDOR|^OUTDOOR/)],
+  ['figures', (n, p) => has(p, /> PRETEND PLAY\b|PRETEND PLAY PLAYSET/)],
+  ['figures', (n, p) => has(p, /> PLAYSET\b/)],
+  ['baby', (n) => /\b(TOY BOX|STORAGE|ORGANI[SZ]ER|CHAIR|TABLE)\b/.test(n)],
+];
+
+// WooCommerce sends names with HTML entities ("LEGO &#8211; CITY"): decode them first.
+const NAMED = { amp: '&', quot: '"', apos: "'", lt: '<', gt: '>', ndash: '-', mdash: '-', rsquo: "'", lsquo: "'", nbsp: ' ' };
+const decode = s => String(s).replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => e[0] === '#'
+  ? String.fromCodePoint(parseInt(e.slice(1).replace(/^x/i, ''), /^#x/i.test(e) ? 16 : 10) || 32)
+  : NAMED[e.toLowerCase()] ?? m);
+
+function websiteCategory({ name = '', paths = [] } = {}) {
+  const n = decode(name).toUpperCase().replace(/[–—]/g, '-').replace(/\s+/g, ' ');
+  const P = paths.map(p => decode(p).toUpperCase().replace(/[–—]/g, '-').replace(/&AMP;/g, '&'));
+  // explicit choice made in WooCommerce wins
+  for (const p of P) {
+    const m = p.match(/^WEBSITE > ([^>]+)/);
+    if (m) { const key = KEYS.find(k => OVERRIDES[k].test(m[1].trim())); if (key) return { key, why: 'woocommerce' }; }
+  }
+  for (let i = 0; i < RULES.length; i++) if (RULES[i][1](n, P)) return { key: RULES[i][0], why: 'rule ' + i };
+  return { key: 'figures', why: 'default' };
+}
+
+module.exports = { websiteCategory, KEYS };

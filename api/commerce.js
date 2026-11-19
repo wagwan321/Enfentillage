@@ -1,12 +1,14 @@
 // Public catalog only. Never forwards WordPress cookies, credentials or arbitrary URLs.
+const { websiteCategory } = require('./categorize');
 const FIELDS = 'id,name,type,parent,permalink,prices,is_in_stock,is_purchasable,images,categories,brands,attributes,variations,add_to_cart';
 // Store API conditionally populates images/options only when their root fields are requested.
 // Compact the response after fetching; nested _fields alone can silently omit those fields.
 // Catalog cards need one thumbnail; full galleries and descriptions load per product.
 const CATALOG_FIELDS = 'id,name,type,parent,prices,is_in_stock,is_purchasable,images,categories,brands,attributes,variations,add_to_cart';
-function catalogProduct(p) {
+function catalogProduct(p, paths = new Map()) {
   const {id,name,type,parent,prices,is_in_stock,is_purchasable,categories}=p;
-  return {id,name,type,parent,prices:{price:prices?.price,regular_price:prices?.regular_price,currency_code:prices?.currency_code,currency_minor_unit:prices?.currency_minor_unit},is_in_stock,is_purchasable,categories:(categories||[]).map(c=>({id:c.id,name:c.name})),
+  const site_category = websiteCategory({ name, paths: (categories||[]).map(c => paths.get(c.id) || String(c.name || '')) }).key;
+  return {id,name,type,parent,site_category,prices:{price:prices?.price,regular_price:prices?.regular_price,currency_code:prices?.currency_code,currency_minor_unit:prices?.currency_minor_unit},is_in_stock,is_purchasable,categories:(categories||[]).map(c=>({id:c.id,name:c.name})),
     images:(p.images||[]).slice(0,1).map(i=>({src:i.thumbnail||i.src})),
     brands:(p.brands||[]).map(b=>({name:b.name})),
     attributes:(p.attributes||[]).filter(a=>a.has_variations).map(a=>({name:a.name,has_variations:true,terms:(a.terms||[]).map(t=>({name:t.name,slug:t.slug}))})),
@@ -22,7 +24,32 @@ function settings(env = process.env) {
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || url.pathname !== '/') throw new Error('Invalid store URL');
   return { enabled: true, storeUrl: url.origin };
 }
+// Full category paths (e.g. "TOYS > PRETEND PLAY > KITCHEN & FOOD") from the public WordPress taxonomy.
+// Optional: if it fails, the one-category rules still work from the category names alone.
+async function readCategoryPaths(config, fetcher = fetch) {
+  const all = [];
+  for (let page = 1; page <= 20; page++) {
+    const url = new URL('/wp-json/wp/v2/product_cat', config.storeUrl);
+    url.search = new URLSearchParams({ per_page: '100', page: String(page), _fields: 'id,name,parent' });
+    const response = await fetcher(url, { redirect: 'error', signal: AbortSignal.timeout(12000), headers: { Accept: 'application/json' } });
+    if (!response.ok) break;
+    const list = await response.json();
+    if (!Array.isArray(list) || !list.length) break;
+    all.push(...list);
+    if (page >= Number(response.headers.get('x-wp-totalpages') || page)) break;
+  }
+  const byId = new Map(all.map(c => [c.id, c]));
+  const decode = s => String(s || '').replace(/&amp;/g, '&').replace(/&#8211;|&#8212;/g, '-').replace(/&#0?39;|&#8217;/g, "'");
+  const paths = new Map();
+  for (const c of all) {
+    const names = []; let cur = c; let guard = 0;
+    while (cur && guard++ < 10) { names.unshift(decode(cur.name)); cur = byId.get(cur.parent); }
+    paths.set(c.id, names.join(' > '));
+  }
+  return paths;
+}
 async function readProducts(config, fetcher = fetch) {
+  const pathsRequest = readCategoryPaths(config, fetcher).catch(() => new Map());
   async function page(number) {
     const url = new URL('/wp-json/wc/store/v1/products', config.storeUrl);
     url.search = new URLSearchParams({ per_page: '100', page: String(number), _fields: CATALOG_FIELDS, orderby: 'id', order: 'desc' });
@@ -42,7 +69,8 @@ async function readProducts(config, fetcher = fetch) {
     pages.forEach(p => products.push(...p.products));
   }
   if (new Set(products.map(p => p.id)).size !== products.length) throw new Error('Catalog changed while loading');
-  return products.map(catalogProduct);
+  const paths = await pathsRequest;
+  return products.map(p => catalogProduct(p, paths));
 }
 async function readProduct(config, id, fetcher = fetch) {
   if (!/^[1-9]\d{0,9}$/.test(String(id))) throw new Error('Invalid product ID');
@@ -84,3 +112,4 @@ module.exports.readProducts = readProducts;
 module.exports.readProduct = readProduct;
 
 module.exports.catalogProduct = catalogProduct;
+module.exports.readCategoryPaths = readCategoryPaths;

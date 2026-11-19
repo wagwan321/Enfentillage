@@ -4,7 +4,8 @@
 window.ENF_COMMERCE = { enabled: false, failed: false, ready: null, cartProducts: new Map() };
 window.ENF_COMMERCE.ready = (async () => {
   const state = window.ENF_COMMERCE;
-  const CACHE_KEY = 'enf_catalog_v1', CACHE_MAX_AGE = 6 * 60 * 60 * 1000;
+  const CACHE_KEY = 'enf_catalog_v2', CACHE_MAX_AGE = 6 * 60 * 60 * 1000;
+  try { localStorage.removeItem('enf_catalog_v1'); } catch {}   // older format (no website category)
   const readCache = () => {
     try {
       const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
@@ -42,6 +43,8 @@ window.ENF_COMMERCE.ready = (async () => {
       return doc.body.textContent || '';
     };
     const safeImage = url => { try { const u = new URL(url); return u.protocol === 'https:' ? u.href : ''; } catch { return ''; } };
+    // WooCommerce categories stay readable (old links like shop.html?cat=wc-210 still filter), but the
+    // website's own category is one per toy, chosen on the server (api/categorize.js).
     state.categories = [...new Map(products.flatMap(p => p.categories).map(c => [c.id, { key: 'wc-' + c.id, name: text(c.name), color: 'navy' }])).values()];
     const mapProduct = raw => {
       const old = previous.get(raw.id);
@@ -57,7 +60,7 @@ window.ENF_COMMERCE.ready = (async () => {
       return { ...old, id: raw.id, n: name, p: price, o: regular > price ? regular : 0,
         s: !!raw.is_in_stock && !!raw.is_purchasable, v: raw.type === 'variable',
         b: raw.brands?.length ? text(raw.brands[0].name).toUpperCase() : (name.split(/\s+[–—-]\s+/).length > 1 ? name.split(/\s+[–—-]\s+/)[0].toUpperCase() : old?.b || ''),
-        c: [...(old?.c || []), ...raw.categories.map(c => 'wc-' + c.id)], a: ages, h: old?.h || [],
+        c: [...(raw.site_category ? [raw.site_category] : old?.c || []), ...raw.categories.map(c => 'wc-' + c.id)], a: ages, h: old?.h || [],
         i: images[0] || 'assets/img/no-photo.svg', _images: images, _live: true, r: undefined,
         _canAdd: raw.type === 'simple' && !!raw.is_purchasable, _categoryNames: categoryNames,
         _maxQty: Math.max(1, Math.min(99, Number(raw.add_to_cart?.maximum) || 99)),
