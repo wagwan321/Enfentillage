@@ -48,6 +48,12 @@ add_action( 'woocommerce_review_order_after_submit', function () {
 // "Delivery" rather than "Shipping" above the 5 $ line.
 add_filter( 'woocommerce_shipping_package_name', function ( $name ) { return enf_checkout_session() ? 'Delivery' : $name; } );
 
+// Same word on the thank-you page and in the order emails of website orders.
+add_filter( 'woocommerce_get_order_item_totals', function ( $rows, $order ) {
+    if ( isset( $rows['shipping'] ) && is_object( $order ) && 'yes' === $order->get_meta( '_enf_storefront_checkout' ) ) { $rows['shipping']['label'] = 'Delivery:'; }
+    return $rows;
+}, 10, 2 );
+
 // No coupon box while 20% off everything is automatic.
 add_filter( 'woocommerce_coupons_enabled', function ( $enabled ) {
     return ( enf_checkout_session() && enf_discount_active() ) ? false : $enabled;

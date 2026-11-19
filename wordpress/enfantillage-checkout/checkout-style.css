@@ -161,7 +161,7 @@ body.enf-co-body > :not(.enf-top, .enf-co, .enf-foot, .select2-container, script
 .enf-co .woocommerce-order-details, .enf-co .woocommerce-customer-details { margin-top: 24px; }
 .enf-co .woocommerce-order-details__title, .enf-co .woocommerce-column__title { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: var(--navy); margin: 0 0 10px; }
 .enf-co .woocommerce-table--order-details thead { display: none; }
-.enf-co .woocommerce-table--order-details tfoot td { white-space: normal; max-width: 65%; }
+.enf-co table.shop_table.woocommerce-table--order-details tfoot td { white-space: normal; max-width: 70%; overflow-wrap: anywhere; }
 .enf-co .woocommerce-customer-details .col2-set { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
 .enf-co .woocommerce-customer-details .col2-set .col-2 { margin: 0; padding: 0; border: 0; }
 .enf-co .woocommerce-customer-details address { font-style: normal; padding: 14px 16px; border-radius: 16px; background: var(--bg); border: 0; line-height: 1.6; }
