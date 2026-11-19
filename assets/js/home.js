@@ -42,7 +42,7 @@ document.addEventListener('site:ready', () => {
       bg: 'linear-gradient(135deg,#fff1f1 0%,#ffd9dc 100%)', accent: '#d81e27',
       kicker: `${icon('tag', 'icon', 2.4)} Limited time · until ${CAMPAIGN.until}`,
       title: 'Get <em>30%</em> back',
-      desc: `${CAMPAIGN.pct}% off right now with code ${CAMPAIGN.code}, plus a ${CAMPAIGN.cashback}% cashback voucher to spend in our store. Only until ${CAMPAIGN.until}!`,
+      desc: `${CAMPAIGN.pct}% off right now ${CAMPAIGN.how}, plus a ${CAMPAIGN.cashback}% cashback voucher to spend in our store. Only until ${CAMPAIGN.until}!`,
       cta: ['Shop 20% off everything', shopUrl({ promo: 1 }), 'btn--red'],
       imgs: topDeals.map(p => p.id),
       burst: true,
@@ -70,7 +70,7 @@ document.addEventListener('site:ready', () => {
       { bg: 'linear-gradient(135deg,#fff6e3 0%,#ffe4a8 100%)', accent: '#c8102e', xmas: 'gold',
         kicker: `${icon('tag', 'icon', 2.4)} Christmas offer · until ${CAMPAIGN.until}`,
         title: 'Get <em>30%</em> back',
-        desc: `${CAMPAIGN.pct}% off with code ${CAMPAIGN.code}, plus a ${CAMPAIGN.cashback}% cashback voucher for the store. Only until ${CAMPAIGN.until}!`,
+        desc: `${CAMPAIGN.pct}% off ${CAMPAIGN.how}, plus a ${CAMPAIGN.cashback}% cashback voucher for the store. Only until ${CAMPAIGN.until}!`,
         cta: ['Shop 20% off everything', shopUrl({ promo: 1 }), 'btn--red'], imgs: topDeals.map(p => p.id), burst: true });
   }
   // while the 30% campaign runs, the banner shows only that offer; afterwards the other slides come back without it
@@ -96,7 +96,7 @@ document.addEventListener('site:ready', () => {
         <a class="btn ${s.cta[2]}" href="${s.cta[1]}">${s.cta[0]} ${icon('arrow', 'icon', 2.6)}</a>
       </div>
       <div class="slide__art">
-        ${s.burst ? `<div class="price-burst"><span>CODE<b>-${CAMPAIGN.pct}%</b>${CAMPAIGN.code}</span></div>` : ''}
+        ${s.burst ? `<div class="price-burst">${CAMPAIGN.auto ? `<span>ALL TOYS<b>-${CAMPAIGN.pct}%</b>NO CODE</span>` : `<span>CODE<b>-${CAMPAIGN.pct}%</b>${CAMPAIGN.code}</span>`}</div>` : ''}
         ${s.imgs.map((id, k) => `<div class="blob blob--${'abc'[k]}" data-quick="${id}" style="cursor:pointer"><span><img src="${img(id)}" alt="${esc(byId.get(id)?.n || '')}"></span></div>`).join('')}
       </div>
     </div>`).join('') + `
@@ -146,7 +146,7 @@ document.addEventListener('site:ready', () => {
   const brandCount = new Set(onSale.map(p => p.b).filter(Boolean)).size;
   const PERKS = [
     ...(CAMPAIGN.active ? [
-      ['tag', 'red', `${CAMPAIGN.pct}% off now`, `Code ${CAMPAIGN.code}, until ${CAMPAIGN.until}`],
+      ['tag', 'red', `${CAMPAIGN.pct}% off now`, CAMPAIGN.auto ? `On everything, until ${CAMPAIGN.until}` : `Code ${CAMPAIGN.code}, until ${CAMPAIGN.until}`],
       ['gift', 'green', `+${CAMPAIGN.cashback}% cashback`, 'A voucher to spend in store'],
     ] : [
       ['truck', 'red', 'Delivery 5 $', 'Anywhere in Lebanon'],
@@ -345,7 +345,7 @@ document.addEventListener('site:ready', () => {
     <div>
       <span class="club__kicker">Get 30% back · until ${CAMPAIGN.until}</span>
       <h2>Get your ${CAMPAIGN.cashback}% cashback voucher</h2>
-      <p>${CAMPAIGN.pct}% off online with code <b>${CAMPAIGN.code}</b>, plus a ${CAMPAIGN.cashback}% cashback voucher to spend in our store. Join the Enfantillage Club with your email to get it.</p>
+      <p>${CAMPAIGN.auto ? `${CAMPAIGN.pct}% off everything online (no code needed)` : `${CAMPAIGN.pct}% off online with code <b>${CAMPAIGN.code}</b>`}, plus a ${CAMPAIGN.cashback}% cashback voucher to spend in our store. Join the Enfantillage Club with your email to get it.</p>
     </div>
     <div id="clubAction">${readVoucher() ? voucherHTML(readVoucher()) : formHTML()}</div>`;
   const action = $('#clubAction');

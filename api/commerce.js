@@ -82,6 +82,20 @@ async function readProduct(config, id, fetcher = fetch) {
   if (product.id !== Number(id) || !product.prices || !Array.isArray(product.categories)) throw new Error('Invalid product');
   return product;
 }
+// The automatic campaign discount (e.g. 20% off everything) as reported by the WordPress checkout plugin.
+// 0 when the plugin doesn't apply one (older plugin, campaign over, store unreachable): the website then
+// never shows prices the checkout wouldn't charge.
+async function readAutoDiscount(config, fetcher = fetch) {
+  try {
+    const response = await fetcher(new URL('/wp-json/enfantillage/v1/checkout-status', config.storeUrl), {
+      redirect: 'error', signal: AbortSignal.timeout(6000), headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) return 0;
+    const status = await response.json();
+    const pct = status?.discount?.pct;
+    return status?.enabled === true && Number.isInteger(pct) && pct > 0 && pct <= 50 ? pct : 0;
+  } catch { return 0; }
+}
 async function handler(req, res) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Cache-Control', 'no-store');
@@ -90,7 +104,7 @@ async function handler(req, res) {
     const config = settings();
     if (req.query.resource === 'config') {
       res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400');
-      return res.status(200).json(config);
+      return res.status(200).json(config.enabled ? { ...config, autoDiscount: await readAutoDiscount(config) } : config);
     }
     if (!config.enabled) return res.status(503).json({ error: 'Catalog connection is not enabled' });
     if (req.query.resource === 'product') {
@@ -113,3 +127,4 @@ module.exports.readProduct = readProduct;
 
 module.exports.catalogProduct = catalogProduct;
 module.exports.readCategoryPaths = readCategoryPaths;
+module.exports.readAutoDiscount = readAutoDiscount;

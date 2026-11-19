@@ -60,3 +60,13 @@ test('catalog excludes gallery metadata while retaining option identity and stoc
  assert.equal(compact.attributes.length,1);assert.deepEqual(compact.variations,raw.variations);assert.equal(compact.add_to_cart.maximum,3);
  assert.ok(JSON.stringify(compact).length<JSON.stringify(raw).length/5);
 });
+
+test('automatic campaign discount is only trusted when the enabled plugin reports a sane one', async () => {
+ const { readAutoDiscount } = require('../api/commerce');
+ const config = { enabled: true, storeUrl: 'https://enfantillagestore.com' };
+ const reply = body => async url => { assert.equal(String(url), 'https://enfantillagestore.com/wp-json/enfantillage/v1/checkout-status'); return { ok: true, json: async () => body }; };
+ assert.equal(await readAutoDiscount(config, reply({ enabled: true, discount: { pct: 20, until: '2026-12-25' } })), 20);
+ for (const body of [{ enabled: true }, { enabled: true, discount: null }, { enabled: false, discount: { pct: 20 } }, { enabled: true, discount: { pct: 90 } }, { enabled: true, discount: { pct: '20' } }])
+  assert.equal(await readAutoDiscount(config, reply(body)), 0);
+ assert.equal(await readAutoDiscount(config, async () => { throw new Error('down'); }), 0);
+});

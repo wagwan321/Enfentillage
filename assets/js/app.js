@@ -17,7 +17,11 @@
      Change the code or the numbers here and the whole site follows. */
   // limited time: until the end of 25 December 2026 (Beirut time); after that the offer banner and Tillo's reminder switch off
   const CAMPAIGN = { code: 'TILLO20', pct: 20, cashback: 10, until: '25 December', active: Date.now() < Date.parse('2026-12-26T00:00:00+02:00') && !/[?&]campaign=off\b/.test(location.search) };
-  // everything that mentions the 30% / TILLO20 / 10% cashback checks CAMPAIGN.active (preview the after-state with ?campaign=off)
+  // everything that mentions the 30% / 10% cashback checks CAMPAIGN.active (preview the after-state with ?campaign=off).
+  // auto: the checkout applies the 20% by itself (prices on the site are already reduced, no code). Until the
+  // updated WordPress plugin reports it, the site keeps the old wording with the TILLO20 code.
+  CAMPAIGN.auto = CAMPAIGN.active && (window.ENF_COMMERCE?.autoDiscount || 0) > 0;
+  CAMPAIGN.how = CAMPAIGN.auto ? 'on everything, no code needed' : `with code ${CAMPAIGN.code}`;
   const OLD_PHOTOS = '';
   const NO_PHOTO = 'assets/img/no-photo.svg';
   const MAP_URL = 'https://www.google.com/maps/search/?api=1&query=Enfantillage%2C%20Mazraat%20Yachouh%2C%20Lebanon';
@@ -409,7 +413,7 @@
   /* price block: sale price, "from" for products with options, or ask-in-store when the old site had no price */
   // price after the campaign code (WooCommerce takes it off every toy at checkout, rounded like the store: 0.1 $)
   const codePrice = n => Math.round((n - Math.round(n * CAMPAIGN.pct / 10) / 10) * 100) / 100;
-  const codeLine = p => CAMPAIGN.active && p.p && p.s ? `<small class="price__code">${money(codePrice(p.p))} with ${CAMPAIGN.code}</small>` : '';
+  const codeLine = p => CAMPAIGN.active && !CAMPAIGN.auto && p.p && p.s ? `<small class="price__code">${money(codePrice(p.p))} with ${CAMPAIGN.code}</small>` : '';
   function priceHTML(p, cls = 'price') {
     if (!p.p) return `<div class="${cls} price--ask">Ask in store</div>`;
     return `<div class="${cls}${p.o ? ' price--sale' : ''}">${p.o ? `<s>${money(p.o)}</s>` : ''}${p.v ? '<small>from</small> ' : ''}${money(p.p)}${codeLine(p)}</div>`;
@@ -481,7 +485,7 @@
     return `
     <div class="ticker" role="region" aria-label="Store announcements"><div class="ticker__track">
       ${[0, 1].map(() => `
-        ${CAMPAIGN.active ? `<span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span><b>Get 30% back until ${CAMPAIGN.until}:</b> <b>${CAMPAIGN.pct}% off</b> now with code <b>${CAMPAIGN.code}</b> + <b>${CAMPAIGN.cashback}% cashback</b> in store</span>
+        ${CAMPAIGN.active ? `<span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span><b>Get 30% back until ${CAMPAIGN.until}:</b> <b>${CAMPAIGN.pct}% off</b> ${CAMPAIGN.auto ? '<b>everything</b>, no code needed' : `now with code <b>${CAMPAIGN.code}</b>`} + <b>${CAMPAIGN.cashback}% cashback</b> in store</span>
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--green)"></span><a href="index.html#club">Get your <b>${CAMPAIGN.cashback}% cashback voucher</b> with your email →</a></span>` : `<span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span>Delivery anywhere in Lebanon for <b>5 $</b></span>`}
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--pink)"></span>Holiday wishlists are open — find the perfect gift with our <b>Gift Finder</b></span>
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--blue)"></span>Visit our store in <b>Mazraat Yachouh</b>, Chattat Center</span>
@@ -637,7 +641,7 @@
       return;
     }
     body.innerHTML = `
-      <div class="ship-meter">${CAMPAIGN.active ? `Use code <b>${CAMPAIGN.code}</b> at checkout for <b>${CAMPAIGN.pct}% off</b> (until ${CAMPAIGN.until}). ` : ''}Final prices and availability are checked at checkout.</div>
+      <div class="ship-meter">${CAMPAIGN.auto ? `<b>${CAMPAIGN.pct}% off everything</b> is already included in these prices (until ${CAMPAIGN.until}). ` : CAMPAIGN.active ? `Use code <b>${CAMPAIGN.code}</b> at checkout for <b>${CAMPAIGN.pct}% off</b> (until ${CAMPAIGN.until}). ` : ''}Final prices and availability are checked at checkout.</div>
       ${needsReview ? '<p role="alert">Some items or quantities need checking. Reduce quantities or remove unavailable items before checkout.</p>' : ''}
       ${lines.map(([id, q]) => { const p = byId.get(+id) || {id:Number(id),n:'Unavailable toy',i:NO_PHOTO,b:'',s:false,p:0}; return `
         <div class="cart-line">

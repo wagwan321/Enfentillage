@@ -27,7 +27,7 @@ document.addEventListener('site:ready', async () => {
     </section>
     <aside class="co-card co-summary"><h2>Your toy box</h2><div class="co-lines">${items.map(item => { const p = byId.get(item.id); return `<div class="co-line"><a href="${productUrl(p)}"><img src="${esc(p.i)}" alt=""></a><div><a href="${productUrl(p)}">${esc(p.n)}</a><small>${item.quantity} × ${money(p.p)}</small></div><b>${money(p.p * item.quantity)}</b></div>`; }).join('')}</div>
       <dl class="co-totals"><dt>Item subtotal</dt><dd>${money(subtotal)}</dd><dt>Delivery in Lebanon</dt><dd id="coDelivery">5 $</dd></dl>
-      <p>${window.ENF.CAMPAIGN.active ? `Have code <b>${esc(window.ENF.CAMPAIGN.code)}</b>? Enter it on the next step. ` : ''}The final total is confirmed there.</p>
+      <p>${window.ENF.CAMPAIGN.auto ? `<b>${window.ENF.CAMPAIGN.pct}% off everything</b> is already included. ` : window.ENF.CAMPAIGN.active ? `Have code <b>${esc(window.ENF.CAMPAIGN.code)}</b>? Enter it on the next step. ` : ''}The final total is confirmed there.</p>
     </aside></div>`;
   const form = document.getElementById('handoffForm');
   const button = document.getElementById('continueCheckout');

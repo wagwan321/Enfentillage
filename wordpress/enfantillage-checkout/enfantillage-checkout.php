@@ -2,13 +2,25 @@
 /**
  * Plugin Name: Enfantillage Checkout Handoff
  * Description: An opt-in cart handoff to WooCommerce checkout, 5 $ Lebanon delivery, COD and manually confirmed Whish payments. Disabled until explicitly enabled by an administrator.
- * Version: 0.4.0
+ * Version: 0.5.0
  * Requires PHP: 8.1
  * Requires Plugins: woocommerce
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 // One delivery price anywhere in Lebanon (US dollars). The website reads it from the status endpoint.
 const ENF_DELIVERY_FEE = 5;
+// Christmas campaign: 20% off everything, applied automatically (no code) until the end of 25 December (Beirut time).
+const ENF_DISCOUNT_PCT = 20;
+const ENF_DISCOUNT_UNTIL = '2026-12-26 00:00:00';
+function enf_discount_active() {
+    try { $end = new DateTimeImmutable( ENF_DISCOUNT_UNTIL, new DateTimeZone( 'Asia/Beirut' ) ); }
+    catch ( Throwable $error ) { return false; }
+    return time() < $end->getTimestamp();
+}
+// Discount per toy, rounded like the store's prices (0.1 $), so it matches the prices shown on the website.
+function enf_discount_for( $price ) {
+    return round( (float) $price * ENF_DISCOUNT_PCT / 100, 1 );
+}
 require_once __DIR__ . '/cart-validation.php';
 require_once __DIR__ . '/storefront-routing.php';
 require_once __DIR__ . '/receipt-validation.php';
@@ -76,6 +88,7 @@ add_action( 'rest_api_init', function () {
                 'version' => 2, 'enabled' => enf_checkout_enabled(),
                 'currency' => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : null, 'deliveryFee' => ENF_DELIVERY_FEE,
                 'methods' => array( 'cod', 'whish' ), 'whishNumber' => '+961 78 881 100',
+                'discount' => enf_discount_active() ? array( 'pct' => ENF_DISCOUNT_PCT, 'until' => '2026-12-25' ) : null,
             ) );
             $response->header( 'Cache-Control', 'no-store' );
             return $response;
@@ -190,6 +203,23 @@ add_filter( 'wc_price_args', function ( $args ) {
 add_filter( 'woocommerce_price_trim_zeros', function ( $trim ) {
     return ( enf_checkout_session() || enf_checkout_receipt_order() ) ? true : $trim;
 } );
+// 20% off everything: one discount line on the new-storefront checkout, no code needed.
+add_action( 'woocommerce_cart_calculate_fees', function ( $cart ) {
+    if ( ! enf_checkout_session() || ! enf_discount_active() ) { return; }
+    $off = 0.0;
+    foreach ( $cart->get_cart() as $item ) {
+        if ( empty( $item['data'] ) || ! is_object( $item['data'] ) ) { continue; }
+        $off += enf_discount_for( $item['data']->get_price() ) * max( 0, (int) $item['quantity'] );
+    }
+    if ( $off > 0 ) { $cart->add_fee( ENF_DISCOUNT_PCT . '% off everything', -round( $off, 2 ), false ); }
+} );
+// The old TILLO20 code is retired on the new storefront (the 20% is automatic), so it can't be added on top.
+add_filter( 'woocommerce_coupon_is_valid', function ( $valid, $coupon ) {
+    if ( enf_checkout_session() && is_object( $coupon ) && 'tillo20' === strtolower( (string) $coupon->get_code() ) ) {
+        throw new Exception( enf_discount_active() ? 'No code needed: 20% off everything is already included.' : 'This code has expired.' );
+    }
+    return $valid;
+}, 10, 2 );
 // This field belongs only to the new storefront checkout; the existing store form is unchanged.
 add_action( 'woocommerce_after_order_notes', function ( $checkout ) {
     if ( ! enf_checkout_session() ) { return; }
@@ -281,7 +311,7 @@ add_action( 'template_redirect', function () {
         $proof = array( 'orderId' => $receipt_order->get_id(), 'orderKey' => $receipt_order->get_order_key(), 'cartToken' => (string) $receipt_order->get_meta( '_enf_storefront_cart_token' ) );
         if ( enf_checkout_receipt_data( $proof ) ) { $return_url = $context['origin'] . '/order-confirmed.html#' . http_build_query( $proof, '', '&', PHP_QUERY_RFC3986 ); }
     }
-    ?><!doctype html><html <?php language_attributes(); ?>><head><meta charset="<?php bloginfo( 'charset' ); ?>"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Checkout — Enfantillage</title><?php wp_head(); ?><style>body{margin:0;background:#f5f6fb;color:#20254d;font-family:Arial,sans-serif}.enf-checkout{max-width:1080px;margin:auto;padding:24px}.enf-checkout header{margin-bottom:24px}.enf-checkout a{color:#25318c}.enf-checkout input,.enf-checkout select,.enf-checkout textarea{max-width:100%;padding:10px}.enf-checkout button{padding:14px 22px;cursor:pointer}.enf-checkout .woocommerce-error{color:#a51229}.enf-return{display:inline-block;margin:24px 0;padding:14px 20px;background:#25318c;color:white!important;border-radius:10px;text-decoration:none}</style></head><body class="woocommerce woocommerce-checkout"><main class="enf-checkout"><header><a href="<?php echo esc_url( $return_url ?: $context['origin'] . '/shop.html' ); ?>">← Back to Enfantillage</a><h1>Delivery and payment</h1><p>Delivery anywhere in Lebanon: 5 $. Choose cash on delivery or Whish with manual payment confirmation.</p></header><?php echo do_shortcode( '[woocommerce_checkout]' ); ?><?php if ( $return_url ) { ?><p><a class="enf-return" href="<?php echo esc_url( $return_url ); ?>">Return to Enfantillage</a></p><?php } ?></main><?php wp_footer(); ?></body></html><?php
+    ?><!doctype html><html <?php language_attributes(); ?>><head><meta charset="<?php bloginfo( 'charset' ); ?>"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Checkout — Enfantillage</title><?php wp_head(); ?><style>body{margin:0;background:#f5f6fb;color:#20254d;font-family:Arial,sans-serif}.enf-checkout{max-width:1080px;margin:auto;padding:24px}.enf-checkout header{margin-bottom:24px}.enf-checkout a{color:#25318c}.enf-checkout input,.enf-checkout select,.enf-checkout textarea{max-width:100%;padding:10px}.enf-checkout button{padding:14px 22px;cursor:pointer}.enf-checkout .woocommerce-error{color:#a51229}.enf-return{display:inline-block;margin:24px 0;padding:14px 20px;background:#25318c;color:white!important;border-radius:10px;text-decoration:none}</style></head><body class="woocommerce woocommerce-checkout"><main class="enf-checkout"><header><a href="<?php echo esc_url( $return_url ?: $context['origin'] . '/shop.html' ); ?>">← Back to Enfantillage</a><h1>Delivery and payment</h1><p><?php echo enf_discount_active() ? '<strong>20% off everything is already included</strong> (until 25 December). ' : ''; ?>Delivery anywhere in Lebanon: 5 $. Choose cash on delivery or Whish with manual payment confirmation.</p></header><?php echo do_shortcode( '[woocommerce_checkout]' ); ?><?php if ( $return_url ) { ?><p><a class="enf-return" href="<?php echo esc_url( $return_url ); ?>">Return to Enfantillage</a></p><?php } ?></main><?php wp_footer(); ?></body></html><?php
     exit;
 }, 5 );
 

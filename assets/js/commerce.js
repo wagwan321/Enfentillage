@@ -33,6 +33,10 @@ window.ENF_COMMERCE.ready = (async () => {
     const config = await configResponse.json();
     if (!config.enabled) { try { localStorage.removeItem(CACHE_KEY); } catch {} return; }
     state.enabled = true;
+    // automatic campaign discount, as applied by the WordPress checkout (0 = none)
+    state.autoDiscount = Number.isInteger(config.autoDiscount) && config.autoDiscount > 0 && config.autoDiscount <= 50 ? config.autoDiscount : 0;
+    // never past the end of the campaign (end of 25 December, Beirut), even from a cached reply
+    if (Date.now() >= Date.parse('2026-12-26T00:00:00+02:00') || /[?&]campaign=off(&|$)/.test(location.search)) state.autoDiscount = 0;
     const products = cached || await catalogRequest;
     // refresh the saved copy quietly once the page has had time to draw
     if (cached) setTimeout(() => fetchCatalog().catch(() => {}), 4000);
@@ -57,7 +61,10 @@ window.ENF_COMMERCE.ready = (async () => {
       const categoryNames = raw.categories.map(c => text(c.name));
       const ages = categoryNames.map(n => n.replace(/[–—]/g, '-').replace(/\s/g, '')).filter(n => /^(0-3|3-5|3-6|5-8|8-11|11-16|17\+)$/.test(n));
       const images = (raw.images || []).map(i => safeImage(i.src)).filter(Boolean);
-      return { ...old, id: raw.id, n: name, p: price, o: regular > price ? regular : 0,
+      // during the automatic discount the old price is the crossed-out one; the discount per toy is rounded
+      // like the store (0.1 $), exactly as the checkout plugin computes it
+      const off = state.autoDiscount && price > 0 ? Math.round(price * state.autoDiscount / 10) / 10 : 0;
+      return { ...old, id: raw.id, n: name, p: off ? Math.round((price - off) * 100) / 100 : price, o: off ? price : regular > price ? regular : 0,
         s: !!raw.is_in_stock && !!raw.is_purchasable, v: raw.type === 'variable',
         b: raw.brands?.length ? text(raw.brands[0].name).toUpperCase() : (name.split(/\s+[–—-]\s+/).length > 1 ? name.split(/\s+[–—-]\s+/)[0].toUpperCase() : old?.b || ''),
         c: [...(raw.site_category ? [raw.site_category] : old?.c || []), ...raw.categories.map(c => 'wc-' + c.id)], a: ages, h: old?.h || [],

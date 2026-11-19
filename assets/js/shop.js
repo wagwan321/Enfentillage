@@ -73,8 +73,8 @@ document.addEventListener('site:ready', () => {
     const one = (k, arr) => st[k].length === 1 && arr.find(x => x.key === st[k][0]);
     const c = one('cat', ALL_CATEGORIES), a = one('age', AGES), b = one('brand', BRANDS), h = one('char', CHARACTERS);
     if (st.fav) { title = 'Your Wishlist'; sub = 'All the toys you’ve hearted, saved in this browser'; color = 'pink'; }
-    else if (st.sale) { title = 'Offer Zone'; sub = window.ENF.CAMPAIGN.active ? `Real savings on top toys, plus ${window.ENF.CAMPAIGN.pct}% off with code ${window.ENF.CAMPAIGN.code} until ${window.ENF.CAMPAIGN.until}` : 'Real savings on top toys'; color = 'red'; }
-    else if (st.promo && !st.q && !st.cat.length && !st.age.length && !st.brand.length && !st.char.length) { const C = window.ENF.CAMPAIGN; title = `${C.pct}% off everything`; sub = `Use code ${C.code} at checkout, plus ${C.cashback}% cashback in store. Until ${C.until}!`; color = 'red'; }
+    else if (st.sale) { title = 'Offer Zone'; sub = window.ENF.CAMPAIGN.auto ? `Everything is ${window.ENF.CAMPAIGN.pct}% off until ${window.ENF.CAMPAIGN.until}, no code needed` : window.ENF.CAMPAIGN.active ? `Real savings on top toys, plus ${window.ENF.CAMPAIGN.pct}% off with code ${window.ENF.CAMPAIGN.code} until ${window.ENF.CAMPAIGN.until}` : 'Real savings on top toys'; color = 'red'; }
+    else if (st.promo && !st.q && !st.cat.length && !st.age.length && !st.brand.length && !st.char.length) { const C = window.ENF.CAMPAIGN; title = `${C.pct}% off everything`; sub = C.auto ? `No code needed: prices already include ${C.pct}% off, plus ${C.cashback}% cashback in store. Until ${C.until}!` : `Use code ${C.code} at checkout, plus ${C.cashback}% cashback in store. Until ${C.until}!`; color = 'red'; }
     else if (st.q) { title = `“${st.q}”`; sub = 'Search results'; color = 'navy'; }
     else if (h) { title = h.name; sub = `Toys, playsets and goodies starring ${h.name}`; color = h.color; }
     else if (b) { title = b.name; sub = `Shop the ${b.name} collection at Enfantillage`; color = b.color; }

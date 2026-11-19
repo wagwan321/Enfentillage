@@ -46,3 +46,11 @@ The client confirmed TILLO20 (20% off), 10% in-store cashback, gift wrapping and
 - Email is required at checkout (order confirmation; cashback voucher). The postcode field is removed for the new-storefront checkout only.
 - Prices on the new-storefront checkout and its receipts show like the website ("75 $", "7.50 $"). Display only: the store's decimal setting and stored prices are unchanged.
 - Install: WordPress → Plugins → Add New → Upload Plugin → `enfantillage-checkout-0.4.0.zip` → "Replace current with uploaded". Settings and the checkout switch are kept.
+
+## 0.5.0 (20 November 2026)
+
+- 20% off everything, automatically (no code), on the new-storefront checkout until the end of 25 December 2026 (Beirut time): one "20% off everything" discount line, rounded per toy to 0.1 $ like the website's prices.
+- The old TILLO20 code is refused on the new-storefront checkout (it can't be stacked; after 25 December it says it has expired). It can also be deleted or expired in Marketing → Coupons.
+- The status endpoint reports `discount: { pct: 20, until: '2026-12-25' }` while it runs. The website only lowers its prices when it sees this, so before the upload it keeps the TILLO20 wording.
+- Includes 0.4.0: 5 $ delivery, no postcode, email required, "75 $" price display.
+- Install: Plugins → Add New → Upload Plugin → `enfantillage-checkout-0.5.0.zip` → "Replace current with uploaded".

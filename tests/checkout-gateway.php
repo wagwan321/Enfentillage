@@ -56,4 +56,22 @@ verify( enf_checkout_receipt_order() === $order, 'Receipt key verification faile
 $_GET['key'] = 'wrong'; verify( false === enf_checkout_receipt_order(), 'Invalid receipt key accepted' );
 $enabled = '0'; $existing = array( 'old_rate' => 'preserve' );
 verify( $existing === $filters['woocommerce_package_rates'][0]( $existing, array() ), 'Existing shipping rates changed while disabled' );
+// automatic 20% (until 25 December): one discount line, rounded per toy like the website
+$enabled = '1';
+class FakeProduct { public $price; function __construct( $p ) { $this->price = $p; } function get_price() { return $this->price; } }
+class FeeCart { public $fees = array(); public $items;
+    function __construct( $items ) { $this->items = $items; }
+    function get_cart() { return $this->items; }
+    function add_fee( $name, $amount, $taxable ) { $this->fees[] = array( $name, $amount ); } }
+$cart = new FeeCart( array( array( 'data' => new FakeProduct( 12.9 ), 'quantity' => 2 ), array( 'data' => new FakeProduct( 400 ), 'quantity' => 1 ) ) );
+$hooks['woocommerce_cart_calculate_fees'][0]( $cart );
+if ( enf_discount_active() ) {
+    verify( 1 === count( $cart->fees ) && abs( $cart->fees[0][1] + 85.2 ) < 0.001, '20% discount line wrong' );
+} else {
+    verify( array() === $cart->fees, 'Discount still applied after 25 December' );
+}
+class FakeCoupon { function get_code() { return 'TILLO20'; } }
+$blocked = false;
+try { $filters['woocommerce_coupon_is_valid'][0]( true, new FakeCoupon() ); } catch ( Exception $error ) { $blocked = true; }
+verify( $blocked, 'TILLO20 can still be stacked on the automatic discount' );
 echo "Checkout gateway contract tests passed\n";
