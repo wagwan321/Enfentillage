@@ -20,8 +20,8 @@ test('handoff requires matching readiness and the configured HTTPS backend', asy
  });
  assert.equal(result.handoffUrl, 'https://enfantillagestore.com/wp-admin/admin-post.php');
  assert.equal(result.deliveryFee, 0);
- assert.equal((await readiness(preview, async () => response({ ...status, deliveryFee: 3 }))).deliveryFee, 3);
- for (const change of [{ enabled: false }, { version: 1 }, { deliveryFee: 7 }, { deliveryFee: '3' }, { currency: 'EUR' }, { methods: ['stripe'] }, { whishNumber: '+96100000000' }]) {
+ assert.equal((await readiness(preview, async () => response({ ...status, deliveryFee: 5 }))).deliveryFee, 5);
+ for (const change of [{ enabled: false }, { version: 1 }, { deliveryFee: 3 }, { deliveryFee: 7 }, { deliveryFee: '5' }, { currency: 'EUR' }, { methods: ['stripe'] }, { whishNumber: '+96100000000' }]) {
   await assert.rejects(readiness(preview, async () => response({ ...status, ...change })));
  }
  await assert.rejects(readiness(preview, async () => ({ ok: false })));

@@ -34,7 +34,7 @@ document.addEventListener('site:ready', () => {
     brands: [['Looking for a brand? Type its name in the box above!', '', ''],
              ['Tap any logo to see all of that brand’s toys.', '', '']],
     info: [['Can’t find your answer? Call us on +961 3 720 233!', 'Call the store', 'tel:+9613720233'],
-           ['We deliver anywhere in Lebanon for 3 $.', '', '']],
+           ['We deliver anywhere in Lebanon for 5 $.', '', '']],
     checkout: [[`Have code ${C.code}? Enter it on the next step for ${C.pct}% off.`, '', ''],
                ['Whish payments are checked manually by the store.', '', '']],
   };
@@ -150,7 +150,7 @@ document.addEventListener('site:ready', () => {
         const line = !p.s ? 'This one is sold out right now. Call us and we’ll tell you when it’s back!'
           : !p.p ? 'Ask us for the price: we’re happy to help!'
           : C.active ? `With code <b>${C.code}</b> it’s only <b>${money(Math.round(p.p * (100 - C.pct)) / 100)}</b>, plus ${C.cashback}% cashback in store! (until ${C.until})`
-          : 'Pay when it arrives: cash on delivery or Whish Money. Delivery anywhere in Lebanon for 3 $.';
+          : 'Pay when it arrives: cash on delivery or Whish Money. Delivery anywhere in Lebanon for 5 $.';
         place(perks, 'beforebegin', `<div class="tillo-tip tillo-tip--plain"><span class="tillo-tip__icon" aria-hidden="true">${icon('sparkle', 'icon', 2.4)}</span><p><b>Tip:</b> ${line}</p></div>`);
       }
     }

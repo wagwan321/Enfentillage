@@ -149,7 +149,7 @@ document.addEventListener('site:ready', () => {
       ['tag', 'red', `${CAMPAIGN.pct}% off now`, `Code ${CAMPAIGN.code}, until ${CAMPAIGN.until}`],
       ['gift', 'green', `+${CAMPAIGN.cashback}% cashback`, 'A voucher to spend in store'],
     ] : [
-      ['truck', 'red', 'Delivery 3 $', 'Anywhere in Lebanon'],
+      ['truck', 'red', 'Delivery 5 $', 'Anywhere in Lebanon'],
       ['gift', 'green', 'Gift wrapping', 'Just tick it at checkout'],
     ]),
     ['blocks', 'blue', `${Math.floor(onSale.length / 100) * 100}+ toys`, `From ${Math.floor(brandCount / 10) * 10}+ brands`],

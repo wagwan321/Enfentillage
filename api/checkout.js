@@ -1,8 +1,8 @@
 // Readiness only: carts are posted by the browser directly to the WooCommerce session.
 const { settings } = require('./commerce');
-const POLICY = Object.freeze({ currency: 'USD', deliveryFee: 3, methods: ['cod', 'whish'], whishNumber: '+961 78 881 100' });
-// The WordPress plugin reports the delivery price it charges; 0 is the older plugin (free delivery).
-const DELIVERY_FEES = [0, 3];
+const POLICY = Object.freeze({ currency: 'USD', deliveryFee: 5, methods: ['cod', 'whish'], whishNumber: '+961 78 881 100' });
+// The WordPress plugin reports the delivery price it charges; 0 is the older plugin (free delivery), 5 the current one.
+const DELIVERY_FEES = [0, 5];
 async function readiness(env = process.env, fetcher = fetch) {
   const catalog = settings(env);
   const preview = env.VERCEL_ENV === 'preview' && env.VERCEL_GIT_COMMIT_REF === 'codex/woocommerce-connection';

@@ -75,7 +75,7 @@ document.addEventListener('site:ready', () => {
           </div>
 
           <ul class="pdp__perks">
-            <li style="${colorVars('green')}">${icon('truck', 'icon', 2.2)}<span><b>Delivery anywhere in Lebanon</b>3 $, usually in 2–6 business days.</span></li>
+            <li style="${colorVars('green')}">${icon('truck', 'icon', 2.2)}<span><b>Delivery anywhere in Lebanon</b>5 $, usually in 2–6 business days.</span></li>
             <li style="${colorVars('blue')}">${icon('tag', 'icon', 2.2)}<span><b>Cash on delivery or Whish Money</b>Pay when your toys arrive, or by Whish.</span></li>
             <li style="${colorVars('pink')}">${icon('gift', 'icon', 2.2)}<span><b>Gift wrapping</b>Just tick “wrap my gifts” at checkout.</span></li>
             <li style="${colorVars('teal')}">${icon('returns', 'icon', 2.2)}<span><b>Easy exchanges</b>Within 30 days, unused and in the original box. <a href="info.html#returns">No refunds</a>.</span></li>

@@ -479,7 +479,7 @@
     <div class="ticker" role="region" aria-label="Store announcements"><div class="ticker__track">
       ${[0, 1].map(() => `
         ${CAMPAIGN.active ? `<span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span><b>Get 30% back until ${CAMPAIGN.until}:</b> <b>${CAMPAIGN.pct}% off</b> now with code <b>${CAMPAIGN.code}</b> + <b>${CAMPAIGN.cashback}% cashback</b> in store</span>
-        <span class="ticker__item"><span class="ticker__dot" style="--c:var(--green)"></span><a href="index.html#club">Get your <b>${CAMPAIGN.cashback}% cashback voucher</b> with your email →</a></span>` : `<span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span>Delivery anywhere in Lebanon for <b>3 $</b></span>`}
+        <span class="ticker__item"><span class="ticker__dot" style="--c:var(--green)"></span><a href="index.html#club">Get your <b>${CAMPAIGN.cashback}% cashback voucher</b> with your email →</a></span>` : `<span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span>Delivery anywhere in Lebanon for <b>5 $</b></span>`}
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--pink)"></span>Holiday wishlists are open — find the perfect gift with our <b>Gift Finder</b></span>
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--blue)"></span>Visit our store in <b>Mazraat Yachouh</b>, Chattat Center</span>
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--red)"></span>Up to <b>${maxOff}% off</b> in the Offer Zone</span>`).join('')}
@@ -645,7 +645,7 @@
           <div class="cart-line__price">${p.s ? money(p.p * q) : 'Unavailable'}</div>
         </div>`; }).join('')}`;
     foot.innerHTML = `<div class="cart-total"><span>Subtotal</span><span>${money(total)}</span></div>
-      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Delivery: 3 $ anywhere in Lebanon.</p>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Delivery: 5 $ anywhere in Lebanon.</p>
       <a class="btn btn--green" style="width:100%" href="checkout.html">Checkout ${icon('arrow', 'icon', 2.6)}</a>
       <p class="cart-pay">Pay by <b>cash on delivery</b> or <img src="assets/img/pay/whish-money.svg" alt="Whish Money" width="62" height="14"></p>`;
   }

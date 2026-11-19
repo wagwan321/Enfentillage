@@ -49,7 +49,7 @@ verify( $rejected, 'Unrelated store order was accepted' );
 $enabled = '0'; verify( ! $whish->is_available() && ! $cod->is_available(), 'Disabled bridge remains available' );
 $enabled = '1'; $order->source = 'yes';
 $free = $filters['woocommerce_package_rates'][0]( array(), array( 'destination' => array( 'country' => 'LB' ) ) );
-verify( isset( $free['enf_delivery'] ) && $free['enf_delivery']->cost === 3, '3 $ Lebanon delivery missing' );
+verify( isset( $free['enf_delivery'] ) && $free['enf_delivery']->cost === 5, '5 $ Lebanon delivery missing' );
 verify( array() === $filters['woocommerce_package_rates'][0]( array(), array( 'destination' => array( 'country' => 'US' ) ) ), 'International shipping allowed' );
 $_GET = array( 'order-received' => '1', 'key' => 'test_order_key' );
 verify( enf_checkout_receipt_order() === $order, 'Receipt key verification failed' );
