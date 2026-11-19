@@ -36,7 +36,7 @@ window.ENF_COMMERCE.ready = (async () => {
     // automatic campaign discount, as applied by the WordPress checkout (0 = none)
     state.autoDiscount = Number.isInteger(config.autoDiscount) && config.autoDiscount > 0 && config.autoDiscount <= 50 ? config.autoDiscount : 0;
     // never past the end of the campaign (end of 25 December, Beirut), even from a cached reply
-    if (Date.now() >= Date.parse('2026-12-26T00:00:00+02:00') || /[?&]campaign=off(&|$)/.test(location.search)) state.autoDiscount = 0;
+    if (Date.now() >= Date.parse('2026-12-26T00:00:00+02:00') || /[?&]campaign=off(&|$)/.test(globalThis.location?.search || '')) state.autoDiscount = 0;
     const products = cached || await catalogRequest;
     // refresh the saved copy quietly once the page has had time to draw
     if (cached) setTimeout(() => fetchCatalog().catch(() => {}), 4000);
