@@ -1,17 +1,40 @@
-/* Opt-in public WooCommerce catalog adapter. Checkout is deliberately a separate step. */
+/* Opt-in public WooCommerce catalog adapter. Checkout is deliberately a separate step.
+   Speed: the last catalog is kept in this browser for a few hours, so pages appear straight away;
+   a fresh copy is fetched in the background for the next page. First visits use the CDN copy. */
 window.ENF_COMMERCE = { enabled: false, failed: false, ready: null, cartProducts: new Map() };
 window.ENF_COMMERCE.ready = (async () => {
   const state = window.ENF_COMMERCE;
-  try {
-    const configResponse = await fetch('/api/commerce?resource=config', { cache: 'no-store', signal: AbortSignal.timeout(15000) });
-    if (!configResponse.ok) throw new Error('Configuration unavailable');
-    const config = await configResponse.json();
-    if (!config.enabled) return;
-    state.enabled = true;
-    const response = await fetch('/api/commerce?resource=catalog', { cache: 'no-store', signal: AbortSignal.timeout(60000) });
+  const CACHE_KEY = 'enf_catalog_v1', CACHE_MAX_AGE = 6 * 60 * 60 * 1000;
+  const readCache = () => {
+    try {
+      const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      const ok = c && Array.isArray(c.products) && c.products.length && Number.isFinite(c.at) && c.at <= Date.now() && Date.now() - c.at < CACHE_MAX_AGE &&
+        c.products.every(p => p && Number.isSafeInteger(p.id) && p.prices && Array.isArray(p.categories));
+      return ok ? c.products : null;
+    } catch { return null; }
+  };
+  const fetchCatalog = async () => {
+    const response = await fetch('/api/commerce?resource=catalog', { signal: AbortSignal.timeout(60000) });
     if (!response.ok) throw new Error('Catalog unavailable');
     const { products } = await response.json();
     if (!Array.isArray(products)) throw new Error('Invalid catalog');
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), products })); }
+    catch { try { localStorage.removeItem(CACHE_KEY); } catch {} }
+    return products;
+  };
+  try {
+    const cached = readCache();
+    // config and catalog are requested together (the catalog request is ignored when the store is off)
+    const catalogRequest = cached ? null : fetchCatalog();
+    catalogRequest?.catch(() => {});
+    const configResponse = await fetch('/api/commerce?resource=config', { signal: AbortSignal.timeout(15000) });
+    if (!configResponse.ok) throw new Error('Configuration unavailable');
+    const config = await configResponse.json();
+    if (!config.enabled) { try { localStorage.removeItem(CACHE_KEY); } catch {} return; }
+    state.enabled = true;
+    const products = cached || await catalogRequest;
+    // refresh the saved copy quietly once the page has had time to draw
+    if (cached) setTimeout(() => fetchCatalog().catch(() => {}), 4000);
     const previous = new Map((window.PRODUCTS || []).map(p => [p.id, p]));
     const text = html => {
       const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
@@ -86,6 +109,7 @@ window.ENF_COMMERCE.ready = (async () => {
     }));
     state.fetchedAt = Date.now();
   } catch {
+    try { localStorage.removeItem(CACHE_KEY); } catch {}
     state.failed = true;
     // Static details may remain readable during an outage, but never imply verified stock.
     (window.PRODUCTS || []).forEach(p => { p.s = false; });

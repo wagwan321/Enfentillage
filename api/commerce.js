@@ -36,8 +36,8 @@ async function readProducts(config, fetcher = fetch) {
   if (!Number.isInteger(first.pages) || first.pages < 1 || first.pages > 100) throw new Error('Invalid pagination');
   const products = [...first.products];
   // Bounded concurrency; a failed page rejects the entire response, never a partial catalog.
-  for (let i = 2; i <= first.pages; i += 3) {
-    const pages = await Promise.all(Array.from({ length: Math.min(3, first.pages - i + 1) }, (_, k) => page(i + k)));
+  for (let i = 2; i <= first.pages; i += 5) {
+    const pages = await Promise.all(Array.from({ length: Math.min(5, first.pages - i + 1) }, (_, k) => page(i + k)));
     if (pages.some(p => p.pages !== first.pages)) throw new Error('Catalog changed while loading');
     pages.forEach(p => products.push(...p.products));
   }
@@ -60,7 +60,10 @@ async function handler(req, res) {
   if (req.method !== 'GET') { res.setHeader('Allow', 'GET'); return res.status(405).json({ error: 'Method not allowed' }); }
   try {
     const config = settings();
-    if (req.query.resource === 'config') return res.status(200).json(config);
+    if (req.query.resource === 'config') {
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400');
+      return res.status(200).json(config);
+    }
     if (!config.enabled) return res.status(503).json({ error: 'Catalog connection is not enabled' });
     if (req.query.resource === 'product') {
       const product = await readProduct(config, req.query.id);
@@ -69,7 +72,9 @@ async function handler(req, res) {
     }
     if (req.query.resource !== 'catalog') return res.status(404).json({ error: 'Not found' });
     const products = await readProducts(config);
-    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=30');
+    // The CDN keeps a copy for 5 minutes and keeps serving it instantly while it refreshes in the
+    // background, so visitors never wait for all the WooCommerce pages. Checkout re-checks stock and prices.
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400');
     return res.status(200).json({ products, fetchedAt: new Date().toISOString() });
   } catch { return res.status(503).json({ error: 'The store is temporarily unavailable. Please try again.' }); }
 }

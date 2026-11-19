@@ -6,12 +6,8 @@
 (async function () {
   'use strict';
 
-  const loading = document.createElement('p');
-  loading.setAttribute('role','status'); loading.className='wrap';
-  loading.style.padding='40px 20px'; loading.textContent='Loading the latest toys and availability…';
-  document.querySelector('main')?.prepend(loading);
+  // wait for the live catalog (normally instant: cached in the browser or by the CDN), no loading screen
   await window.ENF_COMMERCE?.ready;
-  loading.remove();
   const P = window.PRODUCTS || [];
   /* pictures: in-stock toys are stored with the site (sm = card, lg = gallery).
      Sold-out toys (p.r) had their photos in the old WordPress media library, which went offline when this
