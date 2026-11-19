@@ -22,7 +22,7 @@ document.addEventListener('site:ready', () => {
   const cats = CATEGORIES.filter(c => p.c.includes(c.key));
   const ages = AGES.filter(a => p.a.includes(a.key));
   const chars = CHARACTERS.filter(c => p.h.includes(c.key));
-  const pct = p.o ? Math.round((1 - p.p / p.o) * 100) : 0;
+  const pct = window.ENF.offPct(p);
   const buyable = p.p && p.s && (!p._live || p._canAdd);
   const chooseOptions = p._live && p.v && p.s && p._options?.length;
   const tint = cats[0] ? cats[0].color : hashColor(p.b);

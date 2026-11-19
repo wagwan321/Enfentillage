@@ -60,3 +60,10 @@ The client confirmed TILLO20 (20% off), 10% in-store cashback, gift wrapping and
 - 10% cashback voucher on new-storefront orders placed until the end of 25 December 2026: 10% of what the customer paid for the toys (after the 20% off, delivery not included), rounded to 0.1 $. Saved on the order ("Cashback voucher"), with a staff note: honour it only once the order is paid, not if cancelled.
 - Shown on the WooCommerce thank-you page and at the top of the customer order emails (not for cancelled/failed/refunded orders): "X $ to spend in our store … Show this email (order #…) at Enfantillage, Mazraat Yachouh … Valid until 25 December 2026."
 - Includes 0.5.0 and 0.4.0. Install `enfantillage-checkout-0.6.0.zip` with "Replace current with uploaded".
+
+## 0.7.0 (19 November 2026)
+- New design for the plugin's own checkout page (delivery & payment, and the thank-you page), matching www.enfantillagestore.com: logo bar, steps, offer pills, details card on the left, order summary with toy pictures on the right, payment cards with the cash and Whish logos, big green "Place my order" button.
+- New files: `checkout-page.php` (template, icons, wording) and `checkout-style.css` (printed inline on that page only).
+- On this page only, theme and plugin stylesheets are switched off and other plugins' pop-ups at the end of the page are hidden. WooCommerce's scripts and the country picker keep working. No other WordPress page changes.
+- No coupon box while the automatic 20% runs; "Shipping" reads "Delivery".
+- How to install: wp-admin cannot upload plugins on this site, so copy the files over `wp-content/plugins/enfantillage-checkout/` in cPanel's File Manager (or Fileman API). Backup of 0.3.0: `~/enf-backup-2026-11-19/`.

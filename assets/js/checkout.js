@@ -4,6 +4,7 @@ document.addEventListener('site:ready', async () => {
   'use strict';
   const { byId, esc, money, icon, getCart, productUrl } = window.ENF;
   const main = document.getElementById('checkoutMain');
+  const CASH_ICON = '<svg viewBox="0 0 48 32" width="44" height="30" aria-hidden="true"><rect x="2" y="4" width="44" height="24" rx="4" fill="#3db54a"/><rect x="6" y="8" width="36" height="16" rx="2" fill="none" stroke="#fff" stroke-width="1.6" opacity=".7"/><circle cx="24" cy="16" r="5.5" fill="#fff"/><text x="24" y="19.6" font-size="9" font-family="Arial, sans-serif" font-weight="700" text-anchor="middle" fill="#3db54a">$</text></svg>';
   let items;
   try { items = window.ENF_CHECKOUT.cartItems(getCart(), byId); }
   catch (error) {
@@ -16,10 +17,11 @@ document.addEventListener('site:ready', async () => {
       <form id="handoffForm" method="post">
         <input type="hidden" name="action" value="enf_checkout_cart"><input type="hidden" name="items" id="handoffItems"><input type="hidden" name="cart_token" id="handoffToken">
         <div class="co-pay" role="radiogroup" aria-label="Payment preference">
-          <label class="co-pay__opt"><input type="radio" name="payment" value="cod" checked><span class="co-pay__text"><b>Cash on delivery</b><small>Pay the courier when your order arrives.</small></span></label>
-          <label class="co-pay__opt"><input type="radio" name="payment" value="whish"><span class="co-pay__text"><b>Whish Money</b><small>Payment is confirmed manually by the store.</small></span></label>
+          <label class="co-pay__opt co-pay__opt--cod is-on"><input type="radio" name="payment" value="cod" checked><span class="co-pay__radio" aria-hidden="true"></span><span class="co-pay__brand co-pay__brand--cod">${CASH_ICON}</span><span class="co-pay__text"><b>Cash on delivery</b><small>Pay the courier in cash when your toys arrive.</small></span><span class="co-pay__tags"><em>No card needed</em></span></label>
+          <label class="co-pay__opt co-pay__opt--whish"><input type="radio" name="payment" value="whish"><span class="co-pay__radio" aria-hidden="true"></span><span class="co-pay__brand co-pay__brand--whish"><img src="assets/img/pay/whish-money.svg" alt="Whish Money" width="124" height="28"></span><span class="co-pay__text"><b>Whish Money</b><small>Send the total from your Whish app after ordering.</small></span><span class="co-pay__tags"><em>Checked by the store</em></span></label>
         </div>
-        <p id="whishInstructions" hidden>After you receive your order number and total, send payment to <strong>+961 78 881 100</strong>. Send the payment screenshot and order number to the same number. Wait for the store to confirm payment.</p>
+        <div class="co-pay__detail" data-for="cod"><p>Our courier brings your toys to your door. Please have the total ready in cash.</p></div>
+        <div class="co-pay__detail" data-for="whish" id="whishInstructions" hidden><p>After ordering, send the total to <strong>+961 78 881 100</strong> from your <img src="assets/img/pay/whish-icon.png" alt="" class="co-whish-ico"> Whish app, then send the screenshot and your order number to the same number. We confirm the payment and prepare your delivery.</p></div>
         <p>Next, enter your delivery details and confirm the final total in our store checkout. Prices and stock are checked again there. Continuing transfers this toy box to your store cart.</p>
         <p id="checkoutStatus" role="status">Checking the store checkout…</p>
         <button class="btn btn--green co-place" type="submit" id="continueCheckout" disabled>Continue to delivery details ${icon('arrow', 'icon', 2.6)}</button>
@@ -34,7 +36,11 @@ document.addEventListener('site:ready', async () => {
   const status = document.getElementById('checkoutStatus');
   let ready = false;
   document.getElementById('handoffItems').value = JSON.stringify(items);
-  form.addEventListener('change', () => { document.getElementById('whishInstructions').hidden = form.elements.payment.value !== 'whish'; });
+  form.addEventListener('change', () => {
+    const method = form.elements.payment.value;
+    form.querySelectorAll('.co-pay__opt').forEach(o => o.classList.toggle('is-on', o.querySelector('input').checked));
+    form.querySelectorAll('.co-pay__detail').forEach(d => { d.hidden = d.dataset.for !== method; });
+  });
   form.addEventListener('submit', event => {
     if (!ready || window.ENF_COMMERCE.failed) { event.preventDefault(); return; }
     try {

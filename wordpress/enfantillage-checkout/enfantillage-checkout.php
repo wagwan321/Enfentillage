@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Enfantillage Checkout Handoff
  * Description: An opt-in cart handoff to WooCommerce checkout, 5 $ Lebanon delivery, COD and manually confirmed Whish payments. Disabled until explicitly enabled by an administrator.
- * Version: 0.6.0
+ * Version: 0.7.0
  * Requires PHP: 8.1
  * Requires Plugins: woocommerce
  */
@@ -47,6 +47,7 @@ function enf_discount_for( $price ) {
 require_once __DIR__ . '/cart-validation.php';
 require_once __DIR__ . '/storefront-routing.php';
 require_once __DIR__ . '/receipt-validation.php';
+require_once __DIR__ . '/checkout-page.php';
 add_action( 'before_woocommerce_init', function () {
     if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
@@ -303,14 +304,16 @@ add_action( 'plugins_loaded', function () {
         public function __construct() {
             $this->id = 'enf_cod'; $this->enabled = enf_checkout_enabled() ? 'yes' : 'no'; $this->has_fields = false;
             $this->title = 'Cash on delivery'; $this->method_title = 'Enfantillage cash on delivery';
-            $this->description = 'Pay the courier in cash when your order arrives.'; $this->supports = array( 'products' );
+            $this->description = 'Pay the courier in cash when your toys arrive. No card needed.'; $this->supports = array( 'products' );
+            $this->order_button_text = 'Place my order';
         }
     }
     class Enf_Whish_Gateway extends Enf_Offline_Gateway {
         public function __construct() {
             $this->id = 'enf_whish'; $this->enabled = enf_checkout_enabled() ? 'yes' : 'no'; $this->has_fields = false;
             $this->title = 'Whish Money'; $this->method_title = 'Enfantillage manual Whish';
-            $this->description = 'After placing your order, send the confirmed total to +961 78 881 100 and send the payment screenshot to the same number. Your payment will be checked manually.';
+            $this->description = 'After ordering, send the total to +961 78 881 100 from your Whish app, then send the screenshot and your order number to the same number. We confirm the payment and prepare your delivery.';
+            $this->order_button_text = 'Place my order';
             $this->supports = array( 'products' );
         }
     }
@@ -356,7 +359,7 @@ add_action( 'template_redirect', function () {
         $proof = array( 'orderId' => $receipt_order->get_id(), 'orderKey' => $receipt_order->get_order_key(), 'cartToken' => (string) $receipt_order->get_meta( '_enf_storefront_cart_token' ) );
         if ( enf_checkout_receipt_data( $proof ) ) { $return_url = $context['origin'] . '/order-confirmed.html#' . http_build_query( $proof, '', '&', PHP_QUERY_RFC3986 ); }
     }
-    ?><!doctype html><html <?php language_attributes(); ?>><head><meta charset="<?php bloginfo( 'charset' ); ?>"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Checkout — Enfantillage</title><?php wp_head(); ?><style>body{margin:0;background:#f5f6fb;color:#20254d;font-family:Arial,sans-serif}.enf-checkout{max-width:1080px;margin:auto;padding:24px}.enf-checkout header{margin-bottom:24px}.enf-checkout a{color:#25318c}.enf-checkout input,.enf-checkout select,.enf-checkout textarea{max-width:100%;padding:10px}.enf-checkout button{padding:14px 22px;cursor:pointer}.enf-checkout .woocommerce-error{color:#a51229}.enf-return{display:inline-block;margin:24px 0;padding:14px 20px;background:#25318c;color:white!important;border-radius:10px;text-decoration:none}</style></head><body class="woocommerce woocommerce-checkout"><main class="enf-checkout"><header><a href="<?php echo esc_url( $return_url ?: $context['origin'] . '/shop.html' ); ?>">← Back to Enfantillage</a><h1>Delivery and payment</h1><p><?php echo enf_discount_active() ? '<strong>20% off everything is already included</strong> (until 25 December). ' : ''; ?>Delivery anywhere in Lebanon: 5 $. Choose cash on delivery or Whish with manual payment confirmation.</p></header><?php echo do_shortcode( '[woocommerce_checkout]' ); ?><?php if ( $return_url ) { ?><p><a class="enf-return" href="<?php echo esc_url( $return_url ); ?>">Return to Enfantillage</a></p><?php } ?></main><?php wp_footer(); ?></body></html><?php
+    enf_checkout_page_html( $context, $return_url, $receipt_order );
     exit;
 }, 5 );
 

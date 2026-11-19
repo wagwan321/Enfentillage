@@ -1911,3 +1911,4 @@ a[href^="tel:"] { white-space: nowrap; }
 .club__treat em { font-style: normal; font-weight: 900; color: var(--red); }
 .club__treats .btn { justify-self: start; }
 @media (max-width: 760px) { .club__treats .btn { justify-self: stretch; justify-content: center; } }
+.co-pay__detail p { margin: 0; }

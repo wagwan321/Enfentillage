@@ -419,8 +419,10 @@
     return `<div class="${cls}${p.o ? ' price--sale' : ''}">${p.o ? `<s>${money(p.o)}</s>` : ''}${p.v ? '<small>from</small> ' : ''}${money(p.p)}${codeLine(p)}</div>`;
   }
 
+  const offPct = p => !p.o ? 0 : CAMPAIGN.auto ? CAMPAIGN.pct : Math.round((1 - p.p / p.o) * 100);
+
   function card(p, opts = {}) {
-    const pct = p.o ? Math.round((1 - p.p / p.o) * 100) : 0;
+    const pct = offPct(p);
     const badges = [];
     if (!p.s) badges.push('<span class="badge badge--out">Sold out</span>');
     else if (pct >= 5) badges.push(`<span class="badge badge--sale">-${pct}%</span>`);
@@ -480,7 +482,7 @@
   }
 
   function headerHTML(current) {
-    const maxOff = Math.max(0, ...P.filter(p => p.o).map(p => Math.round((1 - p.p / p.o) * 100)));
+    const maxOff = Math.max(0, ...P.filter(p => p.o).map(offPct));
     const navIcon = (name, color) => `<span class="nav__emoji" style="${colorVars(color)}">${icon(name, '', 2.4)}</span>`;
     return `
     <div class="ticker" role="region" aria-label="Store announcements"><div class="ticker__track">
@@ -768,7 +770,7 @@
     const p = byId.get(id);
     if (!p) return;
     const m = document.getElementById('quick');
-    const pct = p.o ? Math.round((1 - p.p / p.o) * 100) : 0;
+    const pct = offPct(p);
     const cats = CATEGORIES.filter(c => p.c.includes(c.key));
     const ages = AGES.filter(a => p.a.includes(a.key));
     const chars = CHARACTERS.filter(c => p.h.includes(c.key));
@@ -1017,7 +1019,7 @@
 
   window.ENF = {
     P, byId, COLORS, colorVars, hashColor, CATEGORIES, AGES, BRANDS, CHARACTERS,
-    tillo, brandMatch, brandLogo, imgOf, imgLg, gallery, galleryHTML, descHTML, loadDetail, productUrl, priceHTML, codeLine, codePrice, titleCase, addToCart, getCart: () => cart, setCart: c => { cart = c; store.set('enf_cart', cart); renderCart(); syncCounts(); }, CAMPAIGN, cartTotal, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
+    tillo, brandMatch, brandLogo, imgOf, imgLg, gallery, galleryHTML, descHTML, loadDetail, productUrl, priceHTML, offPct, codeLine, codePrice, titleCase, addToCart, getCart: () => cart, setCart: c => { cart = c; store.set('enf_cart', cart); renderCart(); syncCounts(); }, CAMPAIGN, cartTotal, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
     observeReveals, initRail, burst, toast, NEW_IDS, getFavs: () => favs,
   };
 

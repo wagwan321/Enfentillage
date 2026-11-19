@@ -2,7 +2,7 @@
    Welcome pop-up for the limited-time 30% offer (until 25 December):
    30% back = 20% off everything + 10% of what you spend back as a voucher for the store.
    (The cashback is earned by buying: nothing is handed out before a purchase.)
-   Shows once when someone arrives; after it's closed it stays away for 3 days.
+   Shows when someone arrives; once closed it stays away for the rest of that visit, and comes back on the next one.
    Off automatically when the campaign ends (CAMPAIGN.active). Preview again with ?promo-popup.
    ========================================================================== */
 document.addEventListener('site:ready', () => {
@@ -12,13 +12,14 @@ document.addEventListener('site:ready', () => {
   const page = document.body.dataset.current || 'home';
   if (page === 'checkout') return;
 
-  const ls = {
-    get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
-    set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } },
+  const visit = {
+    get: k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
+    set: (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) { /* private mode */ } },
   };
-  const SEEN_KEY = 'enf_promo_closed', AWAY = 3 * 24 * 60 * 60 * 1000;
+  const SEEN_KEY = 'enf_promo_closed';
+  try { localStorage.removeItem(SEEN_KEY); } catch (e) { /* old 3-day setting */ }
   const preview = /[?&]promo-popup\b/.test(location.search);
-  if (!preview && Date.now() - Number(ls.get(SEEN_KEY) || 0) < AWAY) return;
+  if (!preview && visit.get(SEEN_KEY)) return;
 
   const END = Date.parse('2026-12-26T00:00:00+02:00');
   const days = Math.max(1, Math.ceil((END - Date.now()) / 86400000));
@@ -72,7 +73,7 @@ document.addEventListener('site:ready', () => {
   const close = () => {
     if (!pop.classList.contains('is-open')) return;
     pop.classList.remove('is-open');
-    ls.set(SEEN_KEY, String(Date.now()));
+    visit.set(SEEN_KEY, '1');
     lastFocus?.focus?.({ preventScroll: true });
   };
   pop.addEventListener('click', e => { if (e.target.closest('[data-promo-close]')) close(); });
