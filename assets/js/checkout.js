@@ -1,211 +1,69 @@
-/* ==========================================================================
-   Enfantillage — checkout: delivery details + cash on delivery / Whish Money
-
-   PREVIEW: there is no order system behind this page yet, so placed orders
-   are only shown back to the customer (and kept in this browser). Before
-   launch, connect "Place order" to the store's order system (e.g. the
-   existing WooCommerce store, which has cash on delivery built in) and set
-   PREVIEW to false.
-   ========================================================================== */
-const PREVIEW = true;
-const STORE_PHONE = '+961 3 720 233';
-const DELIVERY_FEE = 3;          // $ anywhere in Lebanon (store delivery policy)
-/* banknote + padlock drawn inline so they match the site's icon style */
-const CASH_ICON = '<svg viewBox="0 0 48 32" width="44" height="30" aria-hidden="true"><rect x="2" y="4" width="44" height="24" rx="4" fill="#3db54a"/><rect x="6" y="8" width="36" height="16" rx="2" fill="none" stroke="#fff" stroke-width="1.6" opacity=".7"/><circle cx="24" cy="16" r="5.5" fill="#fff"/><text x="24" y="19.6" font-size="9" font-family="Arial, sans-serif" font-weight="700" text-anchor="middle" fill="#3db54a">$</text></svg>';
-const LOCK_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
-const REGIONS = ['Beirut', 'Mount Lebanon', 'Keserwan-Jbeil', 'North', 'Akkar', 'Bekaa', 'Baalbek-Hermel', 'South', 'Nabatieh'];
-
-document.addEventListener('site:ready', () => {
+/* Cart review, followed by WooCommerce's own delivery/payment checkout.
+   Never creates a local order number, stores customer details, or pretends an order succeeded. */
+document.addEventListener('site:ready', async () => {
   'use strict';
-  const { byId, esc, money, icon, balloon, burst, getCart, setCart, brandName, productUrl } = window.ENF;
+  const { byId, esc, money, icon, getCart, productUrl } = window.ENF;
   const main = document.getElementById('checkoutMain');
-  const PROMO = window.ENF.CAMPAIGN;   // { code, pct, cashback } set in app.js
-  let promoOn = false;
-
-  const lines = () => Object.entries(getCart()).map(([id, q]) => [byId.get(+id), q]).filter(([p]) => p && p.p);
-  const totals = () => {
-    const sub = lines().reduce((s, [p, q]) => s + p.p * q, 0);
-    const disc = promoOn ? Math.round(sub * PROMO.pct) / 100 : 0;
-    const ship = sub ? DELIVERY_FEE : 0;
-    return { sub, disc, ship, total: Math.max(0, sub - disc + ship) };
-  };
-  const notice = PREVIEW ? `<div class="co-preview">${icon('sparkle', 'icon', 2.4)}<span><b>Preview of the new website.</b> Orders placed here aren’t sent to the store yet. To order now, call <a href="tel:+9613720233">${STORE_PHONE}</a> or visit us in Mazraat Yachouh.</span></div>` : '';
-
-  function render() {
-    if (!lines().length) {
-      main.innerHTML = `${notice}<div class="empty-state" style="padding:60px 20px"><div class="empty-art" aria-hidden="true">${window.ENF.balloon('#e8222b', 54)}${window.ENF.balloon('#ffc83d', 44)}${window.ENF.balloon('#00a6e4', 50)}</div>
-        <h3>Your toy box is empty</h3><p style="color:var(--ink-soft)">Add a few toys first, then come back to check out.</p><br>
-        <a class="btn btn--red" href="shop.html">Start shopping</a></div>`;
-      return;
+  let items;
+  try { items = window.ENF_CHECKOUT.cartItems(getCart(), byId); }
+  catch (error) {
+    main.innerHTML = `<div class="wrap empty-state" style="padding:60px 20px"><h1>Review your toy box</h1><p>${esc(error.message)}</p><br><a class="btn btn--navy" href="shop.html">Return to the shop</a></div>`;
+    return;
+  }
+  const subtotal = items.reduce((sum, item) => sum + byId.get(item.id).p * item.quantity, 0);
+  main.innerHTML = `<h1 class="co-title">Review your order</h1><div class="co-grid">
+    <section class="co-card"><h2>Payment preference</h2>
+      <form id="handoffForm" method="post">
+        <input type="hidden" name="action" value="enf_checkout_cart"><input type="hidden" name="items" id="handoffItems"><input type="hidden" name="cart_token" id="handoffToken">
+        <div class="co-pay" role="radiogroup" aria-label="Payment preference">
+          <label class="co-pay__opt"><input type="radio" name="payment" value="cod" checked><span class="co-pay__text"><b>Cash on delivery</b><small>Pay the courier when your order arrives.</small></span></label>
+          <label class="co-pay__opt"><input type="radio" name="payment" value="whish"><span class="co-pay__text"><b>Whish Money</b><small>Payment is confirmed manually by the store.</small></span></label>
+        </div>
+        <p id="whishInstructions" hidden>After you receive your order number and total, send payment to <strong>+961 78 881 100</strong>. Send the payment screenshot and order number to the same number. Wait for the store to confirm payment.</p>
+        <p>Next, enter your delivery details and confirm the final total in our store checkout. Prices and stock are checked again there. Continuing transfers this toy box to your store cart.</p>
+        <p id="checkoutStatus" role="status">Checking the store checkout…</p>
+        <button class="btn btn--green co-place" type="submit" id="continueCheckout" disabled>Continue to delivery details ${icon('arrow', 'icon', 2.6)}</button>
+      </form>
+    </section>
+    <aside class="co-card co-summary"><h2>Your toy box</h2><div class="co-lines">${items.map(item => { const p = byId.get(item.id); return `<div class="co-line"><a href="${productUrl(p)}"><img src="${esc(p.i)}" alt=""></a><div><a href="${productUrl(p)}">${esc(p.n)}</a><small>${item.quantity} × ${money(p.p)}</small></div><b>${money(p.p * item.quantity)}</b></div>`; }).join('')}</div>
+      <dl class="co-totals"><dt>Item subtotal</dt><dd>${money(subtotal)}</dd><dt>Delivery in Lebanon</dt><dd>Free</dd></dl>
+      <p>Any valid coupon and the final order total are confirmed at the next step.</p>
+    </aside></div>`;
+  const form = document.getElementById('handoffForm');
+  const button = document.getElementById('continueCheckout');
+  const status = document.getElementById('checkoutStatus');
+  let ready = false;
+  document.getElementById('handoffItems').value = JSON.stringify(items);
+  form.addEventListener('change', () => { document.getElementById('whishInstructions').hidden = form.elements.payment.value !== 'whish'; });
+  form.addEventListener('submit', event => {
+    if (!ready || window.ENF_COMMERCE.failed) { event.preventDefault(); return; }
+    try {
+      document.getElementById('handoffItems').value = JSON.stringify(window.ENF_CHECKOUT.cartItems(getCart(), byId));
+      const token = crypto.randomUUID();
+      // Only IDs/quantities and an opaque token; never customer information.
+      localStorage.setItem('enf_handoff', JSON.stringify({token,cart:getCart(),createdAt:Date.now()}));
+      document.getElementById('handoffToken').value=token;
     }
-    main.innerHTML = `
-      ${notice}
-      <h1 class="co-title">Checkout</h1>
-      <form class="co-grid" id="coForm" novalidate>
-        <div class="co-steps">
-          <section class="co-card">
-            <h2><span>1</span> Your details</h2>
-            <div class="co-row">
-              ${field('name', 'Full name', 'text', 'name', true)}
-              ${field('phone', 'Mobile number', 'tel', 'tel', true, '03 123 456', 'We’ll call to confirm your order')}
-            </div>
-            ${field('email', 'Email (optional)', 'email', 'email', false, '', 'For your order confirmation')}
-          </section>
-
-          <section class="co-card">
-            <h2><span>2</span> Delivery address</h2>
-            <div class="co-row">
-              <label class="co-field"><span>Region <em>*</em></span>
-                <select name="region" required class="select co-select"><option value="">Choose…</option>${REGIONS.map(r => `<option>${r}</option>`).join('')}</select>
-                <small class="co-err">Please choose your region</small></label>
-              ${field('city', 'Town / area', 'text', 'address-level2', true)}
-            </div>
-            ${field('address', 'Street, building and floor', 'text', 'street-address', true, 'e.g. Main road, Chattat Center, 2nd floor')}
-            <label class="co-field"><span>Notes for delivery (optional)</span>
-              <textarea name="notes" rows="2" placeholder="Landmarks, best time to call, toy colour or size…"></textarea></label>
-            <label class="co-check"><input type="checkbox" name="wrap"> ${icon('gift', 'icon', 2.2)} Wrap my gifts</label>
-            <p class="co-hint">${icon('truck', 'icon', 2.2)} Delivery anywhere in Lebanon, usually in 2–6 business days. We’ll contact you before we arrive.</p>
-          </section>
-
-          <section class="co-card">
-            <div class="co-card__head">
-              <h2><span>3</span> Payment method</h2>
-              <span class="co-secure">${LOCK_ICON} Secure checkout</span>
-            </div>
-            <div class="co-pay" role="radiogroup" aria-label="Payment method">
-              <label class="co-pay__opt co-pay__opt--cod is-on">
-                <input type="radio" name="pay" value="cod" checked>
-                <span class="co-pay__radio" aria-hidden="true"></span>
-                <span class="co-pay__brand co-pay__brand--cod">${CASH_ICON}</span>
-                <span class="co-pay__text"><b>Cash on delivery</b><small>Pay the courier in cash when your toys arrive.</small></span>
-                <span class="co-pay__tags"><em>No card needed</em></span>
-              </label>
-              <label class="co-pay__opt co-pay__opt--whish">
-                <input type="radio" name="pay" value="whish">
-                <span class="co-pay__radio" aria-hidden="true"></span>
-                <span class="co-pay__brand co-pay__brand--whish"><img src="assets/img/pay/whish-money.svg" alt="Whish Money" width="124" height="28"></span>
-                <span class="co-pay__text"><b>Whish Money</b><small>Pay from your Whish wallet: quick and contactless.</small></span>
-                <span class="co-pay__tags"><em>Instant</em></span>
-              </label>
-            </div>
-
-            <div class="co-pay__detail" data-for="cod">
-              <p><b>How it works:</b> we’ll call to confirm your order, then our courier brings it to your door. Please have <b class="co-amount">${money(totals().total)}</b> ready in cash.</p>
-            </div>
-            <div class="co-pay__detail" data-for="whish" hidden>
-              <ol class="co-steps-list">
-                <li><span>1</span>Place your order. Nothing is charged yet.</li>
-                <li><span>2</span>We call to confirm, then send a Whish payment request for <b class="co-amount">${money(totals().total)}</b>.</li>
-                <li><span>3</span>Approve it in your <img src="assets/img/pay/whish-icon.png" alt="" class="co-whish-ico"> Whish app, and we prepare your delivery.</li>
-              </ol>
-              <label class="co-field co-field--inline"><span>Whish number <small>(if different from your mobile)</small></span>
-                <input name="whishNumber" type="tel" autocomplete="off" placeholder="e.g. 70 123 456"></label>
-            </div>
-          </section>
-        </div>
-
-        <aside class="co-summary co-card">
-          <h2>Your order</h2>
-          <div class="co-lines">${lines().map(([p, q]) => `
-            <div class="co-line"><a href="${productUrl(p)}"><img src="${esc(p.i)}" alt=""></a>
-              <div><a href="${productUrl(p)}">${esc(p.n)}</a><small>${esc(brandName(p.b))}${q > 1 ? ` · ${q} × ${money(p.p)}` : ''}</small></div>
-              <b>${money(p.p * q)}</b></div>`).join('')}</div>
-          <div class="co-promo">
-            <input type="text" id="promo" placeholder="Promo code" value="${promoOn ? PROMO.code : ''}" aria-label="Promo code">
-            <button type="button" class="btn btn--navy btn--sm" id="promoBtn">${promoOn ? 'Applied' : 'Apply'}</button>
-          </div>
-          <small class="co-promo-msg" id="promoMsg"></small>
-          ${totalsHTML()}
-          <button class="btn btn--green co-place" type="submit">Place order ${icon('arrow', 'icon', 2.6)}</button>
-          <div class="co-accept"><span>We accept</span><span class="co-accept__cod">${CASH_ICON} Cash</span><img src="assets/img/pay/whish-money.svg" alt="Whish Money" width="88" height="20"></div>
-          <p class="co-small">By placing your order you agree to our <a href="info.html#terms">terms</a>. Exchanges within 30 days, unused and in the original box (no refunds).</p>
-        </aside>
-      </form>`;
-    wire();
+    catch (error) { event.preventDefault(); status.textContent = error.message; return; }
+    button.disabled = true;
+    button.textContent = 'Opening store checkout…';
+    // Keep local cart: a failed handoff must not lose the customer's products.
+  });
+  addEventListener('pageshow', event => {
+    if (event.persisted && ready) { button.disabled = false; button.textContent = 'Continue to delivery details'; }
+  });
+  try {
+    const response = await fetch('/api/checkout', { cache: 'no-store', signal: AbortSignal.timeout(15000) });
+    if (!response.ok) throw new Error('Checkout unavailable');
+    const config = await response.json();
+    const url = new URL(config.handoffUrl);
+    const store = new URL((await (await fetch('/api/commerce?resource=config', { signal: AbortSignal.timeout(15000) })).json()).storeUrl);
+    if (!config.enabled || url.origin !== store.origin || url.protocol !== 'https:' || url.pathname !== '/wp-admin/admin-post.php' || url.search || url.hash || url.username || url.password) throw new Error('Invalid checkout address');
+    form.action = url.href;
+    ready = true;
+    button.disabled = false;
+    status.textContent = 'Ready to continue to delivery and payment.';
+  } catch {
+    status.textContent = 'Checkout is being connected. Your toy box has been kept. To order now, call +961 3 720 233.';
   }
-
-  function field(name, label, type, auto, req, ph = '', hint = '') {
-    return `<label class="co-field"><span>${label}${req ? ' <em>*</em>' : ''}</span>
-      <input name="${name}" type="${type}" autocomplete="${auto}" ${req ? 'required' : ''} placeholder="${esc(ph)}">
-      ${hint ? `<small class="co-hintline">${hint}</small>` : ''}<small class="co-err">${req ? 'Please fill this in' : 'Please check this'}</small></label>`;
-  }
-  function totalsHTML() {
-    const t = totals();
-    return `<dl class="co-totals" id="coTotals">
-      <dt>Subtotal</dt><dd>${money(t.sub)}</dd>
-      ${t.disc ? `<dt>Code ${PROMO.code} (−${PROMO.pct}%)</dt><dd class="co-save">−${money(t.disc)}</dd>` : ''}
-      <dt>Delivery</dt><dd>${money(t.ship)}</dd>
-      <dt class="co-total">Total</dt><dd class="co-total">${money(t.total)}</dd></dl>
-      <p class="co-small">+ a <b>${PROMO.cashback}% cashback voucher</b> to spend in our store: <a href="index.html#club">get yours here</a>.</p>`;
-  }
-
-  function wire() {
-    const form = document.getElementById('coForm');
-    form.addEventListener('change', e => {
-      if (e.target.name === 'pay') {
-        form.querySelectorAll('.co-pay__opt').forEach(o => o.classList.toggle('is-on', o.querySelector('input').checked));
-        form.querySelectorAll('.co-pay__detail').forEach(d => { d.hidden = d.dataset.for !== e.target.value; });
-      }
-    });
-    form.addEventListener('input', e => e.target.closest('.co-field')?.classList.remove('is-bad'));
-    document.getElementById('promoBtn').onclick = () => {
-      const v = document.getElementById('promo').value.trim().toUpperCase();
-      const msg = document.getElementById('promoMsg');
-      if (v === PROMO.code) { promoOn = true; msg.textContent = `${PROMO.pct}% off applied!`; msg.className = 'co-promo-msg is-ok'; }
-      else { promoOn = false; msg.textContent = v ? 'That code isn’t valid.' : ''; msg.className = 'co-promo-msg is-bad'; }
-      document.getElementById('promoBtn').textContent = promoOn ? 'Applied' : 'Apply';
-      document.getElementById('coTotals').outerHTML = totalsHTML().replace(/<p class="co-small">.*<\/p>$/s, '');
-      document.querySelectorAll('.co-amount').forEach(el => { el.textContent = money(totals().total); });
-    };
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      let first = null;
-      form.querySelectorAll('[required]').forEach(el => {
-        const bad = !el.value.trim();
-        el.closest('.co-field').classList.toggle('is-bad', bad);
-        if (bad && !first) first = el;
-      });
-      const phone = form.phone.value.replace(/[^\d+]/g, '');
-      const phoneOk = /^(\+?961)?0?\d{7,8}$/.test(phone);
-      if (!phoneOk && form.phone.value.trim()) { form.phone.closest('.co-field').classList.add('is-bad'); first = first || form.phone; }
-      const email = form.email.value.trim();
-      if (email && !/^\S+@\S+\.\S+$/.test(email)) { form.email.closest('.co-field').classList.add('is-bad'); first = first || form.email; }
-      if (first) { first.focus(); first.closest('.co-field').animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }, { transform: 'translateX(0)' }], { duration: 300 }); return; }
-      placeOrder(Object.fromEntries(new FormData(form)));
-    });
-  }
-
-  function placeOrder(f) {
-    const t = totals();
-    const order = {
-      no: 'ENF-' + Date.now().toString(36).toUpperCase().slice(-6),
-      at: new Date().toISOString(), pay: f.pay, wrap: !!f.wrap,
-      customer: { name: f.name, phone: f.phone, whish: f.whishNumber || '', email: f.email, region: f.region, city: f.city, address: f.address, notes: f.notes },
-      items: lines().map(([p, q]) => ({ id: p.id, name: p.n, qty: q, price: p.p })), totals: t, promo: promoOn ? PROMO.code : '',
-    };
-    try { localStorage.setItem('enf_last_order', JSON.stringify(order)); } catch (e) { /* private mode */ }
-    setCart({});
-    const whish = f.pay === 'whish';
-    main.innerHTML = `
-      ${notice}
-      <div class="co-done">
-        <div class="empty-art" aria-hidden="true">${window.ENF.balloon('#e8222b', 54)}${window.ENF.balloon('#ffc83d', 44)}${window.ENF.balloon('#00a6e4', 50)}</div>
-        <h1>Thank you, ${esc(f.name.split(' ')[0])}!</h1>
-        <p class="co-done__no">Order <b>${order.no}</b> · ${money(t.total)}</p>
-        <div class="co-done__next">
-          <h2>What happens next</h2>
-          <ol>
-            <li>We’ll call you on <b>${esc(f.phone)}</b> to confirm your order${order.wrap ? ' and gift wrapping' : ''}.</li>
-            ${whish ? `<li>We’ll send a <img src="assets/img/pay/whish-money.svg" alt="Whish Money" class="co-inline-logo"> payment request for <b>${money(t.total)}</b> to <b>${esc(f.whishNumber || f.phone)}</b>. Approve it in your Whish app and we’ll prepare your delivery.</li>`
-                    : `<li>Have <b>${money(t.total)}</b> ready in cash when your order arrives.</li>`}
-            <li>Delivery to ${esc(f.city)}, ${esc(f.region)}, usually within 2–6 business days.</li>
-          </ol>
-        </div>
-        <a class="btn btn--red" href="shop.html">Keep shopping</a>
-      </div>`;
-    scrollTo({ top: 0, behavior: 'smooth' });
-    burst(main.querySelector('.co-done h1'), undefined, 60);
-  }
-
-  render();
 });

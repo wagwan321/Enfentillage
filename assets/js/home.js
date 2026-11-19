@@ -328,7 +328,7 @@ document.addEventListener('site:ready', () => {
       <input id="clubEmail" type="email" placeholder="Your email address" required autocomplete="email">
       <button class="btn btn--navy" type="submit">Get my voucher</button>
     </form>
-    <p class="club__note">For our store in Mazraat Yachouh. No spam, only smiles.</p>`;
+    <p class="club__note">For our store in Mazraat Yachouh. Your voucher stays in this browser; it is not emailed.</p>`;
   $('#club').innerHTML = `
     <div class="club__balloons"><span class="para" data-speed="-.1" style="position:relative">${balloon('#e8222b', 60)}</span><span class="para" data-speed="-.05" style="position:relative;margin-top:30px">${balloon('#3db54a', 46)}</span><span class="para" data-speed="-.14" style="position:relative;margin-top:10px">${balloon('#ffc83d', 52)}</span></div>
     <div>

@@ -3,9 +3,15 @@
    Header, mega menus, search, cart, wishlist, product cards, quick view,
    scroll reveal + parallax. Used by every page.
    ========================================================================== */
-(function () {
+(async function () {
   'use strict';
 
+  const loading = document.createElement('p');
+  loading.setAttribute('role','status'); loading.className='wrap';
+  loading.style.padding='40px 20px'; loading.textContent='Loading the latest toys and availability…';
+  document.querySelector('main')?.prepend(loading);
+  await window.ENF_COMMERCE?.ready;
+  loading.remove();
   const P = window.PRODUCTS || [];
   /* pictures: in-stock toys are stored with the site (sm = card, lg = gallery).
      Sold-out toys (p.r) had their photos in the old WordPress media library, which went offline when this
@@ -17,10 +23,10 @@
   const OLD_PHOTOS = '';
   const NO_PHOTO = 'assets/img/no-photo.svg';
   const MAP_URL = 'https://www.google.com/maps/search/?api=1&query=Enfantillage%2C%20Mazraat%20Yachouh%2C%20Lebanon';
-  P.forEach(p => { p.i = !p.r ? `assets/img/products/sm/${p.id}.webp` : OLD_PHOTOS ? OLD_PHOTOS + p.r : NO_PHOTO; });
+  P.forEach(p => { p.i = p._live ? p.i : !p.r ? `assets/img/products/sm/${p.id}.webp` : OLD_PHOTOS ? OLD_PHOTOS + p.r : NO_PHOTO; });
   const imgLg = (p, k = 0) => `assets/img/products/lg/${p.id}-${k}.webp`;
   /* every picture of a product; sold-out items need their details loaded first */
-  const gallery = (p, d) => !p.r ? Array.from({ length: p.g || 1 }, (_, k) => imgLg(p, k))
+  const gallery = (p, d) => p._live ? (d?.img?.length ? d.img : p._images.length ? p._images : [p.i]) : !p.r ? Array.from({ length: p.g || 1 }, (_, k) => imgLg(p, k))
     : OLD_PHOTOS && d && d.img ? d.img.map(u => /^https?:/.test(u) ? u : OLD_PHOTOS + u) : [p.i];
   // any picture that fails to load falls back to the placeholder instead of a broken icon
   addEventListener('error', e => {
@@ -29,10 +35,27 @@
   }, true);
   /* descriptions, refs and sold-out galleries live in 20 small files (id % 20), loaded on demand */
   const detailChunks = {};
-  const loadDetail = id => (detailChunks[id % 20] || (detailChunks[id % 20] =
+  const liveDetails = new Map();
+  const loadDetail = id => window.ENF_COMMERCE?.enabled
+    ? (liveDetails.get(id) || (() => {
+      const request = fetch('/api/commerce?resource=product&id=' + encodeURIComponent(id), { signal: AbortSignal.timeout(15000) })
+        .then(r => { if (!r.ok) throw new Error('Details unavailable'); return r.json(); })
+        .then(({ product }) => {
+          if (product.id !== id) throw new Error('Invalid product');
+          const doc = new DOMParser().parseFromString(product.description || product.short_description || '', 'text/html');
+          doc.querySelectorAll('script,style,iframe,object').forEach(el => el.remove());
+          doc.querySelectorAll('br').forEach(el => el.replaceWith('\n'));
+          doc.querySelectorAll('p,div,li,h1,h2,h3,h4').forEach(el => el.append('\n'));
+          const img = (product.images || []).map(i => { try { const u = new URL(i.src); return u.protocol === 'https:' ? u.href : ''; } catch { return ''; } }).filter(Boolean);
+          return { img, d: (doc.body.textContent || '').trim(), sku: String(product.sku || ''), cat: product.categories.map(c => c.name) };
+        }).catch(() => { liveDetails.delete(id); return null; });
+      liveDetails.set(id, request);
+      return request;
+    })())
+    : (detailChunks[id % 20] || (detailChunks[id % 20] =
     fetch(`assets/data/details/${id % 20}.json`).then(r => r.json()).catch(() => ({})))).then(all => all[id]);
-  const productUrl = p => `product.html?id=${p.id}`;
-  const byId = new Map(P.map(p => [p.id, p]));
+  const productUrl = p => `product.html?id=${p._parentId || p.id}${p._parentId ? '&option=' + p.id : ''}`;
+  const byId = new Map([...P.map(p => [p.id, p]), ...(window.ENF_COMMERCE?.cartProducts || new Map())]);
 
   /* ---------- palette ---------- */
   const COLORS = {
@@ -65,6 +88,7 @@
 
   const AGES = [
     { key: '0-3',   num: '0–3',   unit: 'years', label: 'Babies & Toddlers', color: 'pink' },
+    { key: '3-5', num: '3–5', unit: 'years', label: 'Preschoolers', color: 'blue' },
     { key: '3-6',   num: '3–6',   unit: 'years', label: 'Preschoolers',      color: 'blue' },
     { key: '5-8',   num: '5–8',   unit: 'years', label: 'Little Explorers',  color: 'green' },
     { key: '8-11',  num: '8–11',  unit: 'years', label: 'Big Kids',          color: 'red' },
@@ -376,6 +400,8 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode */ } },
   };
   let cart = store.get('enf_cart', {});
+  cart = cart && typeof cart === 'object' && !Array.isArray(cart)
+    ? Object.fromEntries(Object.entries(cart).filter(([id,q]) => /^[1-9]\d{0,9}$/.test(id) && Number.isInteger(q) && q > 0 && q <= 99)) : {};
   let favs = new Set(store.get('enf_favs', []));
 
   /* ==========================================================================
@@ -408,9 +434,9 @@
         <h3 class="card__name"><a href="${productUrl(p)}">${esc(p.n)}</a></h3>
         <div class="card__foot">
           ${priceHTML(p)}
-          ${p.p && p.s ? `<button class="add-btn${added}" data-add="${p.id}" type="button" aria-label="Add ${esc(p.n)} to cart">
+          ${p.p && p.s && (!p._live || p._canAdd) ? `<button class="add-btn${added}" data-add="${p.id}" type="button" aria-label="Add ${esc(p.n)} to cart">
             ${icon('cart', 'icon i-cart', 2.4)}${icon('check', 'icon i-check', 3)}
-          </button>` : `<a class="ask-btn" href="tel:+9613720233" aria-label="${p.s ? 'Call the store about' : 'Sold out. Call the store about'} ${esc(p.n)}">${icon('phone', 'icon', 2.4)}</a>`}
+          </button>` : p._live && p.v && p.s ? `<a class="ask-btn" href="${productUrl(p)}" aria-label="Choose options for ${esc(p.n)}">${icon('arrow', 'icon', 2.4)}</a>` : `<a class="ask-btn" href="tel:+9613720233" aria-label="${p.s ? 'Call the store about' : 'Sold out. Call the store about'} ${esc(p.n)}">${icon('phone', 'icon', 2.4)}</a>`}
         </div>
       </div>
     </article>`;
@@ -600,7 +626,8 @@
     const body = document.getElementById('cartBody');
     const foot = document.getElementById('cartFoot');
     if (!body) return;
-    const lines = Object.entries(cart).filter(([id]) => byId.has(+id));
+    const lines = Object.entries(cart);
+    const needsReview = lines.some(([id,q]) => {const p=byId.get(+id);return !p || !p.s || q > (p._maxQty || 99) || (p._live && !p._canAdd);});
     const total = cartTotal();
     if (!lines.length) {
       body.innerHTML = `<div class="cart-empty"><div class="empty-art" aria-hidden="true">${balloon('#e8222b', 54)}${balloon('#ffc83d', 44)}${balloon('#00a6e4', 50)}</div><h3 style="color:var(--navy);font-size:24px;margin:10px 0 4px">Your toy box is empty!</h3><p>Let’s fill it with something fun.</p><br><a class="btn btn--red" href="shop.html">Start shopping</a></div>`;
@@ -608,24 +635,27 @@
       return;
     }
     body.innerHTML = `
-      <div class="ship-meter">Use code <b>${CAMPAIGN.code}</b> at checkout for <b>${CAMPAIGN.pct}% off</b>, plus a <b>${CAMPAIGN.cashback}% cashback</b> voucher for the store.</div>
-      ${lines.map(([id, q]) => { const p = byId.get(+id); return `
+      <div class="ship-meter">Free delivery in Lebanon. Final prices and availability are checked at checkout.</div>
+      ${needsReview ? '<p role="alert">Some items or quantities need checking. Reduce quantities or remove unavailable items before checkout.</p>' : ''}
+      ${lines.map(([id, q]) => { const p = byId.get(+id) || {id:Number(id),n:'Unavailable toy',i:NO_PHOTO,b:'',s:false,p:0}; return `
         <div class="cart-line">
           <img src="${esc(p.i)}" alt="">
           <div><h5>${esc(p.n)}</h5><small>${esc(brandName(p.b))}</small><br>
-            <span class="qty"><button type="button" data-qty="${p.id}" data-d="-1" aria-label="Decrease">−</button><span>${q}</span><button type="button" data-qty="${p.id}" data-d="1" aria-label="Increase">+</button></span>
+            ${p.s ? `<span class="qty"><button type="button" data-qty="${p.id}" data-d="-1" aria-label="Decrease">−</button><span>${q}</span><button type="button" data-qty="${p.id}" data-d="1" aria-label="Increase">+</button></span>` : `<button type="button" data-qty="${p.id}" data-d="${-q}">Remove unavailable item</button>`}
           </div>
-          <div class="cart-line__price">${money(p.p * q)}</div>
+          <div class="cart-line__price">${p.s ? money(p.p * q) : 'Unavailable'}</div>
         </div>`; }).join('')}`;
     foot.innerHTML = `<div class="cart-total"><span>Subtotal</span><span>${money(total)}</span></div>
-      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Delivery: 3 $ anywhere in Lebanon.</p>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Free delivery in Lebanon.</p>
       <a class="btn btn--green" style="width:100%" href="checkout.html">Checkout ${icon('arrow', 'icon', 2.6)}</a>
       <p class="cart-pay">Pay by <b>cash on delivery</b> or <img src="assets/img/pay/whish-money.svg" alt="Whish Money" width="62" height="14"></p>`;
   }
 
   function addToCart(id, fromEl, qty = 1) {
     const prod = byId.get(id);
-    if (!prod || !prod.p || !prod.s) return;
+    if (!prod || !prod.p || !prod.s || !Number.isInteger(qty) || qty < 1 || window.ENF_COMMERCE?.failed) return false;
+    if (prod._live && !prod._canAdd) { toast('Please choose an available option on the product page.'); return false; }
+    if ((cart[id] || 0) + qty > (prod._maxQty || 99)) { toast('This quantity is not available. Please reduce the quantity.'); return false; }
     cart[id] = (cart[id] || 0) + qty;
     store.set('enf_cart', cart);
     renderCart();
@@ -633,8 +663,10 @@
     document.querySelectorAll(`[data-add="${id}"]`).forEach(b => b.classList.add('is-added'));
     const p = byId.get(id);
     toast(`${qty > 1 ? qty + ' × ' : ''}<b>${esc(p.n.length > 38 ? p.n.slice(0, 36) + '…' : p.n)}</b> added to your toy box`);
+    return true;
   }
   function setQty(id, d) {
+    if (d > 0 && (!byId.get(id)?.s || (cart[id] || 0) + d > (byId.get(id)?._maxQty || 99))) { toast('This quantity is not available.'); return; }
     cart[id] = (cart[id] || 0) + d;
     if (cart[id] <= 0) { delete cart[id]; document.querySelectorAll(`[data-add="${id}"]`).forEach(b => b.classList.remove('is-added')); }
     store.set('enf_cart', cart);
@@ -742,16 +774,16 @@
         <h3>${esc(p.n)}</h3>
         <div class="modal__meta">
           ${ages.map(a => `<span style="${colorVars(a.color)}">Ages ${a.num}</span>`).join('')}
-          ${cats.map(c => `<span style="${colorVars(c.color)}">${c.name}</span>`).join('')}
-          ${chars.map(c => `<span style="${colorVars(c.color)}">${c.name}</span>`).join('')}
+          ${cats.map(c => `<span style="${colorVars(c.color)}">${esc(c.name)}</span>`).join('')}
+          ${chars.map(c => `<span style="${colorVars(c.color)}">${esc(c.name)}</span>`).join('')}
         </div>
         ${p.p ? `<div class="modal__price">${p.v ? '<small>from</small> ' : ''}${money(p.p)}${p.o ? `<s>${money(p.o)}</s> <span class="badge badge--sale" style="vertical-align:middle">-${pct}%</span>` : ''}</div>`
               : '<div class="modal__price price--ask">Ask in store for the price</div>'}
         <span class="stock${p.s ? '' : ' is-out'}">${p.s ? 'In stock — ready to play' : 'Sold out for now'}</span>
         <div class="modal__desc" id="qvDesc"><span class="modal__loading">Loading details…</span></div>
         <div class="modal__actions">
-          ${p.p && p.s ? `<button class="btn btn--red" type="button" data-add="${p.id}">${icon('cart', 'icon', 2.4)} Add to cart</button>`
-                : `<a class="btn btn--red" href="tel:+9613720233">${icon('phone', 'icon', 2.4)} Call the store</a>`}
+          ${p.p && p.s && (!p._live || p._canAdd) ? `<button class="btn btn--red" type="button" data-add="${p.id}">${icon('cart', 'icon', 2.4)} Add to cart</button>`
+                : p._live && p.v && p.s ? `<a class="btn btn--red" href="${productUrl(p)}">Choose options ${icon('arrow', 'icon', 2.4)}</a>` : `<a class="btn btn--red" href="tel:+9613720233">${icon('phone', 'icon', 2.4)} Call the store</a>`}
           <button class="btn btn--white" type="button" data-fav-btn="${p.id}">${icon('heart', 'icon', 2.4)} ${favs.has(p.id) ? 'Saved' : 'Wishlist'}</button>
         </div>
         <a class="modal__more" href="${productUrl(p)}">See the full product page ${icon('arrow', 'icon', 2.6)}</a>
@@ -760,7 +792,7 @@
       const box = m.querySelector('#qvDesc');
       if (!box || m.querySelector('#qvMain')?.alt !== p.n) return;   // another product was opened meanwhile
       box.innerHTML = descHTML(d);
-      if (p.r && d && d.img && d.img.length > 1) m.querySelector('#qvMedia').innerHTML = galleryHTML(gallery(p, d), p.n, 'qvMain');
+      if ((p._live || p.r) && d?.img?.length) m.querySelector('#qvMedia').innerHTML = galleryHTML(gallery(p, d), p.n, 'qvMain');
     });
     lastFocus = document.activeElement;
     m.classList.add('is-open');
@@ -961,7 +993,13 @@
     const h = document.getElementById('site-header');
     const f = document.getElementById('site-footer');
     if (h) h.outerHTML = headerHTML(document.body.dataset.current);
+    // Checkout must not advertise an unverified coupon or cashback promise.
+    if (document.body.dataset.current === 'checkout') document.querySelector('.ticker')?.remove();
     if (f) f.outerHTML = footerHTML();
+    if (window.ENF_COMMERCE?.failed) {
+      const notice = document.createElement('p'); notice.setAttribute('role', 'alert'); notice.className = 'co-preview';
+      notice.textContent = 'Live stock and prices are unavailable. Online ordering is paused. Please call the store.'; document.body.prepend(notice);
+    }
     initEvents();
     initSearch();
     syncCounts();
