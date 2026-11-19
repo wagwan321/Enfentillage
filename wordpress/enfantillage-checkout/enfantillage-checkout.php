@@ -2,12 +2,13 @@
 /**
  * Plugin Name: Enfantillage Checkout Handoff
  * Description: An opt-in cart handoff to WooCommerce checkout, free Lebanon delivery, COD and manually confirmed Whish payments. Disabled until explicitly enabled by an administrator.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Requires PHP: 8.1
  * Requires Plugins: woocommerce
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 require_once __DIR__ . '/cart-validation.php';
+require_once __DIR__ . '/storefront-routing.php';
 add_action( 'before_woocommerce_init', function () {
     if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
@@ -47,6 +48,9 @@ add_action( 'admin_init', function () {
     register_setting( 'enf_checkout', 'enf_checkout_enabled', array(
         'type' => 'string', 'sanitize_callback' => function ( $value ) { return '1' === $value ? '1' : '0'; }, 'default' => '0',
     ) );
+    register_setting( 'enf_checkout', 'enf_storefront_enabled', array(
+        'type' => 'string', 'sanitize_callback' => function ( $value ) { return '1' === $value ? '1' : '0'; }, 'default' => '0',
+    ) );
 } );
 add_action( 'admin_menu', function () {
     add_submenu_page( 'woocommerce', 'Enfantillage checkout', 'Enfantillage checkout', 'manage_options', 'enf-checkout', function () {
@@ -54,6 +58,7 @@ add_action( 'admin_menu', function () {
         echo '<div class="wrap"><h1>Enfantillage checkout</h1><p>Cart handoff for the new storefront. Free delivery in Lebanon. Cash on delivery or Whish to +961 78 881 100; customers send a payment screenshot to the same number. Whish requires manual confirmation.</p><p>Enable only after backup and staging tests. Existing store settings and Wizard are not modified.</p><form method="post" action="options.php">';
         settings_fields( 'enf_checkout' );
         echo '<input type="hidden" name="enf_checkout_enabled" value="0"><label><input type="checkbox" name="enf_checkout_enabled" value="1" ' . checked( get_option( 'enf_checkout_enabled', '0' ), '1', false ) . '> Enable new-storefront checkout handoff</label>';
+        echo '<hr><p>Launch setup: the new website uses www.enfantillagestore.com. WordPress, its dashboard and software connections keep enfantillagestore.com. Enable the following switch only after the www website is ready.</p><input type="hidden" name="enf_storefront_enabled" value="0"><label><input type="checkbox" name="enf_storefront_enabled" value="1" ' . checked( get_option( 'enf_storefront_enabled', '0' ), '1', false ) . '> Send public shopping pages to the new www website</label>';
         submit_button();
         echo '</form></div>';
     } );
@@ -225,3 +230,25 @@ add_action( 'template_redirect', function () {
     ?><!doctype html><html <?php language_attributes(); ?>><head><meta charset="<?php bloginfo( 'charset' ); ?>"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Checkout — Enfantillage</title><?php wp_head(); ?><style>body{margin:0;background:#f5f6fb;color:#20254d;font-family:Arial,sans-serif}.enf-checkout{max-width:1080px;margin:auto;padding:24px}.enf-checkout header{margin-bottom:24px}.enf-checkout a{color:#25318c}.enf-checkout input,.enf-checkout select,.enf-checkout textarea{max-width:100%;padding:10px}.enf-checkout button{padding:14px 22px;cursor:pointer}.enf-checkout .woocommerce-error{color:#a51229}</style></head><body class="woocommerce woocommerce-checkout"><main class="enf-checkout"><header><a href="<?php echo esc_url( $context['origin'] . '/shop.html' ); ?>">← Back to Enfantillage</a><h1>Delivery and payment</h1><p>Free delivery in Lebanon. Choose cash on delivery or Whish with manual payment confirmation.</p></header><?php echo do_shortcode( '[woocommerce_checkout]' ); ?></main><?php wp_footer(); ?></body></html><?php
     exit;
 }, 5 );
+
+// The existing apex stays on this server: no WordPress URL or Wizard changes.
+// Run after dedicated checkout (priority 5), before canonical redirects (10).
+add_action( 'template_redirect', function () {
+    if ( '1' !== get_option( 'enf_storefront_enabled', '0' ) || is_admin() || is_preview() || is_feed() || is_404() ||
+        ( function_exists( 'is_customize_preview' ) && is_customize_preview() ) ) { return; }
+    $type = ''; $id = 0; $search = '';
+    if ( is_front_page() ) { $type = 'home'; }
+    elseif ( function_exists( 'is_product' ) && is_product() ) { $type = 'product'; $id = get_queried_object_id(); }
+    elseif ( function_exists( 'is_product_category' ) && is_product_category() ) { $type = 'category'; $id = get_queried_object_id(); }
+    elseif ( function_exists( 'is_shop' ) && is_shop() ) { $type = 'shop'; }
+    elseif ( is_search() && 'product' === get_query_var( 'post_type' ) ) { $type = 'search'; $search = get_search_query( false ); }
+    $target = enf_storefront_redirect_target( array(
+        'method' => $_SERVER['REQUEST_METHOD'] ?? '', 'host' => $_SERVER['HTTP_HOST'] ?? '',
+        'query' => wp_unslash( $_GET ), 'type' => $type, 'id' => $id, 'search' => $search,
+    ) );
+    if ( ! $target ) { return; }
+    nocache_headers();
+    // Target helper only constructs the fixed, allowlisted www origin.
+    wp_redirect( $target, 302, 'Enfantillage storefront' );
+    exit;
+}, 9 );
