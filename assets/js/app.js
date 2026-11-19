@@ -490,7 +490,7 @@
         ${CAMPAIGN.active ? `<span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span><b>Get 30% back until ${CAMPAIGN.until}:</b> <b>${CAMPAIGN.pct}% off</b> ${CAMPAIGN.auto ? '<b>everything</b>, no code needed' : `now with code <b>${CAMPAIGN.code}</b>`} + <b>${CAMPAIGN.cashback}% cashback</b> in store</span>
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--green)"></span><a href="index.html#club"><b>+${CAMPAIGN.cashback}% back</b> on what you buy, as a store voucher →</a></span>` : `<span class="ticker__item"><span class="ticker__dot" style="--c:var(--sun)"></span>Delivery anywhere in Lebanon for <b>5 $</b></span>`}
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--pink)"></span>Holiday wishlists are open — find the perfect gift with our <b>Gift Finder</b></span>
-        <span class="ticker__item"><span class="ticker__dot" style="--c:var(--blue)"></span>Visit our store in <b>Mazraat Yachouh</b>, Chattat Center</span>
+        <span class="ticker__item"><span class="ticker__dot" style="--c:var(--blue)"></span>Visit our store in <b>Mazraat Yachouh</b></span>
         <span class="ticker__item"><span class="ticker__dot" style="--c:var(--red)"></span>Up to <b>${maxOff}% off</b> in the Offer Zone</span>`).join('')}
     </div></div>
     <header class="header" id="header">
@@ -598,7 +598,7 @@
           <li><a href="info.html#terms">Terms & privacy</a></li>
         </ul></div>
         <div><h4>Visit us</h4><ul class="footer__contact">
-          <li>${icon('pin')}<span><a href="${MAP_URL}" target="_blank" rel="noopener">Mazraat Yachouh, Chattat Center, Lebanon</a></span></li>
+          <li>${icon('pin')}<span><a href="${MAP_URL}" target="_blank" rel="noopener">Mazraat Yachouh, Lebanon</a></span></li>
           <li>${icon('phone')}<span><a href="tel:+9614921863">+961 4 921 863</a><br><a href="tel:+9613720233">+961 3 720 233</a></span></li>
           <li>${icon('mail')}<span><a href="mailto:info@enfantillagestore.com">info@enfantillagestore.com</a></span></li>
         </ul></div>

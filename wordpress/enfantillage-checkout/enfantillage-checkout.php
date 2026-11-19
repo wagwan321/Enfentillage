@@ -32,7 +32,7 @@ function enf_cashback_html( $order ) {
     return '<div style="margin:16px 0;padding:16px 18px;border:3px dashed #ffc83d;border-radius:16px;background:#fff8e6;color:#1e2459">'
         . '<p style="margin:0 0 4px;font-size:13px;font-weight:bold;color:#e8222b;text-transform:uppercase">Enfantillage cashback voucher</p>'
         . '<p style="margin:0 0 6px;font-size:24px;font-weight:bold">' . wp_kses_post( wc_price( $amount ) ) . ' to spend in our store</p>'
-        . '<p style="margin:0;font-size:14px">That&rsquo;s ' . ENF_CASHBACK_PCT . '% of your order. Show this email (order #' . esc_html( $order->get_order_number() ) . ') at Enfantillage, Mazraat Yachouh, Chattat Center, to use it on your next purchase. Valid until ' . esc_html( ENF_CASHBACK_VALID_UNTIL ) . '.</p>'
+        . '<p style="margin:0;font-size:14px">That&rsquo;s ' . ENF_CASHBACK_PCT . '% of your order. Show this email (order #' . esc_html( $order->get_order_number() ) . ') at Enfantillage, Mazraat Yachouh, to use it on your next purchase. Valid until ' . esc_html( ENF_CASHBACK_VALID_UNTIL ) . '.</p>'
         . '</div>';
 }
 function enf_cashback_text( $order ) {

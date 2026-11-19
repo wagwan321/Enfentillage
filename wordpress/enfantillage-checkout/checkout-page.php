@@ -113,6 +113,6 @@ function enf_checkout_page_html( $context, $return_url, $receipt_order ) {
   <?php echo do_shortcode( '[woocommerce_checkout]' ); ?>
   <?php if ( $return_url ) { ?><a class="enf-return" href="<?php echo esc_url( $return_url ); ?>">Back to Enfantillage →</a><?php } ?>
 </main>
-<footer class="enf-foot">Enfantillage · Mazraat Yachouh, Chattat Center · Toys delivered anywhere in Lebanon</footer>
+<footer class="enf-foot">Enfantillage · Mazraat Yachouh · Toys delivered anywhere in Lebanon</footer>
 <?php wp_footer(); ?></body></html><?php
 }

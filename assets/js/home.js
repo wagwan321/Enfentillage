@@ -153,7 +153,7 @@ document.addEventListener('site:ready', () => {
       ['gift', 'green', 'Gift wrapping', 'Just tick it at checkout'],
     ]),
     ['blocks', 'blue', `${Math.floor(onSale.length / 100) * 100}+ toys`, `From ${Math.floor(brandCount / 10) * 10}+ brands`],
-    ['pin', 'pink', 'Visit our store', 'Mazraat Yachouh, Chattat Center'],
+    ['pin', 'pink', 'Visit our store', 'Mazraat Yachouh'],
   ];
   $('#perks').innerHTML = PERKS.map(([ic, c, t, s], i) => `
     <div class="perk reveal" data-from="up" style="${colorVars(c)};--d:${i * 0.08}s"><span class="perk__icon">${icon(ic, 'icon', 2.4)}</span><span><b>${t}</b><small>${s}</small></span></div>`).join('');
