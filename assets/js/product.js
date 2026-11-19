@@ -58,7 +58,7 @@ document.addEventListener('site:ready', () => {
           </div>
 
           <div class="pdp__price">
-            ${p.p ? `${p.v ? '<small>from</small> ' : ''}<b>${money(p.p)}</b>${p.o ? ` <s>${money(p.o)}</s> <span class="badge badge--sale">Save ${money(p.o - p.p)}</span>` : ''}`
+            ${p.p ? `${p.v ? '<small>from</small> ' : ''}<b>${money(p.p)}</b>${p.o ? ` <s>${money(p.o)}</s> <span class="badge badge--sale">Save ${money(p.o - p.p)}</span>` : ''}${window.ENF.codeLine(p)}`
                   : '<b class="price--ask">Ask in store for the price</b>'}
           </div>
           <span class="stock${p.s ? '' : ' is-out'}">${p.s ? 'In stock — ready to play' : 'Sold out for now. Call us and we’ll let you know when it’s back.'}</span>
@@ -163,7 +163,7 @@ document.addEventListener('site:ready', () => {
           const result = await window.ENF_COMMERCE.loadVariation(p.id,matches[0].id);
           if (run !== selectionRun) return;
           byId.set(result.id,result); selected = result;
-          main.querySelector('.pdp__price').innerHTML = `<b>${money(result.p)}</b>${result.o ? ' <s>' + money(result.o) + '</s>' : ''}`;
+          main.querySelector('.pdp__price').innerHTML = `<b>${money(result.p)}</b>${result.o ? ' <s>' + money(result.o) + '</s>' : ''}${window.ENF.codeLine(result)}`;
           document.getElementById('pdpGallery').innerHTML = galleryHTML(gallery(result),result.n,'pdpMain');
           const stock = main.querySelector('.pdp__info .stock');
           stock.textContent = result.s ? 'In stock — ready to play' : 'Sold out for now'; stock.classList.toggle('is-out',!result.s);

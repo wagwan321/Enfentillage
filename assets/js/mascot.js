@@ -43,7 +43,7 @@ document.addEventListener('site:ready', () => {
   // limited-time reminder: Tillo's first message on the home page and the shop, until 25 December
   if (C.active && (page === 'home' || page === 'shop')) {
     if (page === 'home') tips.splice(1, 1);   // the old code tip, replaced by the reminder
-    tips.unshift([`Hurry! Get 30% back until ${C.until}: ${C.pct}% off with code ${C.code} + ${C.cashback}% cashback in store.`, 'See the offers', shopUrl({ sale: 1 })]);
+    tips.unshift([`Hurry! Get 30% back until ${C.until}: ${C.pct}% off with code ${C.code} + ${C.cashback}% cashback in store.`, 'Shop now', shopUrl({ promo: 1 })]);
   }
   let tipIndex = 0;
 
@@ -149,7 +149,7 @@ document.addEventListener('site:ready', () => {
       if (p && perks) {
         const line = !p.s ? 'This one is sold out right now. Call us and we’ll tell you when it’s back!'
           : !p.p ? 'Ask us for the price: we’re happy to help!'
-          : C.active ? `With code <b>${C.code}</b> it’s only <b>${money(Math.round(p.p * (100 - C.pct)) / 100)}</b>, plus ${C.cashback}% cashback in store! (until ${C.until})`
+          : C.active ? `With code <b>${C.code}</b> it’s only <b>${money(window.ENF.codePrice(p.p))}</b>, plus ${C.cashback}% cashback in store! (until ${C.until})`
           : 'Pay when it arrives: cash on delivery or Whish Money. Delivery anywhere in Lebanon for 5 $.';
         place(perks, 'beforebegin', `<div class="tillo-tip tillo-tip--plain"><span class="tillo-tip__icon" aria-hidden="true">${icon('sparkle', 'icon', 2.4)}</span><p><b>Tip:</b> ${line}</p></div>`);
       }

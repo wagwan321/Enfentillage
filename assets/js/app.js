@@ -407,9 +407,12 @@
      Product card
      ========================================================================== */
   /* price block: sale price, "from" for products with options, or ask-in-store when the old site had no price */
+  // price after the campaign code (WooCommerce takes it off every toy at checkout, rounded like the store: 0.1 $)
+  const codePrice = n => Math.round((n - Math.round(n * CAMPAIGN.pct / 10) / 10) * 100) / 100;
+  const codeLine = p => CAMPAIGN.active && p.p && p.s ? `<small class="price__code">${money(codePrice(p.p))} with ${CAMPAIGN.code}</small>` : '';
   function priceHTML(p, cls = 'price') {
     if (!p.p) return `<div class="${cls} price--ask">Ask in store</div>`;
-    return `<div class="${cls}${p.o ? ' price--sale' : ''}">${p.o ? `<s>${money(p.o)}</s>` : ''}${p.v ? '<small>from</small> ' : ''}${money(p.p)}</div>`;
+    return `<div class="${cls}${p.o ? ' price--sale' : ''}">${p.o ? `<s>${money(p.o)}</s>` : ''}${p.v ? '<small>from</small> ' : ''}${money(p.p)}${codeLine(p)}</div>`;
   }
 
   function card(p, opts = {}) {
@@ -1010,7 +1013,7 @@
 
   window.ENF = {
     P, byId, COLORS, colorVars, hashColor, CATEGORIES, AGES, BRANDS, CHARACTERS,
-    tillo, brandMatch, brandLogo, imgOf, imgLg, gallery, galleryHTML, descHTML, loadDetail, productUrl, priceHTML, titleCase, addToCart, getCart: () => cart, setCart: c => { cart = c; store.set('enf_cart', cart); renderCart(); syncCounts(); }, CAMPAIGN, cartTotal, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
+    tillo, brandMatch, brandLogo, imgOf, imgLg, gallery, galleryHTML, descHTML, loadDetail, productUrl, priceHTML, codeLine, codePrice, titleCase, addToCart, getCart: () => cart, setCart: c => { cart = c; store.set('enf_cart', cart); renderCart(); syncCounts(); }, CAMPAIGN, cartTotal, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
     observeReveals, initRail, burst, toast, NEW_IDS, getFavs: () => favs,
   };
 

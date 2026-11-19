@@ -43,7 +43,7 @@ document.addEventListener('site:ready', () => {
       kicker: `${icon('tag', 'icon', 2.4)} Limited time · until ${CAMPAIGN.until}`,
       title: 'Get <em>30%</em> back',
       desc: `${CAMPAIGN.pct}% off right now with code ${CAMPAIGN.code}, plus a ${CAMPAIGN.cashback}% cashback voucher to spend in our store. Only until ${CAMPAIGN.until}!`,
-      cta: ['Shop the offers', shopUrl({ sale: 1 }), 'btn--red'],
+      cta: ['Shop 20% off everything', shopUrl({ promo: 1 }), 'btn--red'],
       imgs: topDeals.map(p => p.id),
       burst: true,
     },
@@ -71,7 +71,7 @@ document.addEventListener('site:ready', () => {
         kicker: `${icon('tag', 'icon', 2.4)} Christmas offer · until ${CAMPAIGN.until}`,
         title: 'Get <em>30%</em> back',
         desc: `${CAMPAIGN.pct}% off with code ${CAMPAIGN.code}, plus a ${CAMPAIGN.cashback}% cashback voucher for the store. Only until ${CAMPAIGN.until}!`,
-        cta: ['Shop the offers', shopUrl({ sale: 1 }), 'btn--red'], imgs: topDeals.map(p => p.id), burst: true });
+        cta: ['Shop 20% off everything', shopUrl({ promo: 1 }), 'btn--red'], imgs: topDeals.map(p => p.id), burst: true });
   }
   // while the 30% campaign runs, the banner shows only that offer; afterwards the other slides come back without it
   const offer = SLIDES.filter(s => s.burst);

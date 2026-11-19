@@ -16,7 +16,7 @@ document.addEventListener('site:ready', () => {
   const list = k => (url.get(k) || '').split(',').filter(Boolean);
   const st = {
     cat: list('cat'), age: list('age'), brand: list('brand'), char: list('char'),
-    q: url.get('q') || '', sale: url.get('sale') === '1', fav: url.get('fav') === '1', out: url.get('out') === '1',
+    q: url.get('q') || '', sale: url.get('sale') === '1', promo: url.get('promo') === '1' && window.ENF.CAMPAIGN.active, fav: url.get('fav') === '1', out: url.get('out') === '1',
     min: url.get('min') || '', max: url.get('max') || '',
     sort: url.get('sort') || 'popular',
   };
@@ -28,6 +28,7 @@ document.addEventListener('site:ready', () => {
     ['cat', 'age', 'brand', 'char'].forEach(k => st[k].length && u.set(k, st[k].join(',')));
     if (st.q) u.set('q', st.q);
     if (st.sale) u.set('sale', '1');
+    if (st.promo) u.set('promo', '1');
     if (st.fav) u.set('fav', '1');
     if (st.out) u.set('out', '1');
     if (st.min) u.set('min', st.min);
@@ -73,6 +74,7 @@ document.addEventListener('site:ready', () => {
     const c = one('cat', ALL_CATEGORIES), a = one('age', AGES), b = one('brand', BRANDS), h = one('char', CHARACTERS);
     if (st.fav) { title = 'Your Wishlist'; sub = 'All the toys you’ve hearted, saved in this browser'; color = 'pink'; }
     else if (st.sale) { title = 'Offer Zone'; sub = window.ENF.CAMPAIGN.active ? `Real savings on top toys, plus ${window.ENF.CAMPAIGN.pct}% off with code ${window.ENF.CAMPAIGN.code} until ${window.ENF.CAMPAIGN.until}` : 'Real savings on top toys'; color = 'red'; }
+    else if (st.promo && !st.q && !st.cat.length && !st.age.length && !st.brand.length && !st.char.length) { const C = window.ENF.CAMPAIGN; title = `${C.pct}% off everything`; sub = `Use code ${C.code} at checkout, plus ${C.cashback}% cashback in store. Until ${C.until}!`; color = 'red'; }
     else if (st.q) { title = `“${st.q}”`; sub = 'Search results'; color = 'navy'; }
     else if (h) { title = h.name; sub = `Toys, playsets and goodies starring ${h.name}`; color = h.color; }
     else if (b) { title = b.name; sub = `Shop the ${b.name} collection at Enfantillage`; color = b.color; }
