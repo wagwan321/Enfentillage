@@ -49,3 +49,12 @@ test('single product reads only the configured store and validates identity', as
  await assert.rejects(readProduct({ storeUrl: 'https://example.com' }, 42, async () => response(product(43))));
  await assert.rejects(readProduct({ storeUrl: 'https://example.com' }, 42, async () => response({}, 1, false)));
 });
+
+test('catalog excludes gallery metadata while retaining option identity and stock limits', () => {
+ const {catalogProduct}=require('../api/commerce');
+ const raw={...product(42),name:'Toy',type:'variable',images:[{src:'https://example.com/full.jpg',thumbnail:'https://example.com/thumb.jpg',srcset:'unused'.repeat(1000)},{src:'https://example.com/second.jpg'}],brands:[{name:'Brand',link:'unused'}],attributes:[{name:'Color',has_variations:true,terms:[{name:'Blue',slug:'blue',extra:'unused'}]},{name:'Weight',has_variations:false}],variations:[{id:43,attributes:[{name:'Color',value:'blue'}]}],add_to_cart:{maximum:3}};
+ const compact=catalogProduct(raw);
+ assert.deepEqual(compact.images,[{src:'https://example.com/thumb.jpg'}]);
+ assert.equal(compact.attributes.length,1);assert.deepEqual(compact.variations,raw.variations);assert.equal(compact.add_to_cart.maximum,3);
+ assert.ok(JSON.stringify(compact).length<JSON.stringify(raw).length/5);
+});

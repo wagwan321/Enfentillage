@@ -1,5 +1,16 @@
 // Public catalog only. Never forwards WordPress cookies, credentials or arbitrary URLs.
 const FIELDS = 'id,name,type,parent,permalink,prices,is_in_stock,is_purchasable,images,categories,brands,attributes,variations,add_to_cart';
+// Catalog cards need one thumbnail; full galleries and descriptions load per product.
+const CATALOG_FIELDS = 'id,name,type,parent,prices.price,prices.regular_price,prices.currency_code,prices.currency_minor_unit,is_in_stock,is_purchasable,images.src,images.thumbnail,categories.id,categories.name,brands.name,attributes.name,attributes.has_variations,attributes.terms.name,attributes.terms.slug,variations.id,variations.attributes,add_to_cart.maximum';
+function catalogProduct(p) {
+  const {id,name,type,parent,prices,is_in_stock,is_purchasable,categories}=p;
+  return {id,name,type,parent,prices:{price:prices?.price,regular_price:prices?.regular_price,currency_code:prices?.currency_code,currency_minor_unit:prices?.currency_minor_unit},is_in_stock,is_purchasable,categories,
+    images:(p.images||[]).slice(0,1).map(i=>({src:i.thumbnail||i.src})),
+    brands:(p.brands||[]).map(b=>({name:b.name})),
+    attributes:(p.attributes||[]).filter(a=>a.has_variations).map(a=>({name:a.name,has_variations:true,terms:(a.terms||[]).map(t=>({name:t.name,slug:t.slug}))})),
+    variations:(p.variations||[]).map(v=>({id:v.id,attributes:v.attributes})),
+    add_to_cart:{maximum:p.add_to_cart?.maximum}};
+}
 function settings(env = process.env) {
   // Temporary read-only preview configuration. Both conditions are required:
   // merging this branch must never activate the production storefront.
@@ -12,7 +23,7 @@ function settings(env = process.env) {
 async function readProducts(config, fetcher = fetch) {
   async function page(number) {
     const url = new URL('/wp-json/wc/store/v1/products', config.storeUrl);
-    url.search = new URLSearchParams({ per_page: '100', page: String(number), _fields: FIELDS, orderby: 'id', order: 'desc' });
+    url.search = new URLSearchParams({ per_page: '100', page: String(number), _fields: CATALOG_FIELDS, orderby: 'id', order: 'desc' });
     const response = await fetcher(url, { redirect: 'error', signal: AbortSignal.timeout(12000), headers: { Accept: 'application/json' } });
     if (!response.ok) throw new Error('Store unavailable');
     const products = await response.json();
@@ -29,7 +40,7 @@ async function readProducts(config, fetcher = fetch) {
     pages.forEach(p => products.push(...p.products));
   }
   if (new Set(products.map(p => p.id)).size !== products.length) throw new Error('Catalog changed while loading');
-  return products;
+  return products.map(catalogProduct);
 }
 async function readProduct(config, id, fetcher = fetch) {
   if (!/^[1-9]\d{0,9}$/.test(String(id))) throw new Error('Invalid product ID');
@@ -56,7 +67,7 @@ async function handler(req, res) {
     }
     if (req.query.resource !== 'catalog') return res.status(404).json({ error: 'Not found' });
     const products = await readProducts(config);
-    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=60');
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=30');
     return res.status(200).json({ products, fetchedAt: new Date().toISOString() });
   } catch { return res.status(503).json({ error: 'The store is temporarily unavailable. Please try again.' }); }
 }
@@ -64,3 +75,5 @@ module.exports = handler;
 module.exports.settings = settings;
 module.exports.readProducts = readProducts;
 module.exports.readProduct = readProduct;
+
+module.exports.catalogProduct = catalogProduct;

@@ -6,7 +6,12 @@
 (async function () {
   'use strict';
 
+  const loading = document.createElement('p');
+  loading.setAttribute('role','status'); loading.className='wrap';
+  loading.style.padding='40px 20px'; loading.textContent='Loading the latest toys and availability…';
+  document.querySelector('main')?.prepend(loading);
   await window.ENF_COMMERCE?.ready;
+  loading.remove();
   const P = window.PRODUCTS || [];
   /* pictures: in-stock toys are stored with the site (sm = card, lg = gallery).
      Sold-out toys (p.r) had their photos in the old WordPress media library, which went offline when this
@@ -21,7 +26,7 @@
   P.forEach(p => { p.i = p._live ? p.i : !p.r ? `assets/img/products/sm/${p.id}.webp` : OLD_PHOTOS ? OLD_PHOTOS + p.r : NO_PHOTO; });
   const imgLg = (p, k = 0) => `assets/img/products/lg/${p.id}-${k}.webp`;
   /* every picture of a product; sold-out items need their details loaded first */
-  const gallery = (p, d) => p._live ? (p._images.length ? p._images : [p.i]) : !p.r ? Array.from({ length: p.g || 1 }, (_, k) => imgLg(p, k))
+  const gallery = (p, d) => p._live ? (d?.img?.length ? d.img : p._images.length ? p._images : [p.i]) : !p.r ? Array.from({ length: p.g || 1 }, (_, k) => imgLg(p, k))
     : OLD_PHOTOS && d && d.img ? d.img.map(u => /^https?:/.test(u) ? u : OLD_PHOTOS + u) : [p.i];
   // any picture that fails to load falls back to the placeholder instead of a broken icon
   addEventListener('error', e => {
@@ -41,7 +46,8 @@
           doc.querySelectorAll('script,style,iframe,object').forEach(el => el.remove());
           doc.querySelectorAll('br').forEach(el => el.replaceWith('\n'));
           doc.querySelectorAll('p,div,li,h1,h2,h3,h4').forEach(el => el.append('\n'));
-          return { d: (doc.body.textContent || '').trim(), sku: String(product.sku || ''), cat: product.categories.map(c => c.name) };
+          const img = (product.images || []).map(i => { try { const u = new URL(i.src); return u.protocol === 'https:' ? u.href : ''; } catch { return ''; } }).filter(Boolean);
+          return { img, d: (doc.body.textContent || '').trim(), sku: String(product.sku || ''), cat: product.categories.map(c => c.name) };
         }).catch(() => { liveDetails.delete(id); return null; });
       liveDetails.set(id, request);
       return request;
@@ -786,7 +792,7 @@
       const box = m.querySelector('#qvDesc');
       if (!box || m.querySelector('#qvMain')?.alt !== p.n) return;   // another product was opened meanwhile
       box.innerHTML = descHTML(d);
-      if (p.r && d && d.img && d.img.length > 1) m.querySelector('#qvMedia').innerHTML = galleryHTML(gallery(p, d), p.n, 'qvMain');
+      if ((p._live || p.r) && d?.img?.length) m.querySelector('#qvMedia').innerHTML = galleryHTML(gallery(p, d), p.n, 'qvMain');
     });
     lastFocus = document.activeElement;
     m.classList.add('is-open');

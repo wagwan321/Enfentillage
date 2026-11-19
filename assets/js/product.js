@@ -130,7 +130,7 @@ document.addEventListener('site:ready', () => {
     document.getElementById('pdpDesc').innerHTML = descHTML(d) || '<p>Ask us anything about this toy: call +961 3 720 233 or visit our store in Mazraat Yachouh.</p>';
     if (d && d.sku) document.getElementById('pdpSpecs').insertAdjacentHTML('afterbegin', `<dt>Reference</dt><dd>${esc(d.sku)}</dd>`);
     if (d && d.cat && d.cat.length) document.getElementById('pdpSpecs').insertAdjacentHTML('beforeend', `<dt>Listed in</dt><dd>${d.cat.map(esc).join(', ')}</dd>`);
-    if (p.r && d && d.img && d.img.length > 1) document.getElementById('pdpGallery').innerHTML = galleryHTML(gallery(p, d), p.n, 'pdpMain');
+    if ((p._live || p.r) && d?.img?.length && document.getElementById('pdpMain')?.alt === p.n) document.getElementById('pdpGallery').innerHTML = galleryHTML(gallery(p, d), p.n, 'pdpMain');
   });
 
   /* quantity + add to cart */
