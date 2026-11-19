@@ -1,10 +1,12 @@
 // Public catalog only. Never forwards WordPress cookies, credentials or arbitrary URLs.
 const FIELDS = 'id,name,type,parent,permalink,prices,is_in_stock,is_purchasable,images,categories,brands,attributes,variations,add_to_cart';
+// Store API conditionally populates images/options only when their root fields are requested.
+// Compact the response after fetching; nested _fields alone can silently omit those fields.
 // Catalog cards need one thumbnail; full galleries and descriptions load per product.
-const CATALOG_FIELDS = 'id,name,type,parent,prices.price,prices.regular_price,prices.currency_code,prices.currency_minor_unit,is_in_stock,is_purchasable,images.src,images.thumbnail,categories.id,categories.name,brands.name,attributes.name,attributes.has_variations,attributes.terms.name,attributes.terms.slug,variations.id,variations.attributes,add_to_cart.maximum';
+const CATALOG_FIELDS = 'id,name,type,parent,prices,is_in_stock,is_purchasable,images,categories,brands,attributes,variations,add_to_cart';
 function catalogProduct(p) {
   const {id,name,type,parent,prices,is_in_stock,is_purchasable,categories}=p;
-  return {id,name,type,parent,prices:{price:prices?.price,regular_price:prices?.regular_price,currency_code:prices?.currency_code,currency_minor_unit:prices?.currency_minor_unit},is_in_stock,is_purchasable,categories,
+  return {id,name,type,parent,prices:{price:prices?.price,regular_price:prices?.regular_price,currency_code:prices?.currency_code,currency_minor_unit:prices?.currency_minor_unit},is_in_stock,is_purchasable,categories:(categories||[]).map(c=>({id:c.id,name:c.name})),
     images:(p.images||[]).slice(0,1).map(i=>({src:i.thumbnail||i.src})),
     brands:(p.brands||[]).map(b=>({name:b.name})),
     attributes:(p.attributes||[]).filter(a=>a.has_variations).map(a=>({name:a.name,has_variations:true,terms:(a.terms||[]).map(t=>({name:t.name,slug:t.slug}))})),

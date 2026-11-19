@@ -20,6 +20,7 @@ const response = (rows, pages = 2, ok = true) => ({ ok, json: async () => rows, 
 test('collects all pages without forwarding cookies or credentials', async () => {
  const rows = await readProducts({ storeUrl: 'https://example.com' }, async (url, options) => {
   assert.equal(options.redirect, 'error'); assert.equal(options.headers.Cookie, undefined);
+  for (const key of ['images','attributes','variations']) assert.ok(url.searchParams.get('_fields').split(',').includes(key), 'Store API requires root field '+key);
   return response([product(Number(url.searchParams.get('page')))]);
  });
  assert.deepEqual(rows.map(p => p.id), [1, 2]);
@@ -52,9 +53,10 @@ test('single product reads only the configured store and validates identity', as
 
 test('catalog excludes gallery metadata while retaining option identity and stock limits', () => {
  const {catalogProduct}=require('../api/commerce');
- const raw={...product(42),name:'Toy',type:'variable',images:[{src:'https://example.com/full.jpg',thumbnail:'https://example.com/thumb.jpg',srcset:'unused'.repeat(1000)},{src:'https://example.com/second.jpg'}],brands:[{name:'Brand',link:'unused'}],attributes:[{name:'Color',has_variations:true,terms:[{name:'Blue',slug:'blue',extra:'unused'}]},{name:'Weight',has_variations:false}],variations:[{id:43,attributes:[{name:'Color',value:'blue'}]}],add_to_cart:{maximum:3}};
+ const raw={...product(42),name:'Toy',type:'variable',categories:[{id:1,name:'5 - 8',slug:'unused',link:'unused'}],images:[{src:'https://example.com/full.jpg',thumbnail:'https://example.com/thumb.jpg',srcset:'unused'.repeat(1000)},{src:'https://example.com/second.jpg'}],brands:[{name:'Brand',link:'unused'}],attributes:[{name:'Color',has_variations:true,terms:[{name:'Blue',slug:'blue',extra:'unused'}]},{name:'Weight',has_variations:false}],variations:[{id:43,attributes:[{name:'Color',value:'blue'}]}],add_to_cart:{maximum:3}};
  const compact=catalogProduct(raw);
  assert.deepEqual(compact.images,[{src:'https://example.com/thumb.jpg'}]);
+ assert.deepEqual(compact.categories,[{id:1,name:'5 - 8'}]);
  assert.equal(compact.attributes.length,1);assert.deepEqual(compact.variations,raw.variations);assert.equal(compact.add_to_cart.maximum,3);
  assert.ok(JSON.stringify(compact).length<JSON.stringify(raw).length/5);
 });
