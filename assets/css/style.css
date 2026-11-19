@@ -1810,3 +1810,53 @@ a[href^="tel:"] { white-space: nowrap; }
 .price .price__code, .pdp__price .price__code, .price__code { display: block; margin-top: 4px; font-family: var(--font-body, inherit); font-size: 12.5px; font-weight: 900; color: var(--red); white-space: nowrap; letter-spacing: 0; }
 .pdp__price .price__code { font-size: 16px; margin-top: 6px; }
 @media (max-width: 760px) { .price .price__code { font-size: 11.5px; } }
+
+/* ==========================================================================
+   Welcome pop-up: the 30% offer (20% off everything + 10% cashback voucher)
+   ========================================================================== */
+.promo-pop { position: fixed; inset: 0; z-index: 160; display: grid; place-items: center; padding: 16px; visibility: hidden; }
+.promo-pop.is-open { visibility: visible; }
+.promo-pop__backdrop { position: absolute; inset: 0; background: rgba(26, 34, 102, .55); opacity: 0; transition: opacity .3s; }
+.promo-pop.is-open .promo-pop__backdrop { opacity: 1; }
+.promo-pop__card {
+  position: relative; width: min(480px, 100%); max-height: calc(100dvh - 32px); overflow: auto;
+  background: linear-gradient(160deg, #fff7f7 0%, #ffe3e5 100%); border: 3px solid var(--sun); border-radius: 28px;
+  box-shadow: var(--shadow-lg); padding: 28px 26px 22px; text-align: center; color: var(--ink);
+  transform: translateY(18px) scale(.97); opacity: 0; transition: transform .45s var(--ease-out), opacity .3s;
+}
+.promo-pop.is-open .promo-pop__card { transform: none; opacity: 1; }
+.promo-pop__x { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: var(--ink-soft); box-shadow: var(--shadow-sm); z-index: 2; }
+.promo-pop__x .icon { width: 16px; height: 16px; }
+.promo-pop__balloons { position: absolute; top: -8px; left: 14px; display: flex; gap: 2px; align-items: flex-start; opacity: .95; pointer-events: none; }
+.promo-pop__balloons > * { animation: floaty 5s ease-in-out infinite; }
+.promo-pop__balloons > *:nth-child(2) { margin-top: 18px; animation-delay: -1.5s; }
+.promo-pop__balloons > *:nth-child(3) { margin-top: 6px; animation-delay: -3s; }
+.promo-pop__kicker { display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; padding: 6px 14px; border-radius: 999px; background: #fff; color: var(--red); font-weight: 900; font-size: 13px; box-shadow: var(--shadow-sm); }
+.promo-pop__kicker .icon { width: 16px; height: 16px; }
+.promo-pop__title { font-family: var(--font-display); font-size: clamp(36px, 8vw, 48px); line-height: 1.05; color: var(--navy); margin: 12px 0 4px; }
+.promo-pop__title em { font-style: normal; color: var(--red); }
+.promo-pop__lead { font-weight: 800; color: var(--ink-soft); margin-bottom: 14px; }
+.promo-pop__parts { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: stretch; margin-bottom: 16px; }
+.promo-pop__part { background: #fff; border-radius: 18px; padding: 14px 10px; border: 2px solid color-mix(in srgb, var(--c) 35%, #fff); display: grid; gap: 4px; align-content: center; }
+.promo-pop__part b { font-family: var(--font-display); font-size: 21px; line-height: 1.1; color: var(--c); }
+.promo-pop__part small { font-size: 13px; font-weight: 700; color: var(--ink-soft); line-height: 1.3; }
+.promo-pop__plus { align-self: center; font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--navy); }
+.promo-pop__form { display: flex; gap: 8px; }
+.promo-pop__form input { flex: 1; min-width: 0; padding: 13px 16px; border-radius: 999px; border: 2px solid var(--line); background: #fff; font: inherit; font-size: 16px; font-weight: 700; color: var(--ink); }
+.promo-pop__form input:focus { outline: none; border-color: var(--navy); }
+.promo-pop__form .btn { flex: none; white-space: nowrap; }
+.promo-pop__note { font-size: 12.5px; color: var(--ink-soft); margin-top: 8px; }
+.promo-pop__action .voucher { text-align: center; justify-items: center; }
+.promo-pop__action .voucher::before, .promo-pop__action .voucher::after { background: #ffe9ea; }
+.promo-pop__foot { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+.promo-pop__skip { font-weight: 800; font-size: 14px; color: var(--ink-soft); text-decoration: underline; }
+@media (max-width: 480px) {
+  .promo-pop__card { padding: 24px 16px 18px; border-radius: 24px; }
+  .promo-pop__parts { grid-template-columns: minmax(0, 1fr); }
+  .promo-pop__plus { font-size: 22px; line-height: 1; }
+  .promo-pop__part { padding: 10px; }
+  .promo-pop__part b { font-size: 19px; }
+  .promo-pop__form { flex-direction: column; }
+  .promo-pop__form .btn { width: 100%; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) { .promo-pop__card, .promo-pop__backdrop { transition: none; } .promo-pop__balloons > * { animation: none; } }

@@ -40,11 +40,6 @@ document.addEventListener('site:ready', () => {
   };
   // after the campaign, tips that mention the code or the cashback are dropped
   const tips = (TIPS[page] || TIPS.home).filter(t => C.active || !/cashback|% off|save \d+%/i.test(t[0] + (t[2] || '')) && !t[0].includes(C.code));
-  // limited-time reminder: Tillo's first message on the home page and the shop, until 25 December
-  if (C.active && (page === 'home' || page === 'shop')) {
-    if (page === 'home') tips.splice(1, 1);   // the old code tip, replaced by the reminder
-    tips.unshift([C.auto ? `Hurry! ${C.pct}% off everything (no code needed) + ${C.cashback}% cashback in store, until ${C.until}.` : `Hurry! Get 30% back until ${C.until}: ${C.pct}% off with code ${C.code} + ${C.cashback}% cashback in store.`, 'Shop now', shopUrl({ promo: 1 })]);
-  }
   // no code to mention while the discount is automatic
   if (C.auto) for (let i = tips.length - 1; i >= 0; i--) if (tips[i][0].includes(C.code)) tips.splice(i, 1);
   let tipIndex = 0;
@@ -108,7 +103,7 @@ document.addEventListener('site:ready', () => {
   }, 35000);
 
   // stay out of the way of drawers, the quick view and big Tillos on screen
-  const sync = () => peek.classList.toggle('is-hidden', !!$('.drawer.is-open, .modal.is-open, .filters.is-open'));
+  const sync = () => peek.classList.toggle('is-hidden', !!$('.drawer.is-open, .modal.is-open, .filters.is-open, .promo-pop.is-open'));
   new MutationObserver(sync).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
   // corner Tillo steps aside while any big Tillo is on screen
   const bigOnScreen = new Set();
