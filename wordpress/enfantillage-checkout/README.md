@@ -4,7 +4,7 @@ Live connector 0.2.0 is installed with checkout and public storefront redirects 
 
 The Vercel storefront sends only product IDs, quantities, an opaque cart token and a payment preference to WooCommerce. A dedicated classic WooCommerce checkout collects addresses, calculates totals and creates the real order. It uses WooCommerce's normal checkout nonce/session and order handling. No administrator/API credentials are embedded in the storefront.
 
-Confirmed policy: free delivery in Lebanon; COD; Whish to +961 78 881 100, with screenshot and order number sent to that same number. Whish orders stay on hold until the store verifies payment. A screenshot does not automatically mark an order paid. COD orders use processing status with a note that cash is due on delivery.
+Confirmed policy (0.4.0): 3 $ delivery anywhere in Lebanon; COD; Whish to +961 78 881 100, with screenshot and order number sent to that same number. Whish orders stay on hold until the store verifies payment. A screenshot does not automatically mark an order paid. COD orders use processing status with a note that cash is due on delivery.
 
 ## Install on a backed-up staging copy first
 
@@ -39,3 +39,10 @@ The redirect never accepts an arbitrary destination from the browser. Unknown re
 Readiness contract is version 2; frontend checkout stays disabled against older connectors. Seventeen JS tests and four PHP validation suites pass. Isolated native WordPress 7.0.9 / WooCommerce 11.3.0 tests passed for guest variable-product COD/Whish orders, USD totals/free shipping, stock reduction/retry safety, denied foreign origins, excess-stock rollback, receipt proof verification after session expiry and cancelled-order rejection. Browser checks passed option selection, saved variant rehydration, verified cart clearing and edited-cart preservation. Live compatibility remains a separate launch check.
 
 The client confirmed TILLO20 (20% off), 10% in-store cashback, gift wrapping and 30-day exchanges. Gift wrapping is saved in the native order metadata and customer note. Native coupon validation is used; configure and verify TILLO20 in the dashboard before launch (it was absent during the read-only check). The cashback voucher is displayed and stored only in that browser for manual in-store redemption; it is not an email subscription or automatic credit ledger. Do not imply an email was sent or centrally recorded.
+
+## 0.4.0 (20 November 2026)
+
+- Delivery is 3 $ in Lebanon (was free). The status endpoint reports `deliveryFee: 3`; the website accepts 0 (older plugin) or 3 and shows what the plugin reports.
+- Email is required at checkout (order confirmation; cashback voucher). The postcode field is removed for the new-storefront checkout only.
+- Prices on the new-storefront checkout and its receipts show like the website ("75 $", "7.50 $"). Display only: the store's decimal setting and stored prices are unchanged.
+- Install: WordPress → Plugins → Add New → Upload Plugin → `enfantillage-checkout-0.4.0.zip` → "Replace current with uploaded". Settings and the checkout switch are kept.

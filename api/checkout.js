@@ -1,6 +1,8 @@
 // Readiness only: carts are posted by the browser directly to the WooCommerce session.
 const { settings } = require('./commerce');
-const POLICY = Object.freeze({ currency: 'USD', deliveryFee: 0, methods: ['cod', 'whish'], whishNumber: '+961 78 881 100' });
+const POLICY = Object.freeze({ currency: 'USD', deliveryFee: 3, methods: ['cod', 'whish'], whishNumber: '+961 78 881 100' });
+// The WordPress plugin reports the delivery price it charges; 0 is the older plugin (free delivery).
+const DELIVERY_FEES = [0, 3];
 async function readiness(env = process.env, fetcher = fetch) {
   const catalog = settings(env);
   const preview = env.VERCEL_ENV === 'preview' && env.VERCEL_GIT_COMMIT_REF === 'codex/woocommerce-connection';
@@ -11,8 +13,8 @@ async function readiness(env = process.env, fetcher = fetch) {
   });
   if (!response.ok) throw new Error('Checkout is not ready');
   const status = await response.json();
-  if (status.version !== 2 || status.enabled !== true || status.currency !== POLICY.currency || status.deliveryFee !== 0 || status.whishNumber !== POLICY.whishNumber || !Array.isArray(status.methods) || status.methods.length !== 2 || !POLICY.methods.every(m => status.methods.includes(m))) throw new Error('Checkout configuration mismatch');
-  return { enabled: true, ...POLICY, handoffUrl: new URL('/wp-admin/admin-post.php', catalog.storeUrl).href };
+  if (status.version !== 2 || status.enabled !== true || status.currency !== POLICY.currency || !DELIVERY_FEES.includes(status.deliveryFee) || status.whishNumber !== POLICY.whishNumber || !Array.isArray(status.methods) || status.methods.length !== 2 || !POLICY.methods.every(m => status.methods.includes(m))) throw new Error('Checkout configuration mismatch');
+  return { enabled: true, ...POLICY, deliveryFee: status.deliveryFee, handoffUrl: new URL('/wp-admin/admin-post.php', catalog.storeUrl).href };
 }
 async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');

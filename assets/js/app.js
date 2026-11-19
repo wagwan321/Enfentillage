@@ -631,7 +631,7 @@
       return;
     }
     body.innerHTML = `
-      <div class="ship-meter">Free delivery in Lebanon. Final prices and availability are checked at checkout.</div>
+      <div class="ship-meter">Use code <b>${CAMPAIGN.code}</b> at checkout for <b>${CAMPAIGN.pct}% off</b>. Final prices and availability are checked at checkout.</div>
       ${needsReview ? '<p role="alert">Some items or quantities need checking. Reduce quantities or remove unavailable items before checkout.</p>' : ''}
       ${lines.map(([id, q]) => { const p = byId.get(+id) || {id:Number(id),n:'Unavailable toy',i:NO_PHOTO,b:'',s:false,p:0}; return `
         <div class="cart-line">
@@ -642,7 +642,7 @@
           <div class="cart-line__price">${p.s ? money(p.p * q) : 'Unavailable'}</div>
         </div>`; }).join('')}`;
     foot.innerHTML = `<div class="cart-total"><span>Subtotal</span><span>${money(total)}</span></div>
-      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Free delivery in Lebanon.</p>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Delivery: 3 $ anywhere in Lebanon.</p>
       <a class="btn btn--green" style="width:100%" href="checkout.html">Checkout ${icon('arrow', 'icon', 2.6)}</a>
       <p class="cart-pay">Pay by <b>cash on delivery</b> or <img src="assets/img/pay/whish-money.svg" alt="Whish Money" width="62" height="14"></p>`;
   }

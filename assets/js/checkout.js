@@ -26,8 +26,8 @@ document.addEventListener('site:ready', async () => {
       </form>
     </section>
     <aside class="co-card co-summary"><h2>Your toy box</h2><div class="co-lines">${items.map(item => { const p = byId.get(item.id); return `<div class="co-line"><a href="${productUrl(p)}"><img src="${esc(p.i)}" alt=""></a><div><a href="${productUrl(p)}">${esc(p.n)}</a><small>${item.quantity} × ${money(p.p)}</small></div><b>${money(p.p * item.quantity)}</b></div>`; }).join('')}</div>
-      <dl class="co-totals"><dt>Item subtotal</dt><dd>${money(subtotal)}</dd><dt>Delivery in Lebanon</dt><dd>Free</dd></dl>
-      <p>Any valid coupon and the final order total are confirmed at the next step.</p>
+      <dl class="co-totals"><dt>Item subtotal</dt><dd>${money(subtotal)}</dd><dt>Delivery in Lebanon</dt><dd id="coDelivery">3 $</dd></dl>
+      <p>Have code <b>${esc(window.ENF.CAMPAIGN.code)}</b>? Enter it on the next step. The final total is confirmed there.</p>
     </aside></div>`;
   const form = document.getElementById('handoffForm');
   const button = document.getElementById('continueCheckout');
@@ -60,6 +60,7 @@ document.addEventListener('site:ready', async () => {
     const store = new URL((await (await fetch('/api/commerce?resource=config', { signal: AbortSignal.timeout(15000) })).json()).storeUrl);
     if (!config.enabled || url.origin !== store.origin || url.protocol !== 'https:' || url.pathname !== '/wp-admin/admin-post.php' || url.search || url.hash || url.username || url.password) throw new Error('Invalid checkout address');
     form.action = url.href;
+    if (Number.isFinite(config.deliveryFee)) document.getElementById('coDelivery').textContent = config.deliveryFee ? money(config.deliveryFee) : 'Free';
     ready = true;
     button.disabled = false;
     status.textContent = 'Ready to continue to delivery and payment.';

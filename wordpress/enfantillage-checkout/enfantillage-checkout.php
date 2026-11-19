@@ -1,12 +1,14 @@
 <?php
 /**
  * Plugin Name: Enfantillage Checkout Handoff
- * Description: An opt-in cart handoff to WooCommerce checkout, free Lebanon delivery, COD and manually confirmed Whish payments. Disabled until explicitly enabled by an administrator.
- * Version: 0.3.0
+ * Description: An opt-in cart handoff to WooCommerce checkout, 3 $ Lebanon delivery, COD and manually confirmed Whish payments. Disabled until explicitly enabled by an administrator.
+ * Version: 0.4.0
  * Requires PHP: 8.1
  * Requires Plugins: woocommerce
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
+// One delivery price anywhere in Lebanon (US dollars). The website reads it from the status endpoint.
+const ENF_DELIVERY_FEE = 3;
 require_once __DIR__ . '/cart-validation.php';
 require_once __DIR__ . '/storefront-routing.php';
 require_once __DIR__ . '/receipt-validation.php';
@@ -56,7 +58,7 @@ add_action( 'admin_init', function () {
 add_action( 'admin_menu', function () {
     add_submenu_page( 'woocommerce', 'Enfantillage checkout', 'Enfantillage checkout', 'manage_options', 'enf-checkout', function () {
         if ( ! current_user_can( 'manage_options' ) ) { return; }
-        echo '<div class="wrap"><h1>Enfantillage checkout</h1><p>Cart handoff for the new storefront. Free delivery in Lebanon. Cash on delivery or Whish to +961 78 881 100; customers send a payment screenshot to the same number. Whish requires manual confirmation.</p><p>Enable only after backup and staging tests. Existing store settings and Wizard are not modified.</p><form method="post" action="options.php">';
+        echo '<div class="wrap"><h1>Enfantillage checkout</h1><p>Cart handoff for the new storefront. Delivery in Lebanon: 3 $. Cash on delivery or Whish to +961 78 881 100; customers send a payment screenshot to the same number. Whish requires manual confirmation.</p><p>Enable only after backup and staging tests. Existing store settings and Wizard are not modified.</p><form method="post" action="options.php">';
         settings_fields( 'enf_checkout' );
         echo '<input type="hidden" name="enf_checkout_enabled" value="0"><label><input type="checkbox" name="enf_checkout_enabled" value="1" ' . checked( get_option( 'enf_checkout_enabled', '0' ), '1', false ) . '> Enable new-storefront checkout handoff</label>';
         echo '<hr><p>Launch setup: the new website uses www.enfantillagestore.com. WordPress, its dashboard and software connections keep enfantillagestore.com. Enable the following switch only after the www website is ready.</p><input type="hidden" name="enf_storefront_enabled" value="0"><label><input type="checkbox" name="enf_storefront_enabled" value="1" ' . checked( get_option( 'enf_storefront_enabled', '0' ), '1', false ) . '> Send public shopping pages to the new www website</label>';
@@ -72,7 +74,7 @@ add_action( 'rest_api_init', function () {
         'callback' => function () {
             $response = new WP_REST_Response( array(
                 'version' => 2, 'enabled' => enf_checkout_enabled(),
-                'currency' => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : null, 'deliveryFee' => 0,
+                'currency' => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : null, 'deliveryFee' => ENF_DELIVERY_FEE,
                 'methods' => array( 'cod', 'whish' ), 'whishNumber' => '+961 78 881 100',
             ) );
             $response->header( 'Cache-Control', 'no-store' );
@@ -154,7 +156,7 @@ add_action( 'admin_post_enf_checkout_cart', 'enf_checkout_handoff' );
 add_filter( 'woocommerce_package_rates', function ( $rates, $package ) {
     if ( ! enf_checkout_session() ) { return $rates; }
     if ( 'LB' !== ( $package['destination']['country'] ?? '' ) ) { return array(); }
-    return array( 'enf_free_delivery' => new WC_Shipping_Rate( 'enf_free_delivery', 'Free delivery', 0, array(), 'enf_free_delivery' ) );
+    return array( 'enf_delivery' => new WC_Shipping_Rate( 'enf_delivery', 'Delivery in Lebanon', ENF_DELIVERY_FEE, array(), 'enf_delivery' ) );
 }, 100, 2 );
 add_action( 'woocommerce_after_checkout_validation', function ( $data, $errors ) {
     if ( ! enf_checkout_session() ) { return; }
@@ -164,9 +166,29 @@ add_action( 'woocommerce_after_checkout_validation', function ( $data, $errors )
 add_filter( 'woocommerce_checkout_fields', function ( $fields ) {
     if ( enf_checkout_session() ) {
         $fields['billing']['billing_phone']['required'] = true;
-        $fields['billing']['billing_email']['required'] = false;
+        // Email is required: the order confirmation (and the store's cashback voucher) are sent there.
+        $fields['billing']['billing_email']['required'] = true;
+        $fields['billing']['billing_email']['label'] = 'Email address';
+        // Lebanon has no postcodes in everyday use.
+        unset( $fields['billing']['billing_postcode'], $fields['shipping']['shipping_postcode'] );
     }
     return $fields;
+} );
+// Same for WooCommerce's address rules (the JavaScript form and server validation follow these).
+add_filter( 'woocommerce_get_country_locale', function ( $locale ) {
+    if ( enf_checkout_session() ) {
+        $locale['LB']['postcode'] = array( 'required' => false, 'hidden' => true );
+    }
+    return $locale;
+} );
+// Show prices like the website ("75 $", "7.50 $") instead of "75.0 $". Display only: the store's
+// saved decimal setting, stored prices and other connected software are not changed.
+add_filter( 'wc_price_args', function ( $args ) {
+    if ( enf_checkout_session() || enf_checkout_receipt_order() ) { $args['decimals'] = 2; }
+    return $args;
+} );
+add_filter( 'woocommerce_price_trim_zeros', function ( $trim ) {
+    return ( enf_checkout_session() || enf_checkout_receipt_order() ) ? true : $trim;
 } );
 // This field belongs only to the new storefront checkout; the existing store form is unchanged.
 add_action( 'woocommerce_after_order_notes', function ( $checkout ) {
@@ -259,7 +281,7 @@ add_action( 'template_redirect', function () {
         $proof = array( 'orderId' => $receipt_order->get_id(), 'orderKey' => $receipt_order->get_order_key(), 'cartToken' => (string) $receipt_order->get_meta( '_enf_storefront_cart_token' ) );
         if ( enf_checkout_receipt_data( $proof ) ) { $return_url = $context['origin'] . '/order-confirmed.html#' . http_build_query( $proof, '', '&', PHP_QUERY_RFC3986 ); }
     }
-    ?><!doctype html><html <?php language_attributes(); ?>><head><meta charset="<?php bloginfo( 'charset' ); ?>"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Checkout — Enfantillage</title><?php wp_head(); ?><style>body{margin:0;background:#f5f6fb;color:#20254d;font-family:Arial,sans-serif}.enf-checkout{max-width:1080px;margin:auto;padding:24px}.enf-checkout header{margin-bottom:24px}.enf-checkout a{color:#25318c}.enf-checkout input,.enf-checkout select,.enf-checkout textarea{max-width:100%;padding:10px}.enf-checkout button{padding:14px 22px;cursor:pointer}.enf-checkout .woocommerce-error{color:#a51229}.enf-return{display:inline-block;margin:24px 0;padding:14px 20px;background:#25318c;color:white!important;border-radius:10px;text-decoration:none}</style></head><body class="woocommerce woocommerce-checkout"><main class="enf-checkout"><header><a href="<?php echo esc_url( $return_url ?: $context['origin'] . '/shop.html' ); ?>">← Back to Enfantillage</a><h1>Delivery and payment</h1><p>Free delivery in Lebanon. Choose cash on delivery or Whish with manual payment confirmation.</p></header><?php echo do_shortcode( '[woocommerce_checkout]' ); ?><?php if ( $return_url ) { ?><p><a class="enf-return" href="<?php echo esc_url( $return_url ); ?>">Return to Enfantillage</a></p><?php } ?></main><?php wp_footer(); ?></body></html><?php
+    ?><!doctype html><html <?php language_attributes(); ?>><head><meta charset="<?php bloginfo( 'charset' ); ?>"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Checkout — Enfantillage</title><?php wp_head(); ?><style>body{margin:0;background:#f5f6fb;color:#20254d;font-family:Arial,sans-serif}.enf-checkout{max-width:1080px;margin:auto;padding:24px}.enf-checkout header{margin-bottom:24px}.enf-checkout a{color:#25318c}.enf-checkout input,.enf-checkout select,.enf-checkout textarea{max-width:100%;padding:10px}.enf-checkout button{padding:14px 22px;cursor:pointer}.enf-checkout .woocommerce-error{color:#a51229}.enf-return{display:inline-block;margin:24px 0;padding:14px 20px;background:#25318c;color:white!important;border-radius:10px;text-decoration:none}</style></head><body class="woocommerce woocommerce-checkout"><main class="enf-checkout"><header><a href="<?php echo esc_url( $return_url ?: $context['origin'] . '/shop.html' ); ?>">← Back to Enfantillage</a><h1>Delivery and payment</h1><p>Delivery anywhere in Lebanon: 3 $. Choose cash on delivery or Whish with manual payment confirmation.</p></header><?php echo do_shortcode( '[woocommerce_checkout]' ); ?><?php if ( $return_url ) { ?><p><a class="enf-return" href="<?php echo esc_url( $return_url ); ?>">Return to Enfantillage</a></p><?php } ?></main><?php wp_footer(); ?></body></html><?php
     exit;
 }, 5 );
 
