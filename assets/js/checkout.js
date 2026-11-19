@@ -14,12 +14,12 @@ document.addEventListener('site:ready', async () => {
   main.innerHTML = `<h1 class="co-title">Review your order</h1><div class="co-grid">
     <section class="co-card"><h2>Payment preference</h2>
       <form id="handoffForm" method="post">
-        <input type="hidden" name="action" value="enf_checkout_cart"><input type="hidden" name="items" id="handoffItems">
+        <input type="hidden" name="action" value="enf_checkout_cart"><input type="hidden" name="items" id="handoffItems"><input type="hidden" name="cart_token" id="handoffToken">
         <div class="co-pay" role="radiogroup" aria-label="Payment preference">
           <label class="co-pay__opt"><input type="radio" name="payment" value="cod" checked><span class="co-pay__text"><b>Cash on delivery</b><small>Pay the courier when your order arrives.</small></span></label>
           <label class="co-pay__opt"><input type="radio" name="payment" value="whish"><span class="co-pay__text"><b>Whish Money</b><small>Payment is confirmed manually by the store.</small></span></label>
         </div>
-        <p id="whishInstructions" hidden>After WooCommerce confirms your order number and total, send payment to <strong>+961 78 881 100</strong>. Send the payment screenshot and order number to the same number. Wait for the store to confirm payment.</p>
+        <p id="whishInstructions" hidden>After you receive your order number and total, send payment to <strong>+961 78 881 100</strong>. Send the payment screenshot and order number to the same number. Wait for the store to confirm payment.</p>
         <p>Next, enter your delivery details and confirm the final total in our store checkout. Prices and stock are checked again there. Continuing transfers this toy box to your store cart.</p>
         <p id="checkoutStatus" role="status">Checking the store checkout…</p>
         <button class="btn btn--green co-place" type="submit" id="continueCheckout" disabled>Continue to delivery details ${icon('arrow', 'icon', 2.6)}</button>
@@ -27,7 +27,7 @@ document.addEventListener('site:ready', async () => {
     </section>
     <aside class="co-card co-summary"><h2>Your toy box</h2><div class="co-lines">${items.map(item => { const p = byId.get(item.id); return `<div class="co-line"><a href="${productUrl(p)}"><img src="${esc(p.i)}" alt=""></a><div><a href="${productUrl(p)}">${esc(p.n)}</a><small>${item.quantity} × ${money(p.p)}</small></div><b>${money(p.p * item.quantity)}</b></div>`; }).join('')}</div>
       <dl class="co-totals"><dt>Item subtotal</dt><dd>${money(subtotal)}</dd><dt>Delivery in Lebanon</dt><dd>Free</dd></dl>
-      <p>Any valid coupon and the final order total are confirmed by WooCommerce at the next step.</p>
+      <p>Any valid coupon and the final order total are confirmed at the next step.</p>
     </aside></div>`;
   const form = document.getElementById('handoffForm');
   const button = document.getElementById('continueCheckout');
@@ -37,7 +37,13 @@ document.addEventListener('site:ready', async () => {
   form.addEventListener('change', () => { document.getElementById('whishInstructions').hidden = form.elements.payment.value !== 'whish'; });
   form.addEventListener('submit', event => {
     if (!ready || window.ENF_COMMERCE.failed) { event.preventDefault(); return; }
-    try { document.getElementById('handoffItems').value = JSON.stringify(window.ENF_CHECKOUT.cartItems(getCart(), byId)); }
+    try {
+      document.getElementById('handoffItems').value = JSON.stringify(window.ENF_CHECKOUT.cartItems(getCart(), byId));
+      const token = crypto.randomUUID();
+      // Only IDs/quantities and an opaque token; never customer information.
+      localStorage.setItem('enf_handoff', JSON.stringify({token,cart:getCart(),createdAt:Date.now()}));
+      document.getElementById('handoffToken').value=token;
+    }
     catch (error) { event.preventDefault(); status.textContent = error.message; return; }
     button.disabled = true;
     button.textContent = 'Opening store checkout…';

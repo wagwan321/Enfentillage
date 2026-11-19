@@ -13,8 +13,16 @@ function enf_checkout_validate_items( $items, $resolver ) {
             throw new InvalidArgumentException( 'The cart contains an invalid product or quantity.' );
         }
         $product = call_user_func( $resolver, $item['id'] );
-        // Variable/external/grouped products must never be silently treated as simple products.
-        if ( ! $product || ! $product->is_type( 'simple' ) || ! $product->is_purchasable() ||
+        $supported = $product && $product->is_type( 'simple' );
+        if ( $product && $product->is_type( 'variation' ) ) {
+            $parent = call_user_func( $resolver, $product->get_parent_id() );
+            $attributes = $product->get_variation_attributes();
+            // Explicit variations have a unique ID for each complete choice.
+            // "Any option" variations require a different cart contract and stay blocked.
+            $supported = $parent && $parent->is_type( 'variable' ) && 'publish' === $parent->get_status() &&
+                $parent->is_purchasable() && $parent->is_in_stock() && count( $attributes ) > 0 && ! in_array( '', $attributes, true );
+        }
+        if ( ! $supported || 'publish' !== $product->get_status() || ! $product->is_purchasable() ||
             ! $product->is_in_stock() || ! $product->has_enough_stock( $item['quantity'] ) ||
             ( $product->is_sold_individually() && $item['quantity'] !== 1 ) ) {
             throw new InvalidArgumentException( 'A product is unavailable or has insufficient stock. Please review your cart.' );

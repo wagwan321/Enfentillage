@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { readiness } = require('../api/checkout');
 const { cartItems } = require('../assets/js/checkout-cart');
 const preview = { VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'codex/woocommerce-connection' };
-const status = { version: 1, enabled: true, currency: 'USD', deliveryFee: 0, methods: ['cod', 'whish'], whishNumber: '+961 78 881 100' };
+const status = { version: 2, enabled: true, currency: 'USD', deliveryFee: 0, methods: ['cod', 'whish'], whishNumber: '+961 78 881 100' };
 const response = data => ({ ok: true, json: async () => data });
 test('checkout stays off in production, on another branch, and when explicitly disabled', async () => {
  const mustNotFetch = () => { throw new Error('Unexpected upstream request'); };
@@ -19,7 +19,7 @@ test('handoff requires matching readiness and the configured HTTPS backend', asy
   return response(status);
  });
  assert.equal(result.handoffUrl, 'https://enfantillagestore.com/wp-admin/admin-post.php');
- for (const change of [{ enabled: false }, { version: 2 }, { deliveryFee: 3 }, { currency: 'EUR' }, { methods: ['stripe'] }, { whishNumber: '+96100000000' }]) {
+ for (const change of [{ enabled: false }, { version: 1 }, { deliveryFee: 3 }, { currency: 'EUR' }, { methods: ['stripe'] }, { whishNumber: '+96100000000' }]) {
   await assert.rejects(readiness(preview, async () => response({ ...status, ...change })));
  }
  await assert.rejects(readiness(preview, async () => ({ ok: false })));

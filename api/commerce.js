@@ -1,5 +1,5 @@
 // Public catalog only. Never forwards WordPress cookies, credentials or arbitrary URLs.
-const FIELDS = 'id,name,type,permalink,prices,is_in_stock,is_purchasable,images,categories,brands,attributes,variations';
+const FIELDS = 'id,name,type,parent,permalink,prices,is_in_stock,is_purchasable,images,categories,brands,attributes,variations,add_to_cart';
 function settings(env = process.env) {
   // Temporary read-only preview configuration. Both conditions are required:
   // merging this branch must never activate the production storefront.

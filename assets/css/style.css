@@ -1776,3 +1776,6 @@ a[href^="tel:"] { white-space: nowrap; }
   .to-top.to-top--plain { width: 44px; height: 44px; right: 12px; }
   .to-top--plain .to-top__up svg { width: 20px; height: 20px; }
 }
+
+/* Respect semantic visibility for checkout instructions and receipt retry. */
+[hidden] { display: none !important; }

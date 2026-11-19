@@ -2,13 +2,14 @@
 /**
  * Plugin Name: Enfantillage Checkout Handoff
  * Description: An opt-in cart handoff to WooCommerce checkout, free Lebanon delivery, COD and manually confirmed Whish payments. Disabled until explicitly enabled by an administrator.
- * Version: 0.2.0
+ * Version: 0.3.0
  * Requires PHP: 8.1
  * Requires Plugins: woocommerce
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 require_once __DIR__ . '/cart-validation.php';
 require_once __DIR__ . '/storefront-routing.php';
+require_once __DIR__ . '/receipt-validation.php';
 add_action( 'before_woocommerce_init', function () {
     if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
@@ -70,11 +71,21 @@ add_action( 'rest_api_init', function () {
         'methods' => 'GET', 'permission_callback' => '__return_true',
         'callback' => function () {
             $response = new WP_REST_Response( array(
-                'version' => 1, 'enabled' => enf_checkout_enabled(),
+                'version' => 2, 'enabled' => enf_checkout_enabled(),
                 'currency' => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : null, 'deliveryFee' => 0,
                 'methods' => array( 'cod', 'whish' ), 'whishNumber' => '+961 78 881 100',
             ) );
             $response->header( 'Cache-Control', 'no-store' );
+            return $response;
+        },
+    ) );
+    register_rest_route( 'enfantillage/v1', '/receipt', array(
+        'methods' => 'POST', 'permission_callback' => '__return_true',
+        'callback' => function ( $request ) {
+            if ( strlen( $request->get_body() ) > 2048 ) { return new WP_Error( 'enf_receipt', 'Receipt could not be verified.', array( 'status' => 404 ) ); }
+            $data = enf_checkout_receipt_data( $request->get_json_params() );
+            if ( ! $data ) { return new WP_Error( 'enf_receipt', 'Receipt could not be verified.', array( 'status' => 404 ) ); }
+            $response = new WP_REST_Response( $data ); $response->header( 'Cache-Control', 'no-store' );
             return $response;
         },
     ) );
@@ -90,7 +101,9 @@ function enf_checkout_handoff() {
     }
     $raw = isset( $_POST['items'] ) && is_string( $_POST['items'] ) ? wp_unslash( $_POST['items'] ) : '';
     $method = isset( $_POST['payment'] ) && is_string( $_POST['payment'] ) ? $_POST['payment'] : '';
-    if ( strlen( $raw ) > 16384 || ! in_array( $method, array( 'cod', 'whish' ), true ) ) {
+    $token = isset( $_POST['cart_token'] ) && is_string( $_POST['cart_token'] ) ? $_POST['cart_token'] : '';
+    if ( strlen( $raw ) > 16384 || ! in_array( $method, array( 'cod', 'whish' ), true ) ||
+        ! preg_match( '/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/D', $token ) ) {
         wp_die( 'Invalid checkout request.', 'Checkout', array( 'response' => 400 ) );
     }
     try {
@@ -107,9 +120,13 @@ function enf_checkout_handoff() {
     $old_method = $session->get( 'chosen_payment_method' );
     try {
         $cart->empty_cart( false );
-        $session->set( 'enf_checkout_context', array( 'origin' => $origin, 'expires' => time() + 2 * HOUR_IN_SECONDS ) );
+        $session->set( 'enf_checkout_context', array( 'origin' => $origin, 'expires' => time() + 2 * HOUR_IN_SECONDS, 'cart_token' => $token ) );
         foreach ( $items as $item ) {
-            if ( ! $cart->add_to_cart( $item['id'], $item['quantity'] ) ) { throw new RuntimeException( 'Cart validation failed.' ); }
+            $product = wc_get_product( $item['id'] );
+            $added = $product && $product->is_type( 'variation' )
+                ? $cart->add_to_cart( $product->get_parent_id(), $item['quantity'], $item['id'], $product->get_variation_attributes() )
+                : $cart->add_to_cart( $item['id'], $item['quantity'] );
+            if ( ! $added ) { throw new RuntimeException( 'Cart validation failed.' ); }
         }
         // Recompute rates instead of reusing an earlier store cart's shipping cache.
         foreach ( array_keys( $session->get_session_data() ) as $key ) {
@@ -151,10 +168,20 @@ add_filter( 'woocommerce_checkout_fields', function ( $fields ) {
     }
     return $fields;
 } );
+// This field belongs only to the new storefront checkout; the existing store form is unchanged.
+add_action( 'woocommerce_after_order_notes', function ( $checkout ) {
+    if ( ! enf_checkout_session() ) { return; }
+    woocommerce_form_field( 'enf_gift_wrap', array( 'type' => 'checkbox', 'label' => 'Wrap my gifts', 'required' => false ), $checkout->get_value( 'enf_gift_wrap' ) );
+} );
 add_action( 'woocommerce_checkout_create_order', function ( $order ) {
     if ( enf_checkout_session() ) {
         $order->update_meta_data( '_enf_storefront_checkout', 'yes' );
+        if ( isset( $_POST['enf_gift_wrap'] ) && '1' === $_POST['enf_gift_wrap'] ) {
+            $order->update_meta_data( 'Gift wrapping', 'Requested' );
+            $order->set_customer_note( trim( $order->get_customer_note() . "\nGift wrapping requested." ) );
+        }
         $order->update_meta_data( '_enf_storefront_origin', WC()->session->get( 'enf_checkout_context' )['origin'] );
+        $order->update_meta_data( '_enf_storefront_cart_token', WC()->session->get( 'enf_checkout_context' )['cart_token'] ?? '' );
     }
 } );
 add_filter( 'woocommerce_get_checkout_url', function ( $url ) { return enf_checkout_session() ? enf_checkout_url() : $url; } );
@@ -223,11 +250,16 @@ add_action( 'template_redirect', function () {
     header( 'X-Robots-Tag: noindex, nofollow' );
     wp_enqueue_script( 'wc-checkout' );
     $context = WC()->session ? WC()->session->get( 'enf_checkout_context' ) : null;
-    if ( ! is_array( $context ) || ! in_array( $context['origin'] ?? '', enf_checkout_origins(), true ) ) {
+    if ( $receipt_order || ! is_array( $context ) || ! in_array( $context['origin'] ?? '', enf_checkout_origins(), true ) ) {
         $origin = $receipt_order ? $receipt_order->get_meta( '_enf_storefront_origin' ) : '';
         $context = array( 'origin' => in_array( $origin, enf_checkout_origins(), true ) ? $origin : 'https://enfantillagestore.com' );
     }
-    ?><!doctype html><html <?php language_attributes(); ?>><head><meta charset="<?php bloginfo( 'charset' ); ?>"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Checkout — Enfantillage</title><?php wp_head(); ?><style>body{margin:0;background:#f5f6fb;color:#20254d;font-family:Arial,sans-serif}.enf-checkout{max-width:1080px;margin:auto;padding:24px}.enf-checkout header{margin-bottom:24px}.enf-checkout a{color:#25318c}.enf-checkout input,.enf-checkout select,.enf-checkout textarea{max-width:100%;padding:10px}.enf-checkout button{padding:14px 22px;cursor:pointer}.enf-checkout .woocommerce-error{color:#a51229}</style></head><body class="woocommerce woocommerce-checkout"><main class="enf-checkout"><header><a href="<?php echo esc_url( $context['origin'] . '/shop.html' ); ?>">← Back to Enfantillage</a><h1>Delivery and payment</h1><p>Free delivery in Lebanon. Choose cash on delivery or Whish with manual payment confirmation.</p></header><?php echo do_shortcode( '[woocommerce_checkout]' ); ?></main><?php wp_footer(); ?></body></html><?php
+    $return_url = '';
+    if ( $receipt_order ) {
+        $proof = array( 'orderId' => $receipt_order->get_id(), 'orderKey' => $receipt_order->get_order_key(), 'cartToken' => (string) $receipt_order->get_meta( '_enf_storefront_cart_token' ) );
+        if ( enf_checkout_receipt_data( $proof ) ) { $return_url = $context['origin'] . '/order-confirmed.html#' . http_build_query( $proof, '', '&', PHP_QUERY_RFC3986 ); }
+    }
+    ?><!doctype html><html <?php language_attributes(); ?>><head><meta charset="<?php bloginfo( 'charset' ); ?>"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Checkout — Enfantillage</title><?php wp_head(); ?><style>body{margin:0;background:#f5f6fb;color:#20254d;font-family:Arial,sans-serif}.enf-checkout{max-width:1080px;margin:auto;padding:24px}.enf-checkout header{margin-bottom:24px}.enf-checkout a{color:#25318c}.enf-checkout input,.enf-checkout select,.enf-checkout textarea{max-width:100%;padding:10px}.enf-checkout button{padding:14px 22px;cursor:pointer}.enf-checkout .woocommerce-error{color:#a51229}.enf-return{display:inline-block;margin:24px 0;padding:14px 20px;background:#25318c;color:white!important;border-radius:10px;text-decoration:none}</style></head><body class="woocommerce woocommerce-checkout"><main class="enf-checkout"><header><a href="<?php echo esc_url( $return_url ?: $context['origin'] . '/shop.html' ); ?>">← Back to Enfantillage</a><h1>Delivery and payment</h1><p>Free delivery in Lebanon. Choose cash on delivery or Whish with manual payment confirmation.</p></header><?php echo do_shortcode( '[woocommerce_checkout]' ); ?><?php if ( $return_url ) { ?><p><a class="enf-return" href="<?php echo esc_url( $return_url ); ?>">Return to Enfantillage</a></p><?php } ?></main><?php wp_footer(); ?></body></html><?php
     exit;
 }, 5 );
 

@@ -48,8 +48,8 @@
     })())
     : (detailChunks[id % 20] || (detailChunks[id % 20] =
     fetch(`assets/data/details/${id % 20}.json`).then(r => r.json()).catch(() => ({})))).then(all => all[id]);
-  const productUrl = p => `product.html?id=${p.id}`;
-  const byId = new Map(P.map(p => [p.id, p]));
+  const productUrl = p => `product.html?id=${p._parentId || p.id}${p._parentId ? '&option=' + p.id : ''}`;
+  const byId = new Map([...P.map(p => [p.id, p]), ...(window.ENF_COMMERCE?.cartProducts || new Map())]);
 
   /* ---------- palette ---------- */
   const COLORS = {
@@ -394,6 +394,8 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode */ } },
   };
   let cart = store.get('enf_cart', {});
+  cart = cart && typeof cart === 'object' && !Array.isArray(cart)
+    ? Object.fromEntries(Object.entries(cart).filter(([id,q]) => /^[1-9]\d{0,9}$/.test(id) && Number.isInteger(q) && q > 0 && q <= 99)) : {};
   let favs = new Set(store.get('enf_favs', []));
 
   /* ==========================================================================
@@ -428,7 +430,7 @@
           ${priceHTML(p)}
           ${p.p && p.s && (!p._live || p._canAdd) ? `<button class="add-btn${added}" data-add="${p.id}" type="button" aria-label="Add ${esc(p.n)} to cart">
             ${icon('cart', 'icon i-cart', 2.4)}${icon('check', 'icon i-check', 3)}
-          </button>` : `<a class="ask-btn" href="tel:+9613720233" aria-label="${p.s ? 'Call the store about' : 'Sold out. Call the store about'} ${esc(p.n)}">${icon('phone', 'icon', 2.4)}</a>`}
+          </button>` : p._live && p.v && p.s ? `<a class="ask-btn" href="${productUrl(p)}" aria-label="Choose options for ${esc(p.n)}">${icon('arrow', 'icon', 2.4)}</a>` : `<a class="ask-btn" href="tel:+9613720233" aria-label="${p.s ? 'Call the store about' : 'Sold out. Call the store about'} ${esc(p.n)}">${icon('phone', 'icon', 2.4)}</a>`}
         </div>
       </div>
     </article>`;
@@ -618,7 +620,8 @@
     const body = document.getElementById('cartBody');
     const foot = document.getElementById('cartFoot');
     if (!body) return;
-    const lines = Object.entries(cart).filter(([id]) => byId.has(+id));
+    const lines = Object.entries(cart);
+    const needsReview = lines.some(([id,q]) => {const p=byId.get(+id);return !p || !p.s || q > (p._maxQty || 99) || (p._live && !p._canAdd);});
     const total = cartTotal();
     if (!lines.length) {
       body.innerHTML = `<div class="cart-empty"><div class="empty-art" aria-hidden="true">${balloon('#e8222b', 54)}${balloon('#ffc83d', 44)}${balloon('#00a6e4', 50)}</div><h3 style="color:var(--navy);font-size:24px;margin:10px 0 4px">Your toy box is empty!</h3><p>Let’s fill it with something fun.</p><br><a class="btn btn--red" href="shop.html">Start shopping</a></div>`;
@@ -627,13 +630,14 @@
     }
     body.innerHTML = `
       <div class="ship-meter">Free delivery in Lebanon. Final prices and availability are checked at checkout.</div>
-      ${lines.map(([id, q]) => { const p = byId.get(+id); return `
+      ${needsReview ? '<p role="alert">Some items or quantities need checking. Reduce quantities or remove unavailable items before checkout.</p>' : ''}
+      ${lines.map(([id, q]) => { const p = byId.get(+id) || {id:Number(id),n:'Unavailable toy',i:NO_PHOTO,b:'',s:false,p:0}; return `
         <div class="cart-line">
           <img src="${esc(p.i)}" alt="">
           <div><h5>${esc(p.n)}</h5><small>${esc(brandName(p.b))}</small><br>
-            <span class="qty"><button type="button" data-qty="${p.id}" data-d="-1" aria-label="Decrease">−</button><span>${q}</span><button type="button" data-qty="${p.id}" data-d="1" aria-label="Increase">+</button></span>
+            ${p.s ? `<span class="qty"><button type="button" data-qty="${p.id}" data-d="-1" aria-label="Decrease">−</button><span>${q}</span><button type="button" data-qty="${p.id}" data-d="1" aria-label="Increase">+</button></span>` : `<button type="button" data-qty="${p.id}" data-d="${-q}">Remove unavailable item</button>`}
           </div>
-          <div class="cart-line__price">${money(p.p * q)}</div>
+          <div class="cart-line__price">${p.s ? money(p.p * q) : 'Unavailable'}</div>
         </div>`; }).join('')}`;
     foot.innerHTML = `<div class="cart-total"><span>Subtotal</span><span>${money(total)}</span></div>
       <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Free delivery in Lebanon.</p>
@@ -643,9 +647,9 @@
 
   function addToCart(id, fromEl, qty = 1) {
     const prod = byId.get(id);
-    if (!prod || !prod.p || !prod.s) return;
-    if (window.ENF_COMMERCE?.failed) return;
-    if (prod._live && !prod._canAdd) { toast('Please contact the store to select the available options.'); return; }
+    if (!prod || !prod.p || !prod.s || !Number.isInteger(qty) || qty < 1 || window.ENF_COMMERCE?.failed) return false;
+    if (prod._live && !prod._canAdd) { toast('Please choose an available option on the product page.'); return false; }
+    if ((cart[id] || 0) + qty > (prod._maxQty || 99)) { toast('This quantity is not available. Please reduce the quantity.'); return false; }
     cart[id] = (cart[id] || 0) + qty;
     store.set('enf_cart', cart);
     renderCart();
@@ -653,8 +657,10 @@
     document.querySelectorAll(`[data-add="${id}"]`).forEach(b => b.classList.add('is-added'));
     const p = byId.get(id);
     toast(`${qty > 1 ? qty + ' × ' : ''}<b>${esc(p.n.length > 38 ? p.n.slice(0, 36) + '…' : p.n)}</b> added to your toy box`);
+    return true;
   }
   function setQty(id, d) {
+    if (d > 0 && (!byId.get(id)?.s || (cart[id] || 0) + d > (byId.get(id)?._maxQty || 99))) { toast('This quantity is not available.'); return; }
     cart[id] = (cart[id] || 0) + d;
     if (cart[id] <= 0) { delete cart[id]; document.querySelectorAll(`[data-add="${id}"]`).forEach(b => b.classList.remove('is-added')); }
     store.set('enf_cart', cart);
@@ -762,8 +768,8 @@
         <h3>${esc(p.n)}</h3>
         <div class="modal__meta">
           ${ages.map(a => `<span style="${colorVars(a.color)}">Ages ${a.num}</span>`).join('')}
-          ${cats.map(c => `<span style="${colorVars(c.color)}">${c.name}</span>`).join('')}
-          ${chars.map(c => `<span style="${colorVars(c.color)}">${c.name}</span>`).join('')}
+          ${cats.map(c => `<span style="${colorVars(c.color)}">${esc(c.name)}</span>`).join('')}
+          ${chars.map(c => `<span style="${colorVars(c.color)}">${esc(c.name)}</span>`).join('')}
         </div>
         ${p.p ? `<div class="modal__price">${p.v ? '<small>from</small> ' : ''}${money(p.p)}${p.o ? `<s>${money(p.o)}</s> <span class="badge badge--sale" style="vertical-align:middle">-${pct}%</span>` : ''}</div>`
               : '<div class="modal__price price--ask">Ask in store for the price</div>'}
@@ -771,7 +777,7 @@
         <div class="modal__desc" id="qvDesc"><span class="modal__loading">Loading details…</span></div>
         <div class="modal__actions">
           ${p.p && p.s && (!p._live || p._canAdd) ? `<button class="btn btn--red" type="button" data-add="${p.id}">${icon('cart', 'icon', 2.4)} Add to cart</button>`
-                : `<a class="btn btn--red" href="tel:+9613720233">${icon('phone', 'icon', 2.4)} Call the store</a>`}
+                : p._live && p.v && p.s ? `<a class="btn btn--red" href="${productUrl(p)}">Choose options ${icon('arrow', 'icon', 2.4)}</a>` : `<a class="btn btn--red" href="tel:+9613720233">${icon('phone', 'icon', 2.4)} Call the store</a>`}
           <button class="btn btn--white" type="button" data-fav-btn="${p.id}">${icon('heart', 'icon', 2.4)} ${favs.has(p.id) ? 'Saved' : 'Wishlist'}</button>
         </div>
         <a class="modal__more" href="${productUrl(p)}">See the full product page ${icon('arrow', 'icon', 2.6)}</a>

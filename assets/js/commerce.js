@@ -1,5 +1,5 @@
 /* Opt-in public WooCommerce catalog adapter. Checkout is deliberately a separate step. */
-window.ENF_COMMERCE = { enabled: false, failed: false, ready: null };
+window.ENF_COMMERCE = { enabled: false, failed: false, ready: null, cartProducts: new Map() };
 window.ENF_COMMERCE.ready = (async () => {
   const state = window.ENF_COMMERCE;
   try {
@@ -20,7 +20,7 @@ window.ENF_COMMERCE.ready = (async () => {
     };
     const safeImage = url => { try { const u = new URL(url); return u.protocol === 'https:' ? u.href : ''; } catch { return ''; } };
     state.categories = [...new Map(products.flatMap(p => p.categories).map(c => [c.id, { key: 'wc-' + c.id, name: text(c.name), color: 'navy' }])).values()];
-    window.PRODUCTS = products.map(raw => {
+    const mapProduct = raw => {
       const old = previous.get(raw.id);
       const name = text(raw.name);
       const unit = Number(raw.prices.currency_minor_unit);
@@ -36,8 +36,54 @@ window.ENF_COMMERCE.ready = (async () => {
         b: raw.brands?.length ? text(raw.brands[0].name).toUpperCase() : (name.split(/\s+[–—-]\s+/).length > 1 ? name.split(/\s+[–—-]\s+/)[0].toUpperCase() : old?.b || ''),
         c: [...(old?.c || []), ...raw.categories.map(c => 'wc-' + c.id)], a: ages, h: old?.h || [],
         i: images[0] || 'assets/img/no-photo.svg', _images: images, _live: true, r: undefined,
-        _canAdd: raw.type === 'simple' && !!raw.is_purchasable, _categoryNames: categoryNames };
-    });
+        _canAdd: raw.type === 'simple' && !!raw.is_purchasable, _categoryNames: categoryNames,
+        _maxQty: Math.max(1, Math.min(99, Number(raw.add_to_cart?.maximum) || 99)),
+        _options: (raw.attributes || []).filter(a => a.has_variations).map(a => ({
+          name: text(a.name), terms: (a.terms || []).map(t => ({value: String(t.slug || t.name), label: text(t.name)}))
+        })),
+        _choices: (raw.variations || []).map(v => ({id: v.id, attributes: (v.attributes || []).map(a => ({name: text(a.name), value: String(a.value || '')}))})) };
+    };
+    window.PRODUCTS = products.map(mapProduct);
+    const parents = new Map(window.PRODUCTS.map(p => [p.id, p]));
+    const pending = new Map();
+    const read = async id => {
+      const r = await fetch('/api/commerce?resource=product&id=' + encodeURIComponent(id), {cache:'no-store',signal:AbortSignal.timeout(15000)});
+      if (!r.ok) throw new Error('This option could not be checked. Please try again.');
+      const {product} = await r.json();
+      if (product?.id !== id) throw new Error('This option could not be checked.');
+      return product;
+    };
+    state.loadVariation = async (parentId, id, loaded) => {
+      const parent = parents.get(parentId);
+      const choice = parent?._choices.find(v => v.id === id);
+      if (!parent?.v || !parent._options.length || !choice || choice.attributes.length !== parent._options.length ||
+          !parent._options.every(a => choice.attributes.filter(v => v.name === a.name && a.terms.some(t => t.value === v.value)).length === 1)) {
+        throw new Error('Please contact the store about this option.');
+      }
+      if (!pending.has(id)) pending.set(id, (async () => {
+        const raw = loaded || await read(id);
+        if (raw.id !== id || raw.type !== 'variation' || raw.parent !== parentId) throw new Error('Invalid product option.');
+        const selected = mapProduct(raw);
+        const labels = parent._options.map(a => a.terms.find(t => t.value === choice.attributes.find(v => v.name === a.name).value).label);
+        const images = selected._images.length ? selected._images : parent._images;
+        const result = {...parent, ...selected, n: parent.n + ' — ' + labels.join(' / '), b:parent.b, c:parent.c, a:parent.a, h:parent.h,
+          v:false, _canAdd:!!raw.is_purchasable, s:parent.s && selected.s, _parentId:parentId,
+          _images:images, i:images[0] || parent.i, _options:[], _choices:[]};
+        state.cartProducts.set(id,result);
+        return result;
+      })().catch(error => {pending.delete(id); throw error;}));
+      return pending.get(id);
+    };
+    // Variation IDs are rechecked from WooCommerce after every page load.
+    // No price, stock or product metadata from local storage is trusted.
+    let saved = {};
+    try { saved = JSON.parse(window.localStorage?.getItem('enf_cart') || '{}'); } catch {}
+    const missing = saved && typeof saved === 'object' && !Array.isArray(saved)
+      ? Object.keys(saved).filter(id => /^[1-9]\d{0,9}$/.test(id) && !parents.has(Number(id))).slice(0,30).map(Number) : [];
+    for (let i=0; i<missing.length; i+=3) await Promise.allSettled(missing.slice(i,i+3).map(async id => {
+      const raw = await read(id);
+      if (raw.type === 'variation') await state.loadVariation(raw.parent,id,raw);
+    }));
     state.fetchedAt = Date.now();
   } catch {
     state.failed = true;
