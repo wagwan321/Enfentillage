@@ -14,7 +14,9 @@ async function readiness(env = process.env, fetcher = fetch) {
   if (!response.ok) throw new Error('Checkout is not ready');
   const status = await response.json();
   if (status.version !== 2 || status.enabled !== true || status.currency !== POLICY.currency || !DELIVERY_FEES.includes(status.deliveryFee) || status.whishNumber !== POLICY.whishNumber || !Array.isArray(status.methods) || status.methods.length !== 2 || !POLICY.methods.every(m => status.methods.includes(m))) throw new Error('Checkout configuration mismatch');
-  return { enabled: true, ...POLICY, deliveryFee: status.deliveryFee, handoffUrl: new URL('/wp-admin/admin-post.php', catalog.storeUrl).href };
+  // 15 $ when the order has a large toy (plugin 0.9.0+); null with an older plugin
+  const largeDeliveryFee = Number.isInteger(status.largeDeliveryFee) && status.largeDeliveryFee > status.deliveryFee && status.largeDeliveryFee <= 100 ? status.largeDeliveryFee : null;
+  return { enabled: true, ...POLICY, deliveryFee: status.deliveryFee, largeDeliveryFee, handoffUrl: new URL('/wp-admin/admin-post.php', catalog.storeUrl).href };
 }
 async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');

@@ -70,3 +70,15 @@ test('automatic campaign discount is only trusted when the enabled plugin report
   assert.equal(await readAutoDiscount(config, reply(body)), 0);
  assert.equal(await readAutoDiscount(config, async () => { throw new Error('down'); }), 0);
 });
+
+test('large toys and their delivery price come only from the enabled plugin, validated', async () => {
+ const { readStoreStatus } = require('../api/commerce');
+ const config = { enabled: true, storeUrl: 'https://enfantillagestore.com' };
+ const reply = body => async () => ({ ok: true, json: async () => body });
+ assert.deepEqual(await readStoreStatus(config, reply({ enabled: true, largeDeliveryFee: 15, largeItems: [31892, 52228] })), { autoDiscount: 0, largeDeliveryFee: 15, largeItems: [31892, 52228] });
+ const none = { autoDiscount: 0, largeDeliveryFee: null, largeItems: [] };
+ for (const body of [{ enabled: true }, { enabled: false, largeDeliveryFee: 15, largeItems: [1] }, { enabled: true, largeDeliveryFee: '15', largeItems: [1] }, { enabled: true, largeDeliveryFee: 1000, largeItems: [1] }])
+  assert.deepEqual(await readStoreStatus(config, reply(body)), none);
+ assert.deepEqual((await readStoreStatus(config, reply({ enabled: true, largeDeliveryFee: 15, largeItems: [1, 'x'] }))).largeItems, []);
+ assert.deepEqual(await readStoreStatus(config, async () => { throw new Error('down'); }), none);
+});

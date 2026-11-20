@@ -85,17 +85,28 @@ async function readProduct(config, id, fetcher = fetch) {
 // The automatic campaign discount (e.g. 20% off everything) as reported by the WordPress checkout plugin.
 // 0 when the plugin doesn't apply one (older plugin, campaign over, store unreachable): the website then
 // never shows prices the checkout wouldn't charge.
-async function readAutoDiscount(config, fetcher = fetch) {
+// Also the large toys (shipping class "Large item" in WooCommerce) and their delivery price (15 $),
+// so the website shows the right delivery before checkout. Nothing large when the plugin doesn't say so.
+async function readStoreStatus(config, fetcher = fetch) {
+  const none = { autoDiscount: 0, largeDeliveryFee: null, largeItems: [] };
   try {
     const response = await fetcher(new URL('/wp-json/enfantillage/v1/checkout-status', config.storeUrl), {
       redirect: 'error', signal: AbortSignal.timeout(6000), headers: { Accept: 'application/json' },
     });
-    if (!response.ok) return 0;
+    if (!response.ok) return none;
     const status = await response.json();
+    if (status?.enabled !== true) return none;
     const pct = status?.discount?.pct;
-    return status?.enabled === true && Number.isInteger(pct) && pct > 0 && pct <= 50 ? pct : 0;
-  } catch { return 0; }
+    const fee = status.largeDeliveryFee;
+    const ids = Array.isArray(status.largeItems) && status.largeItems.length <= 5000 && status.largeItems.every(id => Number.isSafeInteger(id) && id > 0) ? status.largeItems : [];
+    return {
+      autoDiscount: Number.isInteger(pct) && pct > 0 && pct <= 50 ? pct : 0,
+      largeDeliveryFee: Number.isInteger(fee) && fee > 0 && fee <= 100 ? fee : null,
+      largeItems: Number.isInteger(fee) && fee > 0 && fee <= 100 ? ids : [],
+    };
+  } catch { return none; }
 }
+async function readAutoDiscount(config, fetcher = fetch) { return (await readStoreStatus(config, fetcher)).autoDiscount; }
 async function handler(req, res) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Cache-Control', 'no-store');
@@ -104,7 +115,7 @@ async function handler(req, res) {
     const config = settings();
     if (req.query.resource === 'config') {
       res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400');
-      return res.status(200).json(config.enabled ? { ...config, autoDiscount: await readAutoDiscount(config) } : config);
+      return res.status(200).json(config.enabled ? { ...config, ...await readStoreStatus(config) } : config);
     }
     if (!config.enabled) return res.status(503).json({ error: 'Catalog connection is not enabled' });
     if (req.query.resource === 'product') {
@@ -128,3 +139,4 @@ module.exports.readProduct = readProduct;
 module.exports.catalogProduct = catalogProduct;
 module.exports.readCategoryPaths = readCategoryPaths;
 module.exports.readAutoDiscount = readAutoDiscount;
+module.exports.readStoreStatus = readStoreStatus;

@@ -28,7 +28,7 @@ document.addEventListener('site:ready', async () => {
       </form>
     </section>
     <aside class="co-card co-summary"><h2>Your toy box</h2><div class="co-lines">${items.map(item => { const p = byId.get(item.id); return `<div class="co-line"><a href="${productUrl(p)}"><img src="${esc(p.i)}" alt=""></a><div><a href="${productUrl(p)}">${esc(p.n)}</a><small>${item.quantity} × ${money(p.p)}</small></div><b>${money(p.p * item.quantity)}</b></div>`; }).join('')}</div>
-      <dl class="co-totals"><dt>Item subtotal</dt><dd>${money(subtotal)}</dd><dt>Delivery in Lebanon</dt><dd id="coDelivery">5 $</dd></dl>
+      <dl class="co-totals"><dt>Item subtotal</dt><dd>${money(subtotal)}</dd><dt id="coDeliveryLabel">Delivery in Lebanon</dt><dd id="coDelivery">${money(window.ENF.deliveryFor(items.map(i => i.id)))}</dd></dl>
       <p>${window.ENF.CAMPAIGN.auto ? `<b>${window.ENF.CAMPAIGN.pct}% off everything</b> is already included. ` : window.ENF.CAMPAIGN.active ? `Have code <b>${esc(window.ENF.CAMPAIGN.code)}</b>? Enter it on the next step. ` : ''}The final total is confirmed there.</p>
     </aside></div>`;
   const form = document.getElementById('handoffForm');
@@ -66,7 +66,13 @@ document.addEventListener('site:ready', async () => {
     const store = new URL((await (await fetch('/api/commerce?resource=config', { signal: AbortSignal.timeout(15000) })).json()).storeUrl);
     if (!config.enabled || url.origin !== store.origin || url.protocol !== 'https:' || url.pathname !== '/wp-admin/admin-post.php' || url.search || url.hash || url.username || url.password) throw new Error('Invalid checkout address');
     form.action = url.href;
-    if (Number.isFinite(config.deliveryFee)) document.getElementById('coDelivery').textContent = config.deliveryFee ? money(config.deliveryFee) : 'Free';
+    if (Number.isFinite(config.deliveryFee)) {
+      // a large toy in the box: the plugin's large-item price, once for the whole order
+      const large = Number.isFinite(config.largeDeliveryFee) && items.some(i => window.ENF.isLarge(byId.get(i.id)));
+      const fee = large ? config.largeDeliveryFee : config.deliveryFee;
+      document.getElementById('coDelivery').textContent = fee ? money(fee) : 'Free';
+      if (large) document.getElementById('coDeliveryLabel').textContent = 'Delivery in Lebanon (large toy)';
+    }
     ready = true;
     button.disabled = false;
     status.textContent = 'Ready to continue to delivery and payment.';

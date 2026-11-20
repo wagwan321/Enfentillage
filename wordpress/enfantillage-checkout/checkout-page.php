@@ -106,7 +106,8 @@ function enf_checkout_page_html( $context, $return_url, $receipt_order ) {
   <?php if ( ! $done ) { ?>
   <ul class="enf-perks">
     <?php if ( enf_discount_active() ) { ?><li class="is-red"><i>-<?php echo (int) ENF_DISCOUNT_PCT; ?>%</i>Already taken off everything</li><?php } ?>
-    <li class="is-blue"><i><?php echo (int) ENF_DELIVERY_FEE; ?> $</i>Delivery anywhere in Lebanon</li>
+    <?php $enf_fee = enf_cart_delivery_fee(); ?>
+    <li class="is-blue"><i><?php echo (int) $enf_fee; ?> $</i><?php echo ENF_LARGE_DELIVERY_FEE === $enf_fee ? 'Delivery for large toys, anywhere in Lebanon' : 'Delivery anywhere in Lebanon'; ?></li>
     <?php if ( enf_discount_active() ) { ?><li class="is-green"><i>+<?php echo (int) ENF_CASHBACK_PCT; ?>%</i>Back as a store voucher</li><?php } ?>
   </ul>
   <?php } ?>

@@ -37,6 +37,9 @@ window.ENF_COMMERCE.ready = (async () => {
     state.autoDiscount = Number.isInteger(config.autoDiscount) && config.autoDiscount > 0 && config.autoDiscount <= 50 ? config.autoDiscount : 0;
     // never past the end of the campaign (end of 25 December, Beirut), even from a cached reply
     if (Date.now() >= Date.parse('2026-12-26T00:00:00+02:00') || /[?&]campaign=off(&|$)/.test(globalThis.location?.search || '')) state.autoDiscount = 0;
+    // large toys (marked "Large item" in WooCommerce) are delivered for a higher price, once per order
+    state.largeDeliveryFee = Number.isInteger(config.largeDeliveryFee) && config.largeDeliveryFee > 0 && config.largeDeliveryFee <= 100 ? config.largeDeliveryFee : null;
+    const large = new Set(state.largeDeliveryFee && Array.isArray(config.largeItems) ? config.largeItems.filter(Number.isSafeInteger) : []);
     const products = cached || await catalogRequest;
     // refresh the saved copy quietly once the page has had time to draw
     if (cached) setTimeout(() => fetchCatalog().catch(() => {}), 4000);
@@ -65,7 +68,7 @@ window.ENF_COMMERCE.ready = (async () => {
       // like the store (0.1 $), exactly as the checkout plugin computes it
       const off = state.autoDiscount && price > 0 ? Math.round(price * state.autoDiscount / 10) / 10 : 0;
       return { ...old, id: raw.id, n: name, p: off ? Math.round((price - off) * 100) / 100 : price, o: off ? price : regular > price ? regular : 0,
-        s: !!raw.is_in_stock && !!raw.is_purchasable, v: raw.type === 'variable',
+        s: !!raw.is_in_stock && !!raw.is_purchasable, v: raw.type === 'variable', big: large.has(raw.id) || large.has(raw.parent),
         b: raw.brands?.length ? text(raw.brands[0].name).toUpperCase() : (name.split(/\s+[–—-]\s+/).length > 1 ? name.split(/\s+[–—-]\s+/)[0].toUpperCase() : old?.b || ''),
         c: [...(raw.site_category ? [raw.site_category] : old?.c || []), ...raw.categories.map(c => 'wc-' + c.id)], a: ages, h: old?.h || [],
         i: images[0] || 'assets/img/no-photo.svg', _images: images, _live: true, r: undefined,

@@ -51,6 +51,14 @@ $enabled = '1'; $order->source = 'yes';
 $free = $filters['woocommerce_package_rates'][0]( array(), array( 'destination' => array( 'country' => 'LB' ) ) );
 verify( isset( $free['enf_delivery'] ) && $free['enf_delivery']->cost === 5, '5 $ Lebanon delivery missing' );
 verify( array() === $filters['woocommerce_package_rates'][0]( array(), array( 'destination' => array( 'country' => 'US' ) ) ), 'International shipping allowed' );
+// a large toy (shipping class "Large item") makes delivery 15 $, once, however many large toys there are
+class ShipProduct { public $class; function __construct( $c ) { $this->class = $c; } function get_shipping_class() { return $this->class; } }
+$mixed = array( 'destination' => array( 'country' => 'LB' ), 'contents' => array(
+    array( 'data' => new ShipProduct( '' ) ), array( 'data' => new ShipProduct( 'large-item' ) ), array( 'data' => new ShipProduct( 'large-item' ) ) ) );
+$large = $filters['woocommerce_package_rates'][0]( array(), $mixed );
+verify( $large['enf_delivery']->cost === 15, 'Large item delivery is not 15 $' );
+$small = $filters['woocommerce_package_rates'][0]( array(), array( 'destination' => array( 'country' => 'LB' ), 'contents' => array( array( 'data' => new ShipProduct( '' ) ) ) ) );
+verify( $small['enf_delivery']->cost === 5, 'Small items no longer 5 $' );
 $_GET = array( 'order-received' => '1', 'key' => 'test_order_key' );
 verify( enf_checkout_receipt_order() === $order, 'Receipt key verification failed' );
 $_GET['key'] = 'wrong'; verify( false === enf_checkout_receipt_order(), 'Invalid receipt key accepted' );

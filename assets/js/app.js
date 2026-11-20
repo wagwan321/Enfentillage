@@ -623,6 +623,11 @@
      ========================================================================== */
   const cartCount = () => Object.values(cart).reduce((a, b) => a + b, 0);
   const cartTotal = () => Object.entries(cart).reduce((s, [id, q]) => s + (byId.get(+id)?.p || 0) * q, 0);
+  // 5 $ anywhere in Lebanon; 15 $ (once) when a large toy is in the box, as the checkout charges it
+  const DELIVERY_FEE = 5;
+  const largeFee = () => window.ENF_COMMERCE?.largeDeliveryFee || 0;
+  const isLarge = p => !!(p && p.big && largeFee());
+  const deliveryFor = ids => ids.some(id => isLarge(byId.get(+id))) ? largeFee() : DELIVERY_FEE;
 
   function syncCounts() {
     const n = cartCount();
@@ -654,7 +659,7 @@
           <div class="cart-line__price">${p.s ? money(p.p * q) : 'Unavailable'}</div>
         </div>`; }).join('')}`;
     foot.innerHTML = `<div class="cart-total"><span>Subtotal</span><span>${money(total)}</span></div>
-      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Delivery: 5 $ anywhere in Lebanon.</p>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">${lines.some(([id]) => isLarge(byId.get(+id))) ? `Delivery: <b>${money(largeFee())}</b> anywhere in Lebanon, as your box has a large toy.` : 'Delivery: 5 $ anywhere in Lebanon.'}</p>
       <a class="btn btn--green" style="width:100%" href="checkout.html">Checkout ${icon('arrow', 'icon', 2.6)}</a>
       <p class="cart-pay">Pay by <b>cash on delivery</b> or <img src="assets/img/pay/whish-money.svg" alt="Whish Money" width="62" height="14"></p>`;
   }
@@ -1019,7 +1024,7 @@
 
   window.ENF = {
     P, byId, COLORS, colorVars, hashColor, CATEGORIES, AGES, BRANDS, CHARACTERS,
-    tillo, brandMatch, brandLogo, imgOf, imgLg, gallery, galleryHTML, descHTML, loadDetail, productUrl, priceHTML, offPct, codeLine, codePrice, titleCase, addToCart, getCart: () => cart, setCart: c => { cart = c; store.set('enf_cart', cart); renderCart(); syncCounts(); }, CAMPAIGN, cartTotal, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
+    tillo, brandMatch, brandLogo, imgOf, imgLg, gallery, galleryHTML, descHTML, loadDetail, productUrl, priceHTML, offPct, isLarge, deliveryFor, largeFee, codeLine, codePrice, titleCase, addToCart, getCart: () => cart, setCart: c => { cart = c; store.set('enf_cart', cart); renderCart(); syncCounts(); }, CAMPAIGN, cartTotal, icon, balloon, starSvg, esc, money, brandName, card, shopUrl,
     observeReveals, initRail, burst, toast, NEW_IDS, getFavs: () => favs,
   };
 

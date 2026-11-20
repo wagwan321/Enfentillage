@@ -71,3 +71,11 @@ The client confirmed TILLO20 (20% off), 10% in-store cashback, gift wrapping and
 ## 0.8.0 (19 November 2026)
 - The automatic 20% is now applied to each toy's price at checkout (10 $ becomes 8 $), exactly as the website shows it, instead of a separate "-20%" line. The usual price is shown crossed out, with a "You save / You saved" line under the total on the checkout page, the thank-you page and the order emails.
 - The usual price is kept on each order line as hidden meta `_enf_usual_price`; the cashback voucher still works out to 10% of what was paid.
+
+## 0.9.0: 15 $ delivery for large toys
+
+- Products in the WooCommerce shipping class **Large item** (slug `large-item`) are delivered for 15 $. Other toys stay at 5 $. An order with several large toys pays 15 $ once.
+- To mark a toy: Products > edit > Product data > Shipping > Shipping class: Large item. Options of a variable product follow their parent unless set otherwise.
+- The checkout line reads "Delivery in Lebanon (large item)", and the pill at the top of the page shows 15 $.
+- The status endpoint also reports `largeDeliveryFee: 15` and `largeItems` (product IDs), so the website shows 15 $ on the product page, in the toy box and on the order review before checkout.
+- The first list of large toys is in `wordpress/large-items.csv`.

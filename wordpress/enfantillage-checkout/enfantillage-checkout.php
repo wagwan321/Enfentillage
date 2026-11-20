@@ -1,14 +1,42 @@
 <?php
 /**
  * Plugin Name: Enfantillage Checkout Handoff
- * Description: An opt-in cart handoff to WooCommerce checkout, 5 $ Lebanon delivery, COD and manually confirmed Whish payments. Disabled until explicitly enabled by an administrator.
- * Version: 0.8.0
+ * Description: An opt-in cart handoff to WooCommerce checkout, 5 $ Lebanon delivery (15 $ with a large item), COD and manually confirmed Whish payments. Disabled until explicitly enabled by an administrator.
+ * Version: 0.9.0
  * Requires PHP: 8.1
  * Requires Plugins: woocommerce
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 // One delivery price anywhere in Lebanon (US dollars). The website reads it from the status endpoint.
 const ENF_DELIVERY_FEE = 5;
+// Large toys (play sets, slides, trampolines, ride-ons, bikes, strollers, big pools...) cost 15 $ to deliver.
+// Staff mark them in WooCommerce: Product data > Shipping > Shipping class "Large item" (slug large-item).
+// Several large toys in one order still pay 15 $ once.
+const ENF_LARGE_DELIVERY_FEE = 15;
+const ENF_LARGE_CLASS = 'large-item';
+function enf_is_large( $product ) {
+    return is_object( $product ) && method_exists( $product, 'get_shipping_class' ) && ENF_LARGE_CLASS === $product->get_shipping_class();
+}
+// delivery for a list of cart lines (a shipping package's contents, or the cart itself)
+function enf_delivery_fee_for( $lines ) {
+    foreach ( (array) $lines as $line ) {
+        if ( ! empty( $line['data'] ) && enf_is_large( $line['data'] ) ) { return ENF_LARGE_DELIVERY_FEE; }
+    }
+    return ENF_DELIVERY_FEE;
+}
+function enf_cart_delivery_fee() {
+    return function_exists( 'WC' ) && WC()->cart ? enf_delivery_fee_for( WC()->cart->get_cart() ) : ENF_DELIVERY_FEE;
+}
+// IDs of the products (and their options) marked "Large item", for the website to show 15 $ beforehand.
+function enf_large_product_ids() {
+    if ( ! taxonomy_exists( 'product_shipping_class' ) || ! term_exists( ENF_LARGE_CLASS, 'product_shipping_class' ) ) { return array(); }
+    $ids = get_posts( array(
+        'post_type' => array( 'product', 'product_variation' ), 'post_status' => 'publish', 'fields' => 'ids',
+        'posts_per_page' => 3000, 'no_found_rows' => true,
+        'tax_query' => array( array( 'taxonomy' => 'product_shipping_class', 'field' => 'slug', 'terms' => ENF_LARGE_CLASS ) ),
+    ) );
+    return array_values( array_map( 'intval', $ids ) );
+}
 // Christmas campaign: 20% off everything, applied automatically (no code) until the end of 25 December (Beirut time).
 const ENF_DISCOUNT_PCT = 20;
 const ENF_DISCOUNT_UNTIL = '2026-12-26 00:00:00';
@@ -94,7 +122,7 @@ add_action( 'admin_init', function () {
 add_action( 'admin_menu', function () {
     add_submenu_page( 'woocommerce', 'Enfantillage checkout', 'Enfantillage checkout', 'manage_options', 'enf-checkout', function () {
         if ( ! current_user_can( 'manage_options' ) ) { return; }
-        echo '<div class="wrap"><h1>Enfantillage checkout</h1><p>Cart handoff for the new storefront. Delivery in Lebanon: 5 $. Cash on delivery or Whish to +961 78 881 100; customers send a payment screenshot to the same number. Whish requires manual confirmation.</p><p>Enable only after backup and staging tests. Existing store settings and Wizard are not modified.</p><form method="post" action="options.php">';
+        echo '<div class="wrap"><h1>Enfantillage checkout</h1><p>Cart handoff for the new storefront. Delivery in Lebanon: 5 $, or 15 $ once when the order has a product in the shipping class &ldquo;Large item&rdquo;. Cash on delivery or Whish to +961 78 881 100; customers send a payment screenshot to the same number. Whish requires manual confirmation.</p><p>Enable only after backup and staging tests. Existing store settings and Wizard are not modified.</p><form method="post" action="options.php">';
         settings_fields( 'enf_checkout' );
         echo '<input type="hidden" name="enf_checkout_enabled" value="0"><label><input type="checkbox" name="enf_checkout_enabled" value="1" ' . checked( get_option( 'enf_checkout_enabled', '0' ), '1', false ) . '> Enable new-storefront checkout handoff</label>';
         echo '<hr><p>Launch setup: the new website uses www.enfantillagestore.com. WordPress, its dashboard and software connections keep enfantillagestore.com. Enable the following switch only after the www website is ready.</p><input type="hidden" name="enf_storefront_enabled" value="0"><label><input type="checkbox" name="enf_storefront_enabled" value="1" ' . checked( get_option( 'enf_storefront_enabled', '0' ), '1', false ) . '> Send public shopping pages to the new www website</label>';
@@ -111,6 +139,7 @@ add_action( 'rest_api_init', function () {
             $response = new WP_REST_Response( array(
                 'version' => 2, 'enabled' => enf_checkout_enabled(),
                 'currency' => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : null, 'deliveryFee' => ENF_DELIVERY_FEE,
+                'largeDeliveryFee' => ENF_LARGE_DELIVERY_FEE, 'largeItems' => enf_large_product_ids(),
                 'methods' => array( 'cod', 'whish' ), 'whishNumber' => '+961 78 881 100',
                 'discount' => enf_discount_active() ? array( 'pct' => ENF_DISCOUNT_PCT, 'until' => '2026-12-25' ) : null,
             ) );
@@ -193,7 +222,9 @@ add_action( 'admin_post_enf_checkout_cart', 'enf_checkout_handoff' );
 add_filter( 'woocommerce_package_rates', function ( $rates, $package ) {
     if ( ! enf_checkout_session() ) { return $rates; }
     if ( 'LB' !== ( $package['destination']['country'] ?? '' ) ) { return array(); }
-    return array( 'enf_delivery' => new WC_Shipping_Rate( 'enf_delivery', 'Delivery in Lebanon', ENF_DELIVERY_FEE, array(), 'enf_delivery' ) );
+    $fee = enf_delivery_fee_for( $package['contents'] ?? array() );
+    $label = ENF_LARGE_DELIVERY_FEE === $fee ? 'Delivery in Lebanon (large item)' : 'Delivery in Lebanon';
+    return array( 'enf_delivery' => new WC_Shipping_Rate( 'enf_delivery', $label, $fee, array(), 'enf_delivery' ) );
 }, 100, 2 );
 add_action( 'woocommerce_after_checkout_validation', function ( $data, $errors ) {
     if ( ! enf_checkout_session() ) { return; }
