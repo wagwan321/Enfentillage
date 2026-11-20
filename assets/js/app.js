@@ -604,7 +604,7 @@
         </ul></div>
       </div>
       <div class="wrap footer__bottom">
-        <span>© 2026 Enfantillage sarl. All rights reserved. Made by Envision.</span>
+        <span>© 2026 Enfantillage WY SARL. All rights reserved. Made by Envision.</span>
         <span class="pay"><span>Cash on delivery</span><span class="pay__whish"><img class="pay-logo" src="assets/img/pay/whish-money.svg" alt="Whish Money" width="80" height="18"></span></span>
       </div>
     </footer>
