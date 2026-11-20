@@ -10,10 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 // One delivery price anywhere in Lebanon (US dollars). The website reads it from the status endpoint.
 const ENF_DELIVERY_FEE = 5;
 // Large toys (play sets, slides, trampolines, ride-ons, bikes, strollers, big pools...) cost 15 $ to deliver.
-// Staff mark them in WooCommerce: Product data > Shipping > Shipping class "Large item" (slug large-item).
+// Staff mark them in WooCommerce: Product data > Shipping > Shipping class "Large items (15 $ delivery)"
+// (the store's existing "Heavy items" class, slug heavy-items, renamed).
 // Several large toys in one order still pay 15 $ once.
 const ENF_LARGE_DELIVERY_FEE = 15;
-const ENF_LARGE_CLASS = 'large-item';
+const ENF_LARGE_CLASS = 'heavy-items';
 function enf_is_large( $product ) {
     return is_object( $product ) && method_exists( $product, 'get_shipping_class' ) && ENF_LARGE_CLASS === $product->get_shipping_class();
 }
@@ -122,7 +123,7 @@ add_action( 'admin_init', function () {
 add_action( 'admin_menu', function () {
     add_submenu_page( 'woocommerce', 'Enfantillage checkout', 'Enfantillage checkout', 'manage_options', 'enf-checkout', function () {
         if ( ! current_user_can( 'manage_options' ) ) { return; }
-        echo '<div class="wrap"><h1>Enfantillage checkout</h1><p>Cart handoff for the new storefront. Delivery in Lebanon: 5 $, or 15 $ once when the order has a product in the shipping class &ldquo;Large item&rdquo;. Cash on delivery or Whish to +961 78 881 100; customers send a payment screenshot to the same number. Whish requires manual confirmation.</p><p>Enable only after backup and staging tests. Existing store settings and Wizard are not modified.</p><form method="post" action="options.php">';
+        echo '<div class="wrap"><h1>Enfantillage checkout</h1><p>Cart handoff for the new storefront. Delivery in Lebanon: 5 $, or 15 $ once when the order has a product in the shipping class &ldquo;Large items (15 $ delivery)&rdquo; (slug heavy-items). Cash on delivery or Whish to +961 78 881 100; customers send a payment screenshot to the same number. Whish requires manual confirmation.</p><p>Enable only after backup and staging tests. Existing store settings and Wizard are not modified.</p><form method="post" action="options.php">';
         settings_fields( 'enf_checkout' );
         echo '<input type="hidden" name="enf_checkout_enabled" value="0"><label><input type="checkbox" name="enf_checkout_enabled" value="1" ' . checked( get_option( 'enf_checkout_enabled', '0' ), '1', false ) . '> Enable new-storefront checkout handoff</label>';
         echo '<hr><p>Launch setup: the new website uses www.enfantillagestore.com. WordPress, its dashboard and software connections keep enfantillagestore.com. Enable the following switch only after the www website is ready.</p><input type="hidden" name="enf_storefront_enabled" value="0"><label><input type="checkbox" name="enf_storefront_enabled" value="1" ' . checked( get_option( 'enf_storefront_enabled', '0' ), '1', false ) . '> Send public shopping pages to the new www website</label>';

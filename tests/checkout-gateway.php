@@ -54,7 +54,7 @@ verify( array() === $filters['woocommerce_package_rates'][0]( array(), array( 'd
 // a large toy (shipping class "Large item") makes delivery 15 $, once, however many large toys there are
 class ShipProduct { public $class; function __construct( $c ) { $this->class = $c; } function get_shipping_class() { return $this->class; } }
 $mixed = array( 'destination' => array( 'country' => 'LB' ), 'contents' => array(
-    array( 'data' => new ShipProduct( '' ) ), array( 'data' => new ShipProduct( 'large-item' ) ), array( 'data' => new ShipProduct( 'large-item' ) ) ) );
+    array( 'data' => new ShipProduct( '' ) ), array( 'data' => new ShipProduct( 'heavy-items' ) ), array( 'data' => new ShipProduct( 'heavy-items' ) ) ) );
 $large = $filters['woocommerce_package_rates'][0]( array(), $mixed );
 verify( $large['enf_delivery']->cost === 15, 'Large item delivery is not 15 $' );
 $small = $filters['woocommerce_package_rates'][0]( array(), array( 'destination' => array( 'country' => 'LB' ), 'contents' => array( array( 'data' => new ShipProduct( '' ) ) ) ) );

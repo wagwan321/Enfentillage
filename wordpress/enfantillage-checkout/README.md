@@ -74,8 +74,8 @@ The client confirmed TILLO20 (20% off), 10% in-store cashback, gift wrapping and
 
 ## 0.9.0: 15 $ delivery for large toys
 
-- Products in the WooCommerce shipping class **Large item** (slug `large-item`) are delivered for 15 $. Other toys stay at 5 $. An order with several large toys pays 15 $ once.
-- To mark a toy: Products > edit > Product data > Shipping > Shipping class: Large item. Options of a variable product follow their parent unless set otherwise.
+- Products in the WooCommerce shipping class **Large items (15 $ delivery)** are delivered for 15 $. It is the store's existing "Heavy items" class (slug `heavy-items`), renamed; it has no cost in the WooCommerce shipping zone, so the old shop's checkout is unchanged. Other toys stay at 5 $. An order with several large toys pays 15 $ once.
+- To mark a toy: Products > edit > Product data > Shipping > Shipping class: Large items (15 $ delivery). Options of a variable product follow their parent unless set otherwise.
 - The checkout line reads "Delivery in Lebanon (large item)", and the pill at the top of the page shows 15 $.
 - The status endpoint also reports `largeDeliveryFee: 15` and `largeItems` (product IDs), so the website shows 15 $ on the product page, in the toy box and on the order review before checkout.
 - The first list of large toys is in `wordpress/large-items.csv`.
