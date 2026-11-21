@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Enfantillage Checkout Handoff
- * Description: An opt-in cart handoff to WooCommerce checkout, 5 $ Lebanon delivery (15 $ with a large item), COD and manually confirmed Whish payments. Disabled until explicitly enabled by an administrator.
- * Version: 0.9.0
+ * Description: An opt-in cart handoff to WooCommerce checkout, 5 $ Lebanon delivery (15 $ with a large item), COD and manually confirmed Whish payments, cashback vouchers with a one-time QR code. Disabled until explicitly enabled by an administrator.
+ * Version: 0.10.0
  * Requires PHP: 8.1
  * Requires Plugins: woocommerce
  */
@@ -61,13 +61,14 @@ function enf_cashback_html( $order ) {
     return '<div style="margin:16px 0;padding:16px 18px;border:3px dashed #ffc83d;border-radius:16px;background:#fff8e6;color:#1e2459">'
         . '<p style="margin:0 0 4px;font-size:13px;font-weight:bold;color:#e8222b;text-transform:uppercase">Enfantillage cashback voucher</p>'
         . '<p style="margin:0 0 6px;font-size:24px;font-weight:bold">' . wp_kses_post( wc_price( $amount ) ) . ' to spend in our store</p>'
-        . '<p style="margin:0;font-size:14px">That&rsquo;s ' . ENF_CASHBACK_PCT . '% of your order. Show this email (order #' . esc_html( $order->get_order_number() ) . ') at Enfantillage, Mazraat Yachouh, to use it on your next purchase. Valid until ' . esc_html( ENF_CASHBACK_VALID_UNTIL ) . '.</p>'
+        . '<p style="margin:0;font-size:14px">That&rsquo;s ' . ENF_CASHBACK_PCT . '% of your order. Show this QR code at Enfantillage, Mazraat Yachouh, on your next purchase (order #' . esc_html( $order->get_order_number() ) . '). Valid until ' . esc_html( ENF_CASHBACK_VALID_UNTIL ) . '.</p>'
+        . enf_voucher_qr_html( $order )
         . '</div>';
 }
 function enf_cashback_text( $order ) {
     $amount = (float) $order->get_meta( '_enf_cashback' );
     if ( $amount <= 0 ) { return ''; }
-    return 'Your cashback voucher: ' . html_entity_decode( wp_strip_all_tags( wc_price( $amount ) ) ) . ' to spend in our store (' . ENF_CASHBACK_PCT . '% of your order). Show this email (order #' . $order->get_order_number() . ') at Enfantillage, Mazraat Yachouh, to use it on your next purchase. Valid until ' . ENF_CASHBACK_VALID_UNTIL . ".\n\n";
+    return 'Your cashback voucher: ' . html_entity_decode( wp_strip_all_tags( wc_price( $amount ) ) ) . ' to spend in our store (' . ENF_CASHBACK_PCT . '% of your order). Show your QR code at Enfantillage, Mazraat Yachouh, on your next purchase (order #' . $order->get_order_number() . '). Valid until ' . ENF_CASHBACK_VALID_UNTIL . ".\n" . enf_voucher_qr_text( $order ) . "\n";
 }
 // Discount per toy, rounded like the store's prices (0.1 $), so it matches the prices shown on the website.
 function enf_discount_for( $price ) {
@@ -77,6 +78,7 @@ require_once __DIR__ . '/cart-validation.php';
 require_once __DIR__ . '/storefront-routing.php';
 require_once __DIR__ . '/receipt-validation.php';
 require_once __DIR__ . '/checkout-page.php';
+require_once __DIR__ . '/voucher.php';
 add_action( 'before_woocommerce_init', function () {
     if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
@@ -123,7 +125,7 @@ add_action( 'admin_init', function () {
 add_action( 'admin_menu', function () {
     add_submenu_page( 'woocommerce', 'Enfantillage checkout', 'Enfantillage checkout', 'manage_options', 'enf-checkout', function () {
         if ( ! current_user_can( 'manage_options' ) ) { return; }
-        echo '<div class="wrap"><h1>Enfantillage checkout</h1><p>Cart handoff for the new storefront. Delivery in Lebanon: 5 $, or 15 $ once when the order has a product in the shipping class &ldquo;Large items (15 $ delivery)&rdquo; (slug heavy-items). Cash on delivery or Whish to +961 78 881 100; customers send a payment screenshot to the same number. Whish requires manual confirmation.</p><p>Enable only after backup and staging tests. Existing store settings and Wizard are not modified.</p><form method="post" action="options.php">';
+        echo '<div class="wrap"><h1>Enfantillage checkout</h1><p>Cart handoff for the new storefront. Delivery in Lebanon: 5 $, or 15 $ once when the order has a product in the shipping class &ldquo;Large items (15 $ delivery)&rdquo; (slug heavy-items). Cash on delivery or Whish to +961 78 881 100; customers send a payment screenshot to the same number. Whish requires manual confirmation.</p><p><strong>Cashback vouchers:</strong> each voucher email has its own QR code. Scan it with a phone signed in to WordPress (shop manager or administrator) and tap &ldquo;Accept&rdquo;. It works only once, and the order gets a note saying when and by whom it was used. To type a code by hand, open <a href="' . esc_url( home_url( '/?enfv=' ) ) . '">' . esc_html( home_url( '/?enfv=' ) ) . '</a>.</p><p>Enable only after backup and staging tests. Existing store settings and Wizard are not modified.</p><form method="post" action="options.php">';
         settings_fields( 'enf_checkout' );
         echo '<input type="hidden" name="enf_checkout_enabled" value="0"><label><input type="checkbox" name="enf_checkout_enabled" value="1" ' . checked( get_option( 'enf_checkout_enabled', '0' ), '1', false ) . '> Enable new-storefront checkout handoff</label>';
         echo '<hr><p>Launch setup: the new website uses www.enfantillagestore.com. WordPress, its dashboard and software connections keep enfantillagestore.com. Enable the following switch only after the www website is ready.</p><input type="hidden" name="enf_storefront_enabled" value="0"><label><input type="checkbox" name="enf_storefront_enabled" value="1" ' . checked( get_option( 'enf_storefront_enabled', '0' ), '1', false ) . '> Send public shopping pages to the new www website</label>';
@@ -350,6 +352,7 @@ add_action( 'woocommerce_checkout_create_order', function ( $order ) {
             $cashback = enf_cashback_for_order( $order );
             if ( $cashback > 0 ) {
                 $order->update_meta_data( '_enf_cashback', $cashback );
+                $order->update_meta_data( '_enf_voucher_secret', enf_voucher_new_secret() );   // for the one-time QR code
                 $order->update_meta_data( 'Cashback voucher', wp_strip_all_tags( wc_price( $cashback ) ) . ' to spend in store, valid until ' . ENF_CASHBACK_VALID_UNTIL );
             }
         }

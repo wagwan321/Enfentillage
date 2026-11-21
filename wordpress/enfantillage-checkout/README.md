@@ -79,3 +79,15 @@ The client confirmed TILLO20 (20% off), 10% in-store cashback, gift wrapping and
 - The checkout line reads "Delivery in Lebanon (large item)", and the pill at the top of the page shows 15 $.
 - The status endpoint also reports `largeDeliveryFee: 15` and `largeItems` (product IDs), so the website shows 15 $ on the product page, in the toy box and on the order review before checkout.
 - The first list of large toys is in `wordpress/large-items.csv`.
+
+## 0.10.0: one-time QR code on the cashback voucher
+
+- Each order with a cashback voucher gets a code such as `56396-K7XM3PQ9RT`: the order ID, then a random secret saved on the order (`_enf_voucher_secret`). Older orders get their secret the first time the voucher is shown.
+- The voucher box in the emails and on the thank-you page shows the code and its QR code. The picture comes from the website (`/api/voucher-qr?code=…`), which only ever encodes `https://enfantillagestore.com/?enfv=<code>`.
+- Scanning opens `https://enfantillagestore.com/?enfv=<code>` (file `voucher.php`):
+  - staff signed in to WordPress (shop manager or administrator) see the amount, the order and its status, then tap **Accept**. A pending or processing order shows a warning, so staff check it was paid first;
+  - the voucher is then used: `_enf_voucher_used` and `_enf_voucher_used_by` are saved, the "Cashback voucher" field says USED, and the order gets a note with the date and the staff name. Any later scan shows "Already used";
+  - anyone else only sees whether the voucher is ready, used or expired, plus a sign-in link for staff;
+  - opening the link never uses the voucher (only the staff button does), and vouchers of cancelled, refunded or failed orders, or after 25 December 2026, cannot be accepted;
+  - two phones tapping at the same moment cannot both accept it (a unique `enf_voucher_used_<order id>` option is the lock).
+- To type a code by hand, open `https://enfantillagestore.com/?enfv=` while signed in.
