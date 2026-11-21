@@ -47,6 +47,9 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; overflow-x: hidden; overflow-x: clip; }
+/* No scroll anchoring: on Android Chrome/Samsung it undid the scroll each time the sticky header shrank near the top,
+   so the header flipped between big and small and the page shook. iPhone Safari never anchors, so both now behave the same. */
+html { overflow-anchor: none; }
 body {
   margin: 0;
   font-family: var(--font-body);
